@@ -1,0 +1,162 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "all": "All",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close"
+  },
+  "nav": {
+    "home": "Home",
+    "catalog": "Catalog",
+    "cart": "Cart",
+    "account": "My Account",
+    "admin": "Admin",
+    "contact": "Contact",
+    "about": "About"
+  },
+  "catalog": {
+    "title": "Our Catalog",
+    "subtitle": "Discover our selection of professional equipment",
+    "searchPlaceholder": "Search for a product...",
+    "noProducts": "No products found",
+    "categories": {
+      "all": "All categories",
+      "electronics": "Electronics",
+      "furniture": "Furniture",
+      "equipment": "Equipment",
+      "vehicles": "Vehicles",
+      "tools": "Tools"
+    },
+    "filters": {
+      "price": "Price",
+      "category": "Category",
+      "availability": "Availability",
+      "priceRange": "Price range"
+    },
+    "sort": {
+      "default": "Default",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low",
+      "nameAsc": "Name A-Z",
+      "nameDesc": "Name Z-A",
+      "newest": "Newest"
+    }
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "removeFromCart": "Remove from Cart",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "quantity": "Quantity",
+    "description": "Description",
+    "specifications": "Specifications",
+    "fromPerMonth": "from {amount}/month",
+    "reference": "Ref.",
+    "category": "Category"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "emptyDescription": "Browse our catalog to find the equipment you need.",
+    "browseCatalog": "Browse Catalog",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "items": "{count} item(s)",
+    "continue": "Continue Shopping",
+    "checkout": "Proceed to Checkout",
+    "remove": "Remove",
+    "updateQuantity": "Update quantity",
+    "paymentPlan": "Payment Plan",
+    "monthlyPayment": "Monthly Payment",
+    "selectPlan": "Select a payment plan"
+  },
+  "payment": {
+    "title": "Payment Plan",
+    "selectPlan": "Select your payment plan",
+    "monthly": "per month",
+    "total": "Total to pay",
+    "interest": "including interest",
+    "noInterest": "No interest",
+    "plans": {
+      "6months": "6 months",
+      "6months.description": "Pay in 6 interest-free installments",
+      "12months": "12 months",
+      "12months.description": "Our most popular plan",
+      "24months": "24 months",
+      "24months.description": "Reduced payments over 2 years",
+      "36months": "36 months",
+      "36months.description": "Maximum flexibility"
+    },
+    "popular": "Popular"
+  },
+  "order": {
+    "title": "Credit Application",
+    "subtitle": "Complete your application to finalize your order",
+    "personalInfo": "Personal Information",
+    "contactInfo": "Contact Details",
+    "professionalInfo": "Professional Information",
+    "summary": "Summary",
+    "submit": "Submit Application",
+    "submitting": "Submitting...",
+    "success": "Application submitted successfully",
+    "successMessage": "We will get back to you within 48 business hours.",
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "company": "Company",
+      "position": "Position",
+      "siret": "SIRET",
+      "address": "Address",
+      "city": "City",
+      "postalCode": "Postal Code",
+      "country": "Country",
+      "message": "Additional Message"
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalidEmail": "Invalid email",
+      "invalidPhone": "Invalid phone number",
+      "invalidSiret": "Invalid SIRET"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "products": "Products",
+    "customers": "Customers",
+    "settings": "Settings",
+    "stats": {
+      "totalOrders": "Total Orders",
+      "pendingOrders": "Pending",
+      "revenue": "Revenue",
+      "customers": "Customers"
+    }
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "legal": "Legal Notice",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
+    "contact": "Contact Us"
+  }
+}
