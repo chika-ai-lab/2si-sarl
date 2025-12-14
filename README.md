@@ -1,73 +1,112 @@
-# Welcome to your Lovable project
+# Configurable Commerce Hub - ProgressPay
 
-## Project info
+Développé par **Kreatify.sn** - Agence de développement digital
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## À propos du projet
 
-## How can I edit this code?
+**Configurable Commerce Hub** est une plateforme e-commerce innovante spécialisée dans la vente d'équipements professionnels avec paiement échelonné. Cette solution permet aux entreprises et professionnels d'acquérir leur équipement en répartissant le paiement sur 6, 12, 24 ou 36 mois.
 
-There are several ways of editing your application.
+## Technologies utilisées
 
-**Use Lovable**
+Ce projet est construit avec les technologies modernes suivantes :
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- **Vite** - Build tool ultra-rapide
+- **TypeScript** - Typage statique pour JavaScript
+- **React** - Bibliothèque UI composable
+- **shadcn-ui** - Composants UI accessibles et personnalisables
+- **Tailwind CSS** - Framework CSS utility-first
+- **React Router** - Navigation côté client
+- **React Query** - Gestion d'état serveur
+- **React Hook Form** - Gestion de formulaires performante
+- **Zod** - Validation de schémas TypeScript
 
-Changes made via Lovable will be committed automatically to this repo.
+## Installation et démarrage
 
-**Use your preferred IDE**
+### Prérequis
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js 18+ et npm installés - [installer avec nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Étapes d'installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Étape 1 : Cloner le dépôt
+git clone <VOTRE_URL_GIT>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Étape 2 : Naviguer dans le répertoire du projet
+cd configurable-commerce-hub
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Étape 3 : Installer les dépendances
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Étape 4 : Démarrer le serveur de développement
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Le serveur de développement démarrera sur `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Scripts disponibles
 
-**Use GitHub Codespaces**
+```sh
+npm run dev          # Démarre le serveur de développement
+npm run build        # Compile pour la production
+npm run build:dev    # Compile en mode développement
+npm run preview      # Prévisualise la build de production
+npm run lint         # Analyse le code avec ESLint
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Structure du projet
 
-## What technologies are used for this project?
+```
+configurable-commerce-hub/
+├── src/
+│   ├── components/     # Composants React réutilisables
+│   ├── pages/          # Pages de l'application
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # Utilitaires et configurations
+│   ├── locales/        # Fichiers de traduction (i18n)
+│   └── main.tsx        # Point d'entrée de l'application
+├── public/             # Ressources statiques
+└── index.html          # Template HTML
+```
 
-This project is built with:
+## Développement
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Contribuer au projet
 
-## How can I deploy this project?
+1. Créer une branche pour votre fonctionnalité : `git checkout -b feature/ma-fonctionnalite`
+2. Commiter vos changements : `git commit -m 'Ajout de ma fonctionnalité'`
+3. Pousser vers la branche : `git push origin feature/ma-fonctionnalite`
+4. Ouvrir une Pull Request
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Standards de code
 
-## Can I connect a custom domain to my Lovable project?
+- Utiliser TypeScript pour tous les nouveaux fichiers
+- Suivre les conventions ESLint configurées
+- Utiliser les composants shadcn-ui pour l'UI
+- Appliquer les classes Tailwind CSS pour le styling
 
-Yes, you can!
+## Déploiement
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Le projet peut être déployé sur n'importe quelle plateforme supportant les applications Vite/React :
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **Vercel** (recommandé)
+- **Netlify**
+- **GitHub Pages**
+- **AWS Amplify**
+- Tout serveur web statique
+
+### Commandes de build
+
+```sh
+npm run build        # Génère le build de production dans /dist
+```
+
+## Support et Contact
+
+Développé avec ❤️ par [Kreatify.sn](https://kreatify.sn)
+
+Pour toute question ou support technique, contactez-nous à : **support@kreatify.sn**
+
+## Licence
+
+Copyright © 2025 Kreatify.sn - Tous droits réservés

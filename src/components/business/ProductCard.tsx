@@ -1,25 +1,39 @@
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/providers/CartProvider";
+import { useWishlist } from "@/providers/WishlistProvider";
 import { useTranslation } from "@/providers/I18nProvider";
 import { formatCurrency, getMinimumMonthlyPayment } from "@/lib/currency";
 import { type Product } from "@/data/products";
+import { ProductRating } from "./ProductRating";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
+  variant?: "grid" | "list";
+  className?: string;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, variant = "grid", className }: ProductCardProps) {
   const { t } = useTranslation();
   const { items, addItem, removeItem } = useCart();
-  
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
   const isInCart = items.some((item) => item.id === product.id);
+  const inWishlist = isInWishlist(product.id);
   const monthlyPayment = getMinimumMonthlyPayment(product.price);
 
-  const handleCartAction = () => {
+  // Get primary image
+  const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
+
+  const handleCartAction = async () => {
+    setIsAddingToCart(true);
+
     if (isInCart) {
       removeItem(product.id);
     } else {
@@ -28,63 +42,246 @@ export function ProductCard({ product }: ProductCardProps) {
         name: product.name,
         description: product.description,
         price: product.price,
-        image: product.image,
+        image: primaryImage.url,
         category: product.category,
       });
     }
+
+    // Brief animation delay
+    setTimeout(() => setIsAddingToCart(false), 300);
   };
 
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toggleWishlist(product.id);
+  };
+
+  // Calculate discount percentage if on sale
+  const discountPercentage = product.compareAtPrice
+    ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
+    : 0;
+
+  if (variant === "list") {
+    return (
+      <Card className={cn("group overflow-hidden card-elevated-hover", className)}>
+        <div className="flex flex-col md:flex-row">
+          {/* Image Section */}
+          <Link to={`/product/${product.id}`} className="relative md:w-1/3">
+            <div className="relative aspect-[4/3] md:aspect-auto md:h-full overflow-hidden bg-secondary">
+              <img
+                src={primaryImage.url}
+                alt={primaryImage.alt}
+                className="w-full h-full object-cover image-zoom-hover"
+              />
+
+              {/* Badges on image */}
+              <div className="absolute top-3 left-3 flex flex-col gap-2">
+                {product.isNew && (
+                  <Badge className="badge-new">Nouveau</Badge>
+                )}
+                {product.onSale && (
+                  <Badge className="badge-sale">-{discountPercentage}%</Badge>
+                )}
+                {product.featured && !product.onSale && !product.isNew && (
+                  <Badge className="badge-featured">Vedette</Badge>
+                )}
+              </div>
+
+              {/* Wishlist button */}
+              <button
+                onClick={handleWishlistToggle}
+                className={cn(
+                  "absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm",
+                  "hover:bg-white transition-colors shadow-soft",
+                  inWishlist && "text-destructive"
+                )}
+              >
+                <Heart className={cn("w-5 h-5", inWishlist && "fill-current")} />
+              </button>
+
+              {!product.inStock && (
+                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                  <Badge className="badge-out-of-stock">Rupture de stock</Badge>
+                </div>
+              )}
+            </div>
+          </Link>
+
+          {/* Content Section */}
+          <div className="flex-1 p-6 flex flex-col">
+            <div className="flex-1 space-y-3">
+              {/* Category */}
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                {t(`catalog.categories.${product.category}`)}
+              </div>
+
+              {/* Title */}
+              <Link to={`/product/${product.id}`}>
+                <h3 className="text-xl font-semibold text-foreground hover:text-primary transition-colors line-clamp-2">
+                  {product.name}
+                </h3>
+              </Link>
+
+              {/* Rating */}
+              {product.rating && (
+                <ProductRating
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                  size="sm"
+                />
+              )}
+
+              {/* Description */}
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {product.description}
+              </p>
+
+              {/* Stock indicator */}
+              {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
+                <p className="text-sm text-warning font-medium">
+                  Seulement {product.stockQuantity} en stock
+                </p>
+              )}
+            </div>
+
+            {/* Price and Actions */}
+            <div className="mt-4 flex items-end justify-between gap-4">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">
+                    {formatCurrency(product.price)}
+                  </span>
+                  {product.compareAtPrice && (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatCurrency(product.compareAtPrice)}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Dès {formatCurrency(monthlyPayment)}/mois
+                </div>
+              </div>
+
+              <Button
+                onClick={handleCartAction}
+                disabled={!product.inStock || isAddingToCart}
+                variant={isInCart ? "secondary" : "default"}
+                size="lg"
+                className="shrink-0"
+              >
+                {isInCart ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Au panier
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4" />
+                    Ajouter
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Grid variant (default)
   return (
-    <Card className="group overflow-hidden card-hover border-border/50 bg-card">
+    <Card className={cn("group overflow-hidden card-elevated-hover", className)}>
       {/* Image */}
-      <Link to={`/product/${product.id}`}>
+      <Link to={`/product/${product.id}`} className="relative block">
         <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
           <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            src={primaryImage.url}
+            alt={primaryImage.alt}
+            className="w-full h-full object-cover image-zoom-hover"
           />
+
+          {/* Badges on image */}
+          <div className="absolute top-3 left-3 flex flex-col gap-2">
+            {product.isNew && (
+              <Badge className="badge-new">Nouveau</Badge>
+            )}
+            {product.onSale && (
+              <Badge className="badge-sale">-{discountPercentage}%</Badge>
+            )}
+            {product.featured && !product.onSale && !product.isNew && (
+              <Badge className="badge-featured">Vedette</Badge>
+            )}
+          </div>
+
+          {/* Wishlist button */}
+          <button
+            onClick={handleWishlistToggle}
+            className={cn(
+              "absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm",
+              "hover:bg-white transition-all shadow-soft hover:scale-110",
+              inWishlist && "text-destructive"
+            )}
+            aria-label={inWishlist ? "Retirer des favoris" : "Ajouter aux favoris"}
+          >
+            <Heart className={cn("w-4 h-4", inWishlist && "fill-current")} />
+          </button>
+
           {!product.inStock && (
             <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-              <Badge variant="secondary" className="text-sm">
-                {t("product.outOfStock")}
-              </Badge>
+              <Badge className="badge-out-of-stock">Rupture de stock</Badge>
             </div>
-          )}
-          {product.featured && product.inStock && (
-            <Badge className="absolute top-3 left-3 badge-popular">
-              Featured
-            </Badge>
           )}
         </div>
       </Link>
 
-      <CardContent className="p-4 space-y-2">
-        {/* Category & Reference */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="uppercase tracking-wide">{t(`catalog.categories.${product.category}`)}</span>
-          <span>{t("product.reference")} {product.reference}</span>
+      <CardContent className="p-4 space-y-3">
+        {/* Category */}
+        <div className="text-xs text-muted-foreground uppercase tracking-wide">
+          {t(`catalog.categories.${product.category}`)}
         </div>
 
         {/* Title */}
         <Link to={`/product/${product.id}`}>
-          <h3 className="font-semibold text-foreground line-clamp-1 hover:text-primary transition-colors">
+          <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem]">
             {product.name}
           </h3>
         </Link>
+
+        {/* Rating */}
+        {product.rating && (
+          <ProductRating
+            rating={product.rating}
+            reviewCount={product.reviewCount}
+            size="sm"
+          />
+        )}
 
         {/* Description */}
         <p className="text-sm text-muted-foreground line-clamp-2">
           {product.description}
         </p>
 
+        {/* Stock indicator */}
+        {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
+          <p className="text-xs text-warning font-medium">
+            Seulement {product.stockQuantity} en stock
+          </p>
+        )}
+
         {/* Price */}
         <div className="pt-2">
-          <div className="text-xl font-bold text-foreground">
-            {formatCurrency(product.price)}
+          <div className="flex items-baseline gap-2">
+            <span className="text-xl font-bold text-foreground">
+              {formatCurrency(product.price)}
+            </span>
+            {product.compareAtPrice && (
+              <span className="text-sm text-muted-foreground line-through">
+                {formatCurrency(product.compareAtPrice)}
+              </span>
+            )}
           </div>
-          <div className="text-sm text-muted-foreground">
-            {t("product.fromPerMonth", { amount: formatCurrency(monthlyPayment) })}
+          <div className="text-sm text-muted-foreground mt-1">
+            Dès {formatCurrency(monthlyPayment)}/mois
           </div>
         </div>
       </CardContent>
@@ -92,7 +289,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardFooter className="p-4 pt-0">
         <Button
           onClick={handleCartAction}
-          disabled={!product.inStock}
+          disabled={!product.inStock || isAddingToCart}
           variant={isInCart ? "secondary" : "default"}
           className="w-full"
         >

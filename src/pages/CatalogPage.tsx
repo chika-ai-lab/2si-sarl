@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Search, Filter, Grid3X3, List } from "lucide-react";
+import { useState } from "react";
+import { Search, Grid3X3, List, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,67 +11,51 @@ import {
 } from "@/components/ui/select";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductCard } from "@/components/business/ProductCard";
+import { ProductFilters } from "@/components/business/ProductFilters";
+import { MobileFilters } from "@/components/business/MobileFilters";
 import { useTranslation } from "@/providers/I18nProvider";
-import { products, categories, searchProducts, getProductsByCategory } from "@/data/products";
-import { useSearchParams } from "react-router-dom";
-
-type SortOption = "default" | "priceAsc" | "priceDesc" | "nameAsc" | "nameDesc";
+import { useProductFilters } from "@/hooks/useProductFilters";
+import { getMaxPrice, getMinPrice } from "@/data/products";
+import { Link } from "react-router-dom";
 
 export default function CatalogPage() {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  const initialCategory = searchParams.get("category") || "all";
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [sortBy, setSortBy] = useState<SortOption>("default");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const filteredProducts = useMemo(() => {
-    let result = searchQuery 
-      ? searchProducts(searchQuery) 
-      : getProductsByCategory(selectedCategory);
+  const {
+    filters,
+    updateFilters,
+    clearFilters,
+    filteredProducts,
+    activeFilterCount,
+    totalProducts,
+  } = useProductFilters();
 
-    // Apply category filter to search results too
-    if (searchQuery && selectedCategory !== "all") {
-      result = result.filter(p => p.category === selectedCategory);
-    }
+  const minPrice = getMinPrice();
+  const maxPrice = getMaxPrice();
 
-    // Sort
-    switch (sortBy) {
-      case "priceAsc":
-        result = [...result].sort((a, b) => a.price - b.price);
-        break;
-      case "priceDesc":
-        result = [...result].sort((a, b) => b.price - a.price);
-        break;
-      case "nameAsc":
-        result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "nameDesc":
-        result = [...result].sort((a, b) => b.name.localeCompare(a.name));
-        break;
-    }
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFilters({ searchQuery: e.target.value });
+  };
 
-    return result;
-  }, [searchQuery, selectedCategory, sortBy]);
-
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    if (category === "all") {
-      searchParams.delete("category");
-    } else {
-      searchParams.set("category", category);
-    }
-    setSearchParams(searchParams);
+  const handleSortChange = (value: string) => {
+    updateFilters({ sortBy: value as typeof filters.sortBy });
   };
 
   return (
     <MainLayout>
-      {/* Header */}
-      <section className="bg-secondary/30 py-12">
+      {/* Header with Breadcrumb */}
+      <section className="bg-background py-8">
         <div className="container mx-auto px-4">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <Link to="/" className="hover:text-foreground transition-colors">
+              Accueil
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground">Catalogue</span>
+          </nav>
+
           <h1 className="text-4xl font-bold text-foreground mb-2">
             {t("catalog.title")}
           </h1>
@@ -81,111 +65,145 @@ export default function CatalogPage() {
         </div>
       </section>
 
-      {/* Filters Bar */}
-      <section className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t("catalog.searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder={t("catalog.filters.category")} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {t(category.labelKey)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder={t("common.sort")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">{t("catalog.sort.default")}</SelectItem>
-                <SelectItem value="priceAsc">{t("catalog.sort.priceAsc")}</SelectItem>
-                <SelectItem value="priceDesc">{t("catalog.sort.priceDesc")}</SelectItem>
-                <SelectItem value="nameAsc">{t("catalog.sort.nameAsc")}</SelectItem>
-                <SelectItem value="nameDesc">{t("catalog.sort.nameDesc")}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* View Toggle */}
-            <div className="flex gap-1 border border-border rounded-lg p-1">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="icon"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="icon"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Products Grid */}
+      {/* Main Content */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          {/* Results Count */}
-          <div className="mb-6 text-sm text-muted-foreground">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'produit' : 'produits'} trouvé{filteredProducts.length !== 1 ? 's' : ''}
-          </div>
-
-          {filteredProducts.length > 0 ? (
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                  : "flex flex-col gap-4"
-              }
-            >
-              {filteredProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
-                <Search className="h-8 w-8 text-muted-foreground" />
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar Filters - Desktop only */}
+            <aside className="hidden lg:block w-64 shrink-0">
+              <div className="sticky top-24">
+                <ProductFilters
+                  filters={filters}
+                  updateFilters={updateFilters}
+                  clearFilters={clearFilters}
+                  activeFilterCount={activeFilterCount}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {t("catalog.noProducts")}
-              </h3>
-              <p className="text-muted-foreground">
-                Essayez de modifier vos critères de recherche
-              </p>
+            </aside>
+
+            {/* Products Section */}
+            <div className="flex-1 min-w-0">
+              {/* Toolbar */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                {/* Left: Search + Mobile Filters */}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {/* Mobile Filters */}
+                  <div className="lg:hidden">
+                    <MobileFilters
+                      filters={filters}
+                      updateFilters={updateFilters}
+                      clearFilters={clearFilters}
+                      activeFilterCount={activeFilterCount}
+                      minPrice={minPrice}
+                      maxPrice={maxPrice}
+                      filteredCount={filteredProducts.length}
+                      totalCount={totalProducts}
+                    />
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative flex-1 sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Rechercher..."
+                      value={filters.searchQuery}
+                      onChange={handleSearchChange}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Right: Results + Sort + View */}
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                  {/* Results Count */}
+                  <div className="text-sm text-muted-foreground whitespace-nowrap">
+                    {filteredProducts.length} / {totalProducts} produit
+                    {filteredProducts.length !== 1 ? "s" : ""}
+                  </div>
+
+                  {/* Sort */}
+                  <Select
+                    value={filters.sortBy}
+                    onValueChange={handleSortChange}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Nom</SelectItem>
+                      <SelectItem value="price-asc">Prix croissant</SelectItem>
+                      <SelectItem value="price-desc">
+                        Prix décroissant
+                      </SelectItem>
+                      <SelectItem value="rating">Mieux notés</SelectItem>
+                      <SelectItem value="newest">Nouveautés</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* View Toggle */}
+                  <div className="hidden sm:flex gap-1 border border-border rounded-lg p-1">
+                    <Button
+                      variant={viewMode === "grid" ? "default" : "ghost"}
+                      size="icon"
+                      onClick={() => setViewMode("grid")}
+                      className="h-8 w-8"
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="icon"
+                      onClick={() => setViewMode("list")}
+                      className="h-8 w-8"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Products Grid/List */}
+              {filteredProducts.length > 0 ? (
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                      : "flex flex-col gap-4"
+                  }
+                >
+                  {filteredProducts.map((product, index) => (
+                    <div
+                      key={product.id}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <ProductCard product={product} variant={viewMode} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Aucun produit trouvé
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    Essayez de modifier vos critères de recherche ou filtres
+                  </p>
+                  {activeFilterCount > 0 && (
+                    <Button onClick={clearFilters} variant="outline">
+                      Réinitialiser les filtres
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </section>
     </MainLayout>

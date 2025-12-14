@@ -25,12 +25,36 @@ export interface DesignTokens {
     warning: ColorScale;
     error: ColorScale;
   };
+  semantic: {
+    trust: {
+      background: string;
+      border: string;
+      icon: string;
+    };
+    rating: {
+      star: string;
+      background: string;
+    };
+    badge: {
+      new: string;
+      sale: string;
+      featured: string;
+      outOfStock: string;
+    };
+  };
   backgrounds: {
     page: string;
     card: string;
     elevated: string;
     muted: string;
     accent: string;
+  };
+  shadows: {
+    none: string;
+    soft: string;
+    medium: string;
+    large: string;
+    glow: string;
   };
   typography: {
     fontFamily: {
@@ -48,23 +72,27 @@ export interface DesignTokens {
     colors: Record<string, string>;
   };
   transitions: Record<string, string>;
+  animations: {
+    duration: Record<string, string>;
+    easing: Record<string, string>;
+  };
 }
 
 export const designTokens: DesignTokens = {
   colors: {
-    // Primary - Deep forest green (inspired by Shopcart)
+    // Primary - Professional blue (trusted, modern)
     primary: {
-      50: "145 40% 96%",
-      100: "145 38% 90%",
-      200: "145 36% 82%",
-      300: "145 34% 68%",
-      400: "145 32% 52%",
-      500: "145 45% 28%",  // Base - Deep forest green
-      600: "145 50% 22%",
-      700: "145 55% 18%",
-      800: "145 58% 14%",
-      900: "145 60% 10%",
-      950: "145 65% 6%",
+      50: "215 50% 96%",
+      100: "215 50% 90%",
+      200: "215 50% 80%",
+      300: "215 50% 65%",
+      400: "215 50% 45%",
+      500: "215 50% 23%",  // Base - Professional blue
+      600: "215 55% 18%",
+      700: "215 60% 14%",
+      800: "215 65% 10%",
+      900: "215 70% 7%",
+      950: "215 75% 4%",
     },
     // Secondary - Warm beige/cream (background accent)
     secondary: {
@@ -82,17 +110,17 @@ export const designTokens: DesignTokens = {
     },
     // Accent - Vibrant orange (CTAs, highlights)
     accent: {
-      50: "25 100% 97%",
-      100: "25 100% 92%",
-      200: "25 100% 85%",
-      300: "25 100% 75%",
-      400: "25 100% 62%",
-      500: "25 95% 53%",   // Bright orange
-      600: "22 90% 48%",
-      700: "20 85% 42%",
-      800: "18 80% 35%",
-      900: "15 75% 28%",
-      950: "12 70% 18%",
+      50: "38 92% 95%",
+      100: "38 92% 88%",
+      200: "38 92% 78%",
+      300: "38 92% 65%",
+      400: "38 92% 55%",
+      500: "38 92% 50%",   // Base - Vibrant orange
+      600: "38 92% 45%",
+      700: "38 92% 38%",
+      800: "38 92% 30%",
+      900: "38 92% 22%",
+      950: "38 92% 15%",
     },
     // Neutral - Clean grays
     neutral: {
@@ -148,6 +176,23 @@ export const designTokens: DesignTokens = {
       950: "0 85% 12%",
     },
   },
+  semantic: {
+    trust: {
+      background: "215 50% 96%",  // Very light blue
+      border: "215 50% 80%",
+      icon: "215 50% 23%",
+    },
+    rating: {
+      star: "45 100% 51%",        // Gold
+      background: "45 100% 96%",
+    },
+    badge: {
+      new: "142 76% 36%",         // Success green
+      sale: "0 84% 60%",          // Destructive red
+      featured: "38 92% 50%",     // Accent orange
+      outOfStock: "220 10% 46%",  // Neutral gray
+    },
+  },
   backgrounds: {
     page: "0 0% 100%",           // Pure white
     card: "0 0% 100%",           // White cards
@@ -155,10 +200,17 @@ export const designTokens: DesignTokens = {
     muted: "220 15% 96%",        // Light gray
     accent: "35 45% 95%",        // Cream accent
   },
+  shadows: {
+    none: "none",
+    soft: "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)",
+    medium: "0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06)",
+    large: "0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05)",
+    glow: "0 0 20px rgba(38, 92%, 50%, 0.3)",
+  },
   typography: {
     fontFamily: {
-      display: "'DM Sans', system-ui, sans-serif",
-      body: "'Plus Jakarta Sans', system-ui, sans-serif",
+      display: "'Inter', system-ui, sans-serif",
+      body: "'Inter', system-ui, sans-serif",
       mono: "'JetBrains Mono', 'Fira Code', monospace",
     },
     fontSize: {
@@ -225,5 +277,19 @@ export const designTokens: DesignTokens = {
     base: "200ms ease-out",
     smooth: "300ms cubic-bezier(0.4, 0, 0.2, 1)",
     slow: "400ms cubic-bezier(0.4, 0, 0.2, 1)",
+  },
+  animations: {
+    duration: {
+      fast: "150ms",
+      base: "250ms",
+      slow: "400ms",
+      slower: "600ms",
+    },
+    easing: {
+      easeOut: "cubic-bezier(0, 0, 0.2, 1)",
+      easeIn: "cubic-bezier(0.4, 0, 1, 1)",
+      easeInOut: "cubic-bezier(0.4, 0, 0.2, 1)",
+      spring: "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+    },
   },
 };
