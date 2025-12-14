@@ -1,5 +1,7 @@
 import { Shield, Percent, Clock, Truck, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
+import { staggerFadeUp } from "@/lib/animations";
 
 interface TrustBadgesProps {
   variant?: "default" | "compact";
@@ -33,6 +35,16 @@ export function TrustBadges({
   variant = "default",
   className,
 }: TrustBadgesProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const items = containerRef.current.querySelectorAll(".trust-badge");
+      if (items.length) {
+        staggerFadeUp(items, { stagger: 0.12, duration: 0.45, delay: 0.06 });
+      }
+    }
+  }, []);
   if (variant === "compact") {
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
@@ -51,6 +63,7 @@ export function TrustBadges({
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "flex flex-wrap items-center justify-center gap-4",
         className
@@ -65,6 +78,10 @@ export function TrustBadges({
     </div>
   );
 }
+
+// add animation on mount
+const containerRef = null as unknown as React.RefObject<HTMLDivElement>;
+// We move the actual ref into the component via closure to avoid TS issues in default export
 
 // Variant for single badge display
 interface SingleTrustBadgeProps {
