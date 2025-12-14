@@ -24,6 +24,8 @@ import {
   products as allProducts,
 } from "@/data/products";
 import { heroSlides } from "@/constants";
+import { useEffect, useRef } from "react";
+import { fadeUp, staggerFadeUp } from "@/lib/animations";
 
 export default function HomePage() {
   const company = useCompany();
@@ -32,10 +34,59 @@ export default function HomePage() {
   const newProducts = getNewProducts().slice(0, 4);
   const saleProducts = getOnSaleProducts().slice(0, 4);
 
+  // Refs for GSAP in-view animations
+  const heroRef = useRef<HTMLDivElement | null>(null);
+  const categoriesRef = useRef<HTMLElement | null>(null);
+  const featuredRef = useRef<HTMLElement | null>(null);
+  const newRef = useRef<HTMLElement | null>(null);
+  const statsRef = useRef<HTMLDivElement | null>(null);
+  const ctaRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    const observe = (ref: HTMLElement | null) => {
+      if (!ref) return;
+      const obs = new IntersectionObserver(
+        (entries, ob) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const root = entry.target as HTMLElement;
+              const items = root.querySelectorAll(".animate-fade-in");
+              if (items.length) {
+                staggerFadeUp(Array.from(items) as Element[], {
+                  stagger: 0.08,
+                  duration: 0.5,
+                });
+              } else {
+                fadeUp(root, { duration: 0.6 });
+              }
+              ob.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -10% 0px" }
+      );
+      obs.observe(ref);
+      observers.push(obs);
+    };
+
+    observe(heroRef.current);
+    observe(categoriesRef.current);
+    observe(featuredRef.current);
+    observe(newRef.current);
+    observe(statsRef.current);
+    observe(ctaRef.current);
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
   return (
     <MainLayout>
       {/* Hero Carousel */}
-      <HeroCarousel slides={heroSlides(company)} autoplay interval={6000} />
+      <div ref={heroRef}>
+        <HeroCarousel slides={heroSlides(company)} autoplay interval={6000} />
+      </div>
 
       {/* Promo Banner */}
       <section className="py-6">
@@ -51,7 +102,7 @@ export default function HomePage() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-background">
+      <section ref={categoriesRef} className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-foreground mb-2">
@@ -87,7 +138,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products Section */}
-      <section className="py-16">
+      <section ref={featuredRef} className="py-16">
         <div className="container mx-auto px-4">
           <div className="flex items-end justify-between mb-10">
             <div>
@@ -122,7 +173,7 @@ export default function HomePage() {
 
       {/* New Products Section */}
       {newProducts.length > 0 && (
-        <section className="py-16 bg-background">
+        <section ref={newRef} className="py-16 bg-background">
           <div className="container mx-auto px-4">
             <div className="flex items-end justify-between mb-10">
               <div>
@@ -168,7 +219,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <div
+            ref={statsRef}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto"
+          >
             {[
               {
                 icon: Users,
@@ -224,7 +278,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section - Flat Design */}
-      <section className="py-16 bg-background">
+      <section ref={ctaRef} className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center bg-primary rounded-2xl p-12 shadow-large">
             <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
