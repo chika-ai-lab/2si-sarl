@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { CartItem } from "@/components/business/CartItem";
 import { PaymentPlanSelector } from "@/components/business/PaymentPlanSelector";
+import { SEO } from "@/components/SEO";
 import { useCart } from "@/providers/CartProvider";
 import { useTranslation } from "@/providers/I18nProvider";
 import { formatCurrency } from "@/lib/currency";
@@ -55,6 +56,12 @@ export default function CartPage() {
 
   return (
     <MainLayout>
+      <SEO
+        title="Panier"
+        description="Finalisez votre commande d'équipements professionnels avec nos options de paiement échelonné flexibles."
+        keywords="panier, commande, checkout, paiement échelonné"
+        noindex={true}
+      />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-foreground mb-8">
           {t("cart.title")}
@@ -70,7 +77,7 @@ export default function CartPage() {
             {/* Continue Shopping */}
             <div className="pt-4">
               <Link to="/catalog">
-                <Button variant="outline">
+                <Button variant="outline" size="lg">
                   {t("cart.continue")}
                 </Button>
               </Link>
@@ -134,9 +141,9 @@ export default function CartPage() {
                 </div>
 
                 <Link to="/order" className="block pt-2">
-                  <Button size="lg" variant="accent" className="w-full">
+                  <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-white">
                     {t("cart.checkout")}
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
 

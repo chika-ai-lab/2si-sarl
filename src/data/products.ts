@@ -56,8 +56,8 @@ export const products: Product[] = [
     name: "Ordinateur Portable Pro",
     description: "Laptop professionnel haute performance pour entreprises",
     longDescription: "Un ordinateur portable conçu pour les professionnels exigeants. Processeur dernière génération, 32GB RAM, SSD 1TB. Parfait pour les tâches intensives et le multitâche. Design fin et léger avec écran OLED 4K pour une qualité d'image exceptionnelle.",
-    price: 1899,
-    compareAtPrice: 2299,
+    price: 1243000,
+    compareAtPrice: 1505000,
     images: [
       { url: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop", alt: "Ordinateur Portable Pro - Vue principale", isPrimary: true },
       { url: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop", alt: "Ordinateur Portable Pro - Clavier" },
@@ -123,7 +123,7 @@ export const products: Product[] = [
     name: "Bureau Ergonomique Ajustable",
     description: "Bureau électrique réglable en hauteur pour un confort optimal",
     longDescription: "Bureau moderne avec réglage électrique de la hauteur. Surface spacieuse de 160x80cm, système anti-collision, mémorisation de 4 positions. Construction robuste en acier avec plateau en bois massif. Idéal pour alterner position assise et debout durant la journée.",
-    price: 799,
+    price: 523000,
     images: [
       { url: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=800&auto=format&fit=crop", alt: "Bureau Ergonomique - Vue principale", isPrimary: true },
       { url: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&auto=format&fit=crop", alt: "Bureau Ergonomique - Position haute" },
@@ -179,7 +179,7 @@ export const products: Product[] = [
     name: "Imprimante Multifonction Pro",
     description: "Imprimante laser couleur avec scanner et fax intégrés",
     longDescription: "Solution d'impression complète pour entreprises. Impression recto-verso automatique, connectivité WiFi et Ethernet, capacité papier 500 feuilles. Scanner recto-verso en une passe avec chargeur automatique 50 feuilles.",
-    price: 649,
+    price: 425000,
     images: [
       { url: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=800&auto=format&fit=crop", alt: "Imprimante Multifonction - Vue principale", isPrimary: true },
       { url: "https://images.unsplash.com/photo-1585792180666-f7347c490ee2?w=800&auto=format&fit=crop", alt: "Imprimante Multifonction - Panneau de contrôle" },
@@ -215,7 +215,7 @@ export const products: Product[] = [
     name: "Fauteuil Direction Premium",
     description: "Fauteuil de bureau haut de gamme en cuir véritable",
     longDescription: "Fauteuil de direction en cuir pleine fleur. Dossier haut ergonomique, accoudoirs 4D réglables, mécanisme synchrone avec blocage multi-positions. Rembourrage haute densité pour un confort longue durée. Design élégant adapté aux bureaux de direction.",
-    price: 1299,
+    price: 850000,
     images: [
       { url: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=800&auto=format&fit=crop", alt: "Fauteuil Direction - Vue principale", isPrimary: true },
       { url: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800&auto=format&fit=crop", alt: "Fauteuil Direction - Profil" },
@@ -279,7 +279,7 @@ export const products: Product[] = [
     name: "Serveur NAS Enterprise",
     description: "Stockage réseau 8 baies pour données entreprise",
     longDescription: "Serveur NAS haute performance avec 8 baies hot-swap. Processeur Xeon, 64GB RAM ECC, support RAID avancé, 2x ports 10GbE. Solution professionnelle pour sauvegarde et partage de données. Système d'exploitation Linux avec interface web intuitive.",
-    price: 3499,
+    price: 2290000,
     images: [
       { url: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop", alt: "Serveur NAS - Vue principale", isPrimary: true },
       { url: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop", alt: "Serveur NAS - Arrière" },
@@ -315,7 +315,7 @@ export const products: Product[] = [
     name: "Chariot Élévateur Électrique",
     description: "Chariot élévateur compact pour entrepôt",
     longDescription: "Chariot élévateur électrique 3 roues, idéal pour les espaces restreints. Capacité 1.6 tonnes, hauteur de levée 4.5m, batterie lithium-ion longue durée. Rayon de braquage réduit pour une maniabilité optimale. Cabine ergonomique avec excellente visibilité.",
-    price: 24999,
+    price: 16370000,
     images: [
       { url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop", alt: "Chariot Élévateur - Vue principale", isPrimary: true },
     ],
@@ -350,7 +350,7 @@ export const products: Product[] = [
     name: "Perceuse Colonne Industrielle",
     description: "Perceuse à colonne professionnelle avec variateur",
     longDescription: "Perceuse à colonne haute précision pour ateliers professionnels. Variateur de vitesse électronique, mandrin auto-serrant 20mm, table inclinable. Construction robuste en fonte pour une stabilité optimale et des perçages précis.",
-    price: 1899,
+    price: 1243000,
     images: [
       { url: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop", alt: "Perceuse Colonne - Vue principale", isPrimary: true },
     ],
@@ -385,8 +385,8 @@ export const products: Product[] = [
     name: "Écran Moniteur 32\" 4K",
     description: "Moniteur professionnel 32 pouces Ultra HD",
     longDescription: "Moniteur IPS 32 pouces avec résolution 4K UHD. Calibration usine Delta E<2, USB-C 90W, hub USB intégré, hauteur et pivot réglables. Parfait pour la création de contenu, la retouche photo et le travail multi-fenêtres. Certification HDR400.",
-    price: 899,
-    compareAtPrice: 1099,
+    price: 589000,
+    compareAtPrice: 719000,
     images: [
       { url: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop", alt: "Moniteur 32 pouces - Vue principale", isPrimary: true },
       { url: "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=800&auto=format&fit=crop", alt: "Moniteur 32 pouces - Profil" },

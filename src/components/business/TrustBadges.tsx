@@ -1,7 +1,8 @@
 import { Shield, Percent, Clock, Truck, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
-import { staggerFadeUp } from "@/lib/animations";
+import { motion } from "framer-motion";
+import { staggerContainerVariant, staggerItemVariant } from "@/lib/animations";
+import { useTranslation } from "@/providers/I18nProvider";
 
 interface TrustBadgesProps {
   variant?: "default" | "compact";
@@ -11,22 +12,22 @@ interface TrustBadgesProps {
 const badges = [
   {
     icon: Shield,
-    label: "Paiement sécurisé",
+    labelKey: "trustBadges.secure",
     key: "secure",
   },
   {
     icon: Percent,
-    label: "0% d'intérêt possible",
+    labelKey: "trustBadges.interest",
     key: "interest",
   },
   {
     icon: Clock,
-    label: "Approbation rapide",
+    labelKey: "trustBadges.approval",
     key: "approval",
   },
   {
     icon: Truck,
-    label: "Livraison gratuite",
+    labelKey: "trustBadges.shipping",
     key: "shipping",
   },
 ];
@@ -35,26 +36,18 @@ export function TrustBadges({
   variant = "default",
   className,
 }: TrustBadgesProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    if (containerRef.current) {
-      const items = containerRef.current.querySelectorAll(".trust-badge");
-      if (items.length) {
-        staggerFadeUp(items, { stagger: 0.12, duration: 0.45, delay: 0.06 });
-      }
-    }
-  }, []);
   if (variant === "compact") {
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
-        {badges.map(({ icon: Icon, label, key }) => (
+        {badges.map(({ icon: Icon, labelKey, key }) => (
           <div
             key={key}
             className="flex items-center justify-center text-center gap-1.5 text-primary"
           >
             <Icon className="w-4 h-4" />
-            <span className="text-sm font-medium">{label}</span>
+            <span className="text-sm font-medium">{t(labelKey)}</span>
           </div>
         ))}
       </div>
@@ -62,26 +55,29 @@ export function TrustBadges({
   }
 
   return (
-    <div
-      ref={containerRef}
+    <motion.div
+      variants={staggerContainerVariant}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, amount: 0.3 }}
       className={cn(
         "flex flex-wrap items-center justify-center gap-4",
         className
       )}
     >
-      {badges.map(({ icon: Icon, label, key }) => (
-        <div key={key} className="trust-badge flex items-center gap-2">
+      {badges.map(({ icon: Icon, labelKey, key }) => (
+        <motion.div
+          key={key}
+          variants={staggerItemVariant}
+          className="trust-badge flex items-center gap-2"
+        >
           <Icon className="w-5 h-5 shrink-0" />
-          <span className="font-medium">{label}</span>
-        </div>
+          <span className="font-medium">{t(labelKey)}</span>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
-
-// add animation on mount
-const containerRef = null as unknown as React.RefObject<HTMLDivElement>;
-// We move the actual ref into the component via closure to avoid TS issues in default export
 
 // Variant for single badge display
 interface SingleTrustBadgeProps {
@@ -90,12 +86,14 @@ interface SingleTrustBadgeProps {
 }
 
 export function SingleTrustBadge({ type, className }: SingleTrustBadgeProps) {
+  const { t } = useTranslation();
+
   const badgeConfig = {
-    secure: { icon: Shield, label: "Paiement sécurisé" },
-    interest: { icon: Percent, label: "0% d'intérêt" },
-    approval: { icon: Clock, label: "Approbation rapide" },
-    shipping: { icon: Truck, label: "Livraison gratuite" },
-    warranty: { icon: Award, label: "Garantie incluse" },
+    secure: { icon: Shield, labelKey: "trustBadges.secure" },
+    interest: { icon: Percent, labelKey: "trustBadges.interest" },
+    approval: { icon: Clock, labelKey: "trustBadges.approval" },
+    shipping: { icon: Truck, labelKey: "trustBadges.shipping" },
+    warranty: { icon: Award, labelKey: "trustBadges.warranty" },
   };
 
   const config = badgeConfig[type];
@@ -106,7 +104,7 @@ export function SingleTrustBadge({ type, className }: SingleTrustBadgeProps) {
       className={cn("trust-badge inline-flex items-center gap-1.5", className)}
     >
       <Icon className="w-4 h-4" />
-      <span>{config.label}</span>
+      <span>{t(config.labelKey)}</span>
     </div>
   );
 }

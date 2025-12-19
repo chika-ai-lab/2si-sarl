@@ -13,7 +13,7 @@ export interface FilterState {
 
 const DEFAULT_FILTERS: FilterState = {
   categories: [],
-  priceRange: [0, 30000],
+  priceRange: [0, 20000000], // Updated for FCFA prices
   minRating: 0,
   inStockOnly: false,
   searchQuery: "",

@@ -13,6 +13,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductCard } from "@/components/business/ProductCard";
 import { ProductFilters } from "@/components/business/ProductFilters";
 import { MobileFilters } from "@/components/business/MobileFilters";
+import { SEO } from "@/components/SEO";
 import { useTranslation } from "@/providers/I18nProvider";
 import { useProductFilters } from "@/hooks/useProductFilters";
 import { getMaxPrice, getMinPrice } from "@/data/products";
@@ -44,6 +45,11 @@ export default function CatalogPage() {
 
   return (
     <MainLayout>
+      <SEO
+        title="Catalogue"
+        description="Parcourez notre large catalogue d'équipements professionnels avec paiement échelonné. Bureaux, informatique, mobilier et bien plus encore."
+        keywords="catalogue équipement, matériel professionnel, bureau, informatique, mobilier, paiement échelonné"
+      />
       {/* Header with Breadcrumb */}
       <section className="bg-background py-8">
         <div className="container mx-auto px-4">
@@ -177,7 +183,7 @@ export default function CatalogPage() {
                   {filteredProducts.map((product, index) => (
                     <div
                       key={product.id}
-                      className="animate-fade-in"
+                      className={viewMode === "grid" ? "animate-fade-in h-full" : "animate-fade-in"}
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
                       <ProductCard product={product} variant={viewMode} />

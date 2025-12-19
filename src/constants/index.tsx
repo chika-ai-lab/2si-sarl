@@ -15,7 +15,7 @@ export const heroSlides = (company): HeroSlide[] => [
   {
     id: "slide-1",
     title: company.tagline,
-    subtitle: "ProgressPay",
+    subtitle: "2SI.Sarl",
     description: company.description,
     ctaText: "Explorer le catalogue",
     ctaLink: "/catalog",

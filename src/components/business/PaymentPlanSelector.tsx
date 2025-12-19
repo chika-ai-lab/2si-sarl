@@ -44,7 +44,7 @@ export function PaymentPlanSelector({
         {t("payment.selectPlan")}
       </h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {paymentConfig.plans.map((plan) => {
           const isSelected = selectedPlanId === plan.id;
           const monthly = calculateMonthly(plan.id);
@@ -67,9 +67,9 @@ export function PaymentPlanSelector({
             >
               {/* Popular Badge */}
               {plan.isPopular && (
-                <div className="absolute -top-3 left-4">
-                  <span className="badge-popular flex items-center gap-1">
-                    <Star className="h-3 w-3" />
+                <div className="absolute -top-2.5 left-4">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                    <Star className="h-3 w-3 fill-current" />
                     {t("payment.popular")}
                   </span>
                 </div>
@@ -77,47 +77,49 @@ export function PaymentPlanSelector({
 
               {/* Selection Indicator */}
               {isSelected && (
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full gradient-primary flex items-center justify-center">
+                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                   <Check className="h-3 w-3 text-primary-foreground" />
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {/* Plan Title */}
-                <div>
+                <div className={cn(plan.isPopular && "mt-2")}>
                   <div className="font-semibold text-foreground">
                     {t(plan.labelKey)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground line-clamp-1">
                     {t(plan.descriptionKey)}
                   </div>
                 </div>
 
                 {/* Monthly Payment */}
                 <div className="pt-2 border-t border-border/50">
-                  <div className="text-2xl font-bold text-foreground">
-                    {formatCurrency(monthly)}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      /{t("payment.monthly")}
-                    </span>
+                  <div className="flex flex-col">
+                    <div className="text-xl font-bold text-foreground">
+                      {formatCurrency(monthly)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("payment.monthly")}
+                    </div>
                   </div>
                 </div>
 
                 {/* Total & Interest */}
                 <div className="text-xs text-muted-foreground space-y-1">
                   <div className="flex justify-between">
-                    <span>{t("payment.total")}</span>
+                    <span>{t("payment.total")}:</span>
                     <span className="font-medium text-foreground">
                       {formatCurrency(total)}
                     </span>
                   </div>
                   {interest > 0 ? (
                     <div className="flex justify-between">
-                      <span>{t("payment.interest")}</span>
+                      <span>{t("payment.interest")}:</span>
                       <span>{formatCurrency(interest)}</span>
                     </div>
                   ) : (
-                    <div className="text-success font-medium">
+                    <div className="text-green-600 font-medium">
                       {t("payment.noInterest")}
                     </div>
                   )}

@@ -20,57 +20,57 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    /* Primary - Deep professional blue */
-    --primary: 215 50% 23%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - 2SI Green */
+    --primary: 158 100% 25%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Light slate */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 215 50% 23%;
+    /* Secondary - 2SI Gray/Dark */
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted - Subtle backgrounds */
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent - Warm amber for CTAs */
-    --accent: 38 92% 50%;
+    /* Accent - Vibrant green for CTAs */
+    --accent: 158 85% 35%;
     --accent-foreground: 0 0% 100%;
 
     /* Success, Warning, Destructive */
-    --success: 142 76% 36%;
+    --success: 158 100% 30%;
     --success-foreground: 0 0% 100%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 215 50% 23%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 158 100% 25%;
 
     --radius: 0.75rem;
 
     /* Extended palette for gradients and effects */
-    --primary-light: 215 50% 35%;
-    --primary-dark: 215 55% 15%;
-    --accent-light: 38 92% 60%;
-    --accent-dark: 38 92% 40%;
-    
+    --primary-light: 158 100% 35%;
+    --primary-dark: 158 100% 20%;
+    --accent-light: 158 85% 45%;
+    --accent-dark: 158 85% 25%;
+
     /* Shadows */
     --shadow-color: 215 50% 23%;
     
     /* Sidebar */
-    --sidebar-background: 220 14% 98%;
-    --sidebar-foreground: 215 25% 25%;
-    --sidebar-primary: 215 50% 23%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 215 50% 23%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 215 50% 23%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 158 100% 25%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent-foreground: 158 100% 25%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 158 100% 25%;
   }
 
   .dark {
@@ -225,6 +225,12 @@
 }
 
 @layer utilities {
+  /* Scroll animation setup */
+  .will-animate {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
   /* Animation delays */
   .animation-delay-100 {
     animation-delay: 100ms;

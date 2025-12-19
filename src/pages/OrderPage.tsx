@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { SEO } from "@/components/SEO";
 import { useCart } from "@/providers/CartProvider";
 import { useTranslation } from "@/providers/I18nProvider";
 import { formatCurrency } from "@/lib/currency";
@@ -130,6 +131,12 @@ export default function OrderPage() {
 
   return (
     <MainLayout>
+      <SEO
+        title="Finaliser la commande"
+        description="Complétez votre demande de financement d'équipement professionnel avec paiement échelonné."
+        keywords="commande, financement, demande crédit"
+        noindex={true}
+      />
       <div className="container mx-auto px-4 py-8">
         {/* Back Link */}
         <Link
@@ -163,7 +170,10 @@ export default function OrderPage() {
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.firstName")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.firstName")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -176,7 +186,10 @@ export default function OrderPage() {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.lastName")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.lastName")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -198,7 +211,10 @@ export default function OrderPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.email")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.email")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input type="email" {...field} />
                           </FormControl>
@@ -211,7 +227,10 @@ export default function OrderPage() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.phone")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.phone")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input type="tel" {...field} />
                           </FormControl>
@@ -233,7 +252,10 @@ export default function OrderPage() {
                       name="company"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.company")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.company")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -259,7 +281,10 @@ export default function OrderPage() {
                       name="siret"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-2">
-                          <FormLabel>{t("order.fields.siret")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.siret")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input placeholder="12345678901234" maxLength={14} {...field} />
                           </FormControl>
@@ -275,7 +300,10 @@ export default function OrderPage() {
                       name="address"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-2">
-                          <FormLabel>{t("order.fields.address")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.address")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -288,7 +316,10 @@ export default function OrderPage() {
                       name="postalCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.postalCode")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.postalCode")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input maxLength={5} {...field} />
                           </FormControl>
@@ -301,7 +332,10 @@ export default function OrderPage() {
                       name="city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t("order.fields.city")}</FormLabel>
+                          <FormLabel>
+                            {t("order.fields.city")}
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -338,13 +372,12 @@ export default function OrderPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    variant="accent"
-                    className="w-full"
+                    className="w-full bg-primary hover:bg-primary/90 text-white"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         {t("order.submitting")}
                       </>
                     ) : (
@@ -416,14 +449,13 @@ export default function OrderPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    variant="accent"
-                    className="w-full"
+                    className="w-full bg-primary hover:bg-primary/90 text-white"
                     disabled={isSubmitting}
                     onClick={form.handleSubmit(onSubmit)}
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         {t("order.submitting")}
                       </>
                     ) : (

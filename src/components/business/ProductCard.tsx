@@ -11,6 +11,8 @@ import { ProductRating } from "./ProductRating";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { cardHoverVariant, bounceBadgeVariant, buttonPressVariant } from "@/lib/animations";
 
 interface ProductCardProps {
   product: Product;
@@ -77,13 +79,33 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
               {/* Badges on image */}
               <div className="absolute top-3 left-3 flex flex-col gap-2">
                 {product.isNew && (
-                  <Badge className="badge-new">Nouveau</Badge>
+                  <motion.div
+                    variants={bounceBadgeVariant}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <Badge className="badge-new">{t("badges.new")}</Badge>
+                  </motion.div>
                 )}
                 {product.onSale && (
-                  <Badge className="badge-sale">-{discountPercentage}%</Badge>
+                  <motion.div
+                    variants={bounceBadgeVariant}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: 0.1 }}
+                  >
+                    <Badge className="badge-sale">-{discountPercentage}%</Badge>
+                  </motion.div>
                 )}
                 {product.featured && !product.onSale && !product.isNew && (
-                  <Badge className="badge-featured">Vedette</Badge>
+                  <motion.div
+                    variants={bounceBadgeVariant}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Badge className="badge-featured">{t("badges.featured")}</Badge>
+                  </motion.div>
                 )}
               </div>
 
@@ -101,7 +123,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
 
               {!product.inStock && (
                 <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                  <Badge className="badge-out-of-stock">Rupture de stock</Badge>
+                  <Badge className="badge-out-of-stock">{t("badges.outOfStock")}</Badge>
                 </div>
               )}
             </div>
@@ -139,7 +161,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
               {/* Stock indicator */}
               {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
                 <p className="text-sm text-warning font-medium">
-                  Seulement {product.stockQuantity} en stock
+                  {t("productDetails.onlyLeft", { count: product.stockQuantity })}
                 </p>
               )}
             </div>
@@ -158,7 +180,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  Dès {formatCurrency(monthlyPayment)}/mois
+                  {t("productDetails.from")} {formatCurrency(monthlyPayment)}{t("productDetails.perMonth")}
                 </div>
               </div>
 
@@ -190,9 +212,15 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
 
   // Grid variant (default)
   return (
-    <Card className={cn("group overflow-hidden card-elevated-hover", className)}>
+    <motion.div
+      variants={cardHoverVariant}
+      initial="rest"
+      whileHover="hover"
+      className={cn("h-full", className)}
+    >
+      <Card className="group overflow-hidden card-elevated-hover flex flex-col h-full">
       {/* Image */}
-      <Link to={`/product/${product.id}`} className="relative block">
+      <Link to={`/product/${product.id}`} className="relative block flex-shrink-0">
         <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
           <img
             src={primaryImage.url}
@@ -203,13 +231,33 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           {/* Badges on image */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
             {product.isNew && (
-              <Badge className="badge-new">Nouveau</Badge>
+              <motion.div
+                variants={bounceBadgeVariant}
+                initial="hidden"
+                animate="visible"
+              >
+                <Badge className="badge-new">{t("badges.new")}</Badge>
+              </motion.div>
             )}
             {product.onSale && (
-              <Badge className="badge-sale">-{discountPercentage}%</Badge>
+              <motion.div
+                variants={bounceBadgeVariant}
+                initial="hidden"
+                animate="visible"
+                transition={{ delay: 0.1 }}
+              >
+                <Badge className="badge-sale">-{discountPercentage}%</Badge>
+              </motion.div>
             )}
             {product.featured && !product.onSale && !product.isNew && (
-              <Badge className="badge-featured">Vedette</Badge>
+              <motion.div
+                variants={bounceBadgeVariant}
+                initial="hidden"
+                animate="visible"
+                transition={{ delay: 0.2 }}
+              >
+                <Badge className="badge-featured">{t("badges.featured")}</Badge>
+              </motion.div>
             )}
           </div>
 
@@ -221,91 +269,107 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
               "hover:bg-white transition-all shadow-soft hover:scale-110",
               inWishlist && "text-destructive"
             )}
-            aria-label={inWishlist ? "Retirer des favoris" : "Ajouter aux favoris"}
+            aria-label={inWishlist ? t("productDetails.removeFromWishlist") : t("productDetails.addToWishlist")}
           >
             <Heart className={cn("w-4 h-4", inWishlist && "fill-current")} />
           </button>
 
           {!product.inStock && (
             <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-              <Badge className="badge-out-of-stock">Rupture de stock</Badge>
+              <Badge className="badge-out-of-stock">{t("badges.outOfStock")}</Badge>
             </div>
           )}
         </div>
       </Link>
 
-      <CardContent className="p-4 space-y-3">
-        {/* Category */}
-        <div className="text-xs text-muted-foreground uppercase tracking-wide">
-          {t(`catalog.categories.${product.category}`)}
-        </div>
-
-        {/* Title */}
-        <Link to={`/product/${product.id}`}>
-          <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors min-h-[2.5rem]">
-            {product.name}
-          </h3>
-        </Link>
-
-        {/* Rating */}
-        {product.rating && (
-          <ProductRating
-            rating={product.rating}
-            reviewCount={product.reviewCount}
-            size="sm"
-          />
-        )}
-
-        {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {product.description}
-        </p>
-
-        {/* Stock indicator */}
-        {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
-          <p className="text-xs text-warning font-medium">
-            Seulement {product.stockQuantity} en stock
-          </p>
-        )}
-
-        {/* Price */}
-        <div className="pt-2">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-foreground">
-              {formatCurrency(product.price)}
-            </span>
-            {product.compareAtPrice && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatCurrency(product.compareAtPrice)}
-              </span>
-            )}
+      <div className="flex flex-col flex-1">
+        <CardContent className="p-5 flex flex-col flex-1">
+          {/* Category */}
+          <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
+            {t(`catalog.categories.${product.category}`)}
           </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Dès {formatCurrency(monthlyPayment)}/mois
-          </div>
-        </div>
-      </CardContent>
 
-      <CardFooter className="p-4 pt-0">
-        <Button
-          onClick={handleCartAction}
-          disabled={!product.inStock || isAddingToCart}
-          variant={isInCart ? "secondary" : "default"}
-          className="w-full"
-        >
-          {isInCart ? (
-            <>
-              <Check className="h-4 w-4" />
-              {t("product.removeFromCart")}
-            </>
+          {/* Title */}
+          <Link to={`/product/${product.id}`} className="mb-3 block">
+            <h3 className="font-semibold text-base text-foreground line-clamp-2 hover:text-primary transition-colors min-h-[3rem] leading-6">
+              {product.name}
+            </h3>
+          </Link>
+
+          {/* Rating */}
+          {product.rating ? (
+            <div className="mb-3">
+              <ProductRating
+                rating={product.rating}
+                reviewCount={product.reviewCount}
+                size="sm"
+              />
+            </div>
           ) : (
-            <>
-              <ShoppingCart className="h-4 w-4" />
-              {t("product.addToCart")}
-            </>
+            <div className="mb-3 h-5" />
           )}
-        </Button>
-      </CardFooter>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem] leading-5">
+            {product.description}
+          </p>
+
+          {/* Stock indicator */}
+          {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
+            <p className="text-xs text-warning font-semibold mb-3">
+              {t("productDetails.onlyLeft", { count: product.stockQuantity })}
+            </p>
+          )}
+
+          {/* Spacer to push price to bottom */}
+          <div className="flex-1" />
+
+          {/* Price */}
+          <div className="mt-auto pt-3 border-t border-border">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-2xl font-bold text-foreground">
+                {formatCurrency(product.price)}
+              </span>
+              {product.compareAtPrice && (
+                <span className="text-sm text-muted-foreground line-through font-normal">
+                  {formatCurrency(product.compareAtPrice)}
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {t("productDetails.from")} {formatCurrency(monthlyPayment)}{t("productDetails.perMonth")}
+            </div>
+          </div>
+        </CardContent>
+
+        <CardFooter className="p-5 pt-0">
+          <motion.div
+            variants={buttonPressVariant}
+            whileTap="tap"
+            className="w-full"
+          >
+            <Button
+              onClick={handleCartAction}
+              disabled={!product.inStock || isAddingToCart}
+              variant={isInCart ? "secondary" : "default"}
+              className="w-full"
+            >
+              {isInCart ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  {t("product.removeFromCart")}
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="h-4 w-4" />
+                  {t("product.addToCart")}
+                </>
+              )}
+            </Button>
+          </motion.div>
+        </CardFooter>
+      </div>
     </Card>
+    </motion.div>
   );
 }

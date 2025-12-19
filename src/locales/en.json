@@ -29,7 +29,17 @@
     "account": "My Account",
     "admin": "Admin",
     "contact": "Contact",
-    "about": "About"
+    "about": "About",
+    "deals": "Deals",
+    "allCategories": "All categories"
+  },
+  "header": {
+    "support": "Support",
+    "contactEmail": "contact@sen-services.com",
+    "signIn": "Sign in",
+    "or": "or",
+    "register": "Register",
+    "searchPlaceholder": "Search products..."
   },
   "catalog": {
     "title": "Our Catalog",
@@ -158,5 +168,69 @@
     "privacy": "Privacy Policy",
     "terms": "Terms & Conditions",
     "contact": "Contact Us"
+  },
+  "home": {
+    "hero": {
+      "title": "Equip Your Business",
+      "subtitle": "Flexible Financing Solutions"
+    },
+    "promo": {
+      "title": "0% Interest for 6 Months",
+      "description": "Finance your professional equipment with no additional fees",
+      "cta": "See Conditions"
+    },
+    "categories": {
+      "title": "Our Categories",
+      "subtitle": "Find the equipment suited to your professional needs"
+    },
+    "featured": {
+      "title": "Featured Products",
+      "subtitle": "Our most popular professional equipment",
+      "viewAll": "View All"
+    },
+    "new": {
+      "title": "New Arrivals",
+      "subtitle": "Discover our latest products"
+    },
+    "trust": {
+      "title": "Why Choose Sen Services International?",
+      "subtitle": "A reliable and transparent financing solution",
+      "stats": {
+        "clients": "Satisfied Clients",
+        "clientsDesc": "Professionals trust us",
+        "approval": "Approval Rate",
+        "approvalDesc": "Fast response guaranteed",
+        "delay": "Response Time",
+        "delayDesc": "Ultra-fast approval",
+        "interest": "Interest Fees",
+        "interestDesc": "On 6 and 12 month plans"
+      }
+    },
+    "cta": {
+      "title": "Ready to Get Equipped?",
+      "description": "Explore our complete catalog and find the perfect equipment to grow your professional business.",
+      "browseCatalog": "Browse Catalog",
+      "makeRequest": "Make a Request"
+    }
+  },
+  "trustBadges": {
+    "secure": "Secure Payment",
+    "interest": "0% Interest Available",
+    "approval": "Fast Approval",
+    "shipping": "Free Shipping",
+    "warranty": "Warranty Included"
+  },
+  "badges": {
+    "new": "New",
+    "sale": "Sale",
+    "featured": "Featured",
+    "outOfStock": "Out of Stock"
+  },
+  "productDetails": {
+    "from": "From",
+    "perMonth": "/month",
+    "onlyLeft": "Only {count} left in stock",
+    "addToWishlist": "Add to Wishlist",
+    "removeFromWishlist": "Remove from Wishlist"
   }
 }

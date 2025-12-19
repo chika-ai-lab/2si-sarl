@@ -25,8 +25,8 @@ export interface PaymentConfig {
 }
 
 export const paymentConfig: PaymentConfig = {
-  currency: "EUR",
-  currencySymbol: "€",
+  currency: "XOF",
+  currencySymbol: "FCFA",
   currencyPosition: "after",
   decimalSeparator: ",",
   thousandSeparator: " ",
@@ -37,8 +37,8 @@ export const paymentConfig: PaymentConfig = {
       labelKey: "payment.plans.6months",
       descriptionKey: "payment.plans.6months.description",
       interestRate: 0,
-      minAmount: 100,
-      maxAmount: 10000,
+      minAmount: 50000,
+      maxAmount: 5000000,
     },
     {
       id: "plan-12",
@@ -46,8 +46,8 @@ export const paymentConfig: PaymentConfig = {
       labelKey: "payment.plans.12months",
       descriptionKey: "payment.plans.12months.description",
       interestRate: 2.5,
-      minAmount: 200,
-      maxAmount: 25000,
+      minAmount: 100000,
+      maxAmount: 10000000,
       isPopular: true,
     },
     {
@@ -56,8 +56,8 @@ export const paymentConfig: PaymentConfig = {
       labelKey: "payment.plans.24months",
       descriptionKey: "payment.plans.24months.description",
       interestRate: 4.5,
-      minAmount: 500,
-      maxAmount: 50000,
+      minAmount: 250000,
+      maxAmount: 25000000,
     },
     {
       id: "plan-36",
@@ -65,11 +65,11 @@ export const paymentConfig: PaymentConfig = {
       labelKey: "payment.plans.36months",
       descriptionKey: "payment.plans.36months.description",
       interestRate: 5.5,
-      minAmount: 1000,
-      maxAmount: 100000,
+      minAmount: 500000,
+      maxAmount: 50000000,
     },
   ],
   defaultPlanId: "plan-12",
-  minOrderAmount: 100,
-  maxOrderAmount: 100000,
+  minOrderAmount: 50000,
+  maxOrderAmount: 50000000,
 };

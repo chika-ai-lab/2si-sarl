@@ -14,6 +14,7 @@ import { TrustBadges } from "@/components/business/TrustBadges";
 import { CategoryCard } from "@/components/business/CategoryCard";
 import { PromoBanner } from "@/components/business/PromoBanner";
 import { HeroCarousel } from "@/components/business/HeroCarousel";
+import { SEO } from "@/components/SEO";
 import { useCompany } from "@/providers/ConfigProvider";
 import { useTranslation } from "@/providers/I18nProvider";
 import {
@@ -24,77 +25,45 @@ import {
   products as allProducts,
 } from "@/data/products";
 import { heroSlides } from "@/constants";
-import { useEffect, useRef } from "react";
-import { fadeUp, staggerFadeUp } from "@/lib/animations";
+import { motion } from "framer-motion";
+import {
+  fadeUpVariant,
+  staggerContainerVariant,
+  staggerItemVariant,
+  slideInLeftVariant,
+  viewportOptions,
+} from "@/lib/animations";
 
 export default function HomePage() {
   const company = useCompany();
   const { t } = useTranslation();
   const featuredProducts = getFeaturedProducts().slice(0, 3);
-  const newProducts = getNewProducts().slice(0, 4);
-  const saleProducts = getOnSaleProducts().slice(0, 4);
-
-  // Refs for GSAP in-view animations
-  const heroRef = useRef<HTMLDivElement | null>(null);
-  const categoriesRef = useRef<HTMLElement | null>(null);
-  const featuredRef = useRef<HTMLElement | null>(null);
-  const newRef = useRef<HTMLElement | null>(null);
-  const statsRef = useRef<HTMLDivElement | null>(null);
-  const ctaRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-
-    const observe = (ref: HTMLElement | null) => {
-      if (!ref) return;
-      const obs = new IntersectionObserver(
-        (entries, ob) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const root = entry.target as HTMLElement;
-              const items = root.querySelectorAll(".animate-fade-in");
-              if (items.length) {
-                staggerFadeUp(Array.from(items) as Element[], {
-                  stagger: 0.08,
-                  duration: 0.5,
-                });
-              } else {
-                fadeUp(root, { duration: 0.6 });
-              }
-              ob.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.12, rootMargin: "0px 0px -10% 0px" }
-      );
-      obs.observe(ref);
-      observers.push(obs);
-    };
-
-    observe(heroRef.current);
-    observe(categoriesRef.current);
-    observe(featuredRef.current);
-    observe(newRef.current);
-    observe(statsRef.current);
-    observe(ctaRef.current);
-
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  const newProducts = getNewProducts().slice(0, 3);
+  const saleProducts = getOnSaleProducts().slice(0, 3);
 
   return (
     <MainLayout>
+      <SEO
+        description="Découvrez notre catalogue d'équipements professionnels avec des options de paiement échelonné sur 6, 12, 24 ou 36 mois. Financez votre équipement facilement au Sénégal."
+        keywords="équipement professionnel, paiement échelonné, crédit équipement, financement entreprise, Sénégal, Dakar, 2SI"
+      />
       {/* Hero Carousel */}
-      <div ref={heroRef}>
+      <motion.div
+        variants={fadeUpVariant}
+        initial="hidden"
+        animate="visible"
+        viewport={viewportOptions}
+      >
         <HeroCarousel slides={heroSlides(company)} autoplay interval={6000} />
-      </div>
+      </motion.div>
 
       {/* Promo Banner */}
       <section className="py-6">
         <div className="container mx-auto px-4">
           <PromoBanner
-            title="0% d'intérêt sur 6 mois"
-            description="Financez vos équipements professionnels sans frais supplémentaires"
-            ctaText="Voir les conditions"
+            title={t("home.promo.title")}
+            description={t("home.promo.description")}
+            ctaText={t("home.promo.cta")}
             ctaLink="/catalog"
             variant="accent"
           />
@@ -102,25 +71,37 @@ export default function HomePage() {
       </section>
 
       {/* Categories Section */}
-      <section ref={categoriesRef} className="py-16 bg-background">
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
+          <motion.div
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+            className="text-center mb-10"
+          >
             <h2 className="text-3xl font-bold text-foreground mb-2">
-              Nos Catégories
+              {t("home.categories.title")}
             </h2>
             <p className="text-muted-foreground">
-              Trouvez l'équipement adapté à vos besoins professionnels
+              {t("home.categories.subtitle")}
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch">
+          <motion.div
+            variants={staggerContainerVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch"
+          >
             {categories
               .filter((c) => c.id !== "all")
-              .map((category, index) => (
-                <div
+              .map((category) => (
+                <motion.div
                   key={category.id}
-                  className="animate-fade-in h-full"
-                  style={{ animationDelay: `${index * 80}ms` }}
+                  variants={staggerItemVariant}
+                  className="h-full"
                 >
                   <CategoryCard
                     id={category.id}
@@ -131,78 +112,102 @@ export default function HomePage() {
                     }
                     className="w-full"
                   />
-                </div>
+                </motion.div>
               ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Featured Products Section */}
-      <section ref={featuredRef} className="py-16">
+      <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
+          <motion.div
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+            className="flex items-end justify-between mb-10"
+          >
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-2">
-                Produits Vedettes
+                {t("home.featured.title")}
               </h2>
               <p className="text-muted-foreground">
-                Nos équipements professionnels les plus populaires
+                {t("home.featured.subtitle")}
               </p>
             </div>
             <Link to="/catalog">
               <Button variant="outline">
-                Voir tout
+                {t("home.featured.viewAll")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProducts.map((product, index) => (
-              <div
+          <motion.div
+            variants={staggerContainerVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {featuredProducts.map((product) => (
+              <motion.div
                 key={product.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                variants={staggerItemVariant}
+                className="h-full"
               >
                 <ProductCard product={product} />
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* New Products Section */}
       {newProducts.length > 0 && (
-        <section ref={newRef} className="py-16 bg-background">
+        <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
-            <div className="flex items-end justify-between mb-10">
+            <motion.div
+              variants={fadeUpVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOptions}
+              className="flex items-end justify-between mb-10"
+            >
               <div>
                 <h2 className="text-3xl font-bold text-foreground mb-2">
-                  Nouveautés
+                  {t("home.new.title")}
                 </h2>
                 <p className="text-muted-foreground">
-                  Découvrez nos derniers arrivages
+                  {t("home.new.subtitle")}
                 </p>
               </div>
               <Link to="/catalog?sort=newest">
                 <Button variant="outline">
-                  Voir tout
+                  {t("home.featured.viewAll")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {newProducts.map((product, index) => (
-                <div
+            <motion.div
+              variants={staggerContainerVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOptions}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {newProducts.map((product) => (
+                <motion.div
                   key={product.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 80}ms` }}
+                  variants={staggerItemVariant}
+                  className="h-full"
                 >
                   <ProductCard product={product} />
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
       )}
@@ -210,49 +215,58 @@ export default function HomePage() {
       {/* Trust & Stats Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <motion.div
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+            className="text-center mb-12"
+          >
             <h2 className="text-3xl font-bold text-foreground mb-2">
-              Pourquoi choisir ProgressPay ?
+              {t("home.trust.title")}
             </h2>
             <p className="text-muted-foreground">
-              Une solution de financement fiable et transparente
+              {t("home.trust.subtitle")}
             </p>
-          </div>
+          </motion.div>
 
-          <div
-            ref={statsRef}
+          <motion.div
+            variants={staggerContainerVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto"
           >
             {[
               {
                 icon: Users,
                 stat: "1000+",
-                label: "Clients satisfaits",
-                description: "Professionnels nous font confiance",
+                labelKey: "home.trust.stats.clients",
+                descKey: "home.trust.stats.clientsDesc",
               },
               {
                 icon: CheckCircle,
                 stat: "95%",
-                label: "Taux d'approbation",
-                description: "Réponse rapide garantie",
+                labelKey: "home.trust.stats.approval",
+                descKey: "home.trust.stats.approvalDesc",
               },
               {
                 icon: Clock,
                 stat: "48h",
-                label: "Délai de réponse",
-                description: "Approbation ultra-rapide",
+                labelKey: "home.trust.stats.delay",
+                descKey: "home.trust.stats.delayDesc",
               },
               {
                 icon: TrendingUp,
                 stat: "0%",
-                label: "Frais d'intérêt",
-                description: "Sur plans 6 et 12 mois",
+                labelKey: "home.trust.stats.interest",
+                descKey: "home.trust.stats.interestDesc",
               },
             ].map((item, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="text-center items-center justify-center p-6 rounded-xl bg-card border border-border shadow-soft hover:shadow-medium transition-all animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                variants={staggerItemVariant}
+                className="text-center items-center justify-center p-6 rounded-xl bg-card border border-border shadow-soft hover:shadow-medium transition-all"
               >
                 <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                   <item.icon className="w-7 h-7 text-primary" />
@@ -261,14 +275,14 @@ export default function HomePage() {
                   {item.stat}
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {item.label}
+                  {t(item.labelKey)}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {item.description}
+                  {t(item.descKey)}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Trust Badges - Full */}
           <div className="mt-12">
@@ -278,35 +292,40 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section - Flat Design */}
-      <section ref={ctaRef} className="py-16 bg-background">
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center bg-primary rounded-2xl p-12 shadow-large">
+          <motion.div
+            variants={slideInLeftVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+            className="max-w-4xl mx-auto text-center bg-primary rounded-2xl p-12 shadow-large"
+          >
             <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Prêt à vous équiper ?
+              {t("home.cta.title")}
             </h2>
             <p className="text-lg text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-              Découvrez notre catalogue complet et trouvez les équipements
-              parfaits pour développer votre activité professionnelle.
+              {t("home.cta.description")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/catalog">
                 <Button size="xl" variant="accent" className="shadow-medium">
                   <ShoppingBag className="h-5 w-5" />
-                  Explorer le catalogue
+                  {t("home.cta.browseCatalog")}
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/order">
                 <Button
                   size="xl"
-                  variant="outline"
-                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+                  variant="secondary"
+                  className="bg-white text-primary hover:bg-white/90 border-2 border-white"
                 >
-                  Faire une demande
+                  {t("home.cta.makeRequest")}
                 </Button>
               </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </MainLayout>

@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { ShoppingCart, Menu, X, Globe, Heart, Search } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { animateHeaderCollapse } from "@/lib/animations";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +31,11 @@ export function Header() {
   const itemCount = getItemCount();
 
   const categories = [
-    { id: "informatique", label: "Informatique" },
-    { id: "mobilier", label: "Mobilier" },
-    { id: "equipement", label: "Équipement" },
-    { id: "vehicule", label: "Véhicules" },
-    { id: "outillage", label: "Outillage" },
+    { id: "electronics", labelKey: "catalog.categories.electronics" },
+    { id: "furniture", labelKey: "catalog.categories.furniture" },
+    { id: "equipment", labelKey: "catalog.categories.equipment" },
+    { id: "vehicles", labelKey: "catalog.categories.vehicles" },
+    { id: "tools", labelKey: "catalog.categories.tools" },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -64,227 +63,148 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // refs to DOM nodes for GSAP animations
-  const topBarRef = useRef<HTMLDivElement | null>(null);
-  const logoRef = useRef<HTMLDivElement | null>(null);
-  const navRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    animateHeaderCollapse(topBarRef.current, logoRef.current, navRef.current, isCollapsed);
-  }, [isCollapsed]);
-
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 bg-background border-b border-border transition-shadow duration-200",
-        isCollapsed ? "shadow-sm" : "shadow-md"
-      )}
-    >
-      {/* Top Bar */}
-      <div
-        ref={topBarRef}
-        className={cn(
-          "bg-primary text-primary-foreground transition-[height,opacity] duration-200 overflow-hidden",
-          isCollapsed ? "h-0 opacity-0" : "py-2"
-        )}
-      >
+    <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
+      {/* Main Header */}
+      <div className="bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between text-xs md:text-sm">
-            <div className="flex items-center gap-4">
-              <span>📞 Support: +221 XX XXX XX XX</span>
-              <span className="hidden md:inline">
-                ✉️ contact@progresspay.sn
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                    <Globe className="h-4 w-4" />
-                    <span className="hidden sm:inline">
-                      {localeNames[locale]}
-                    </span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {supportedLocales.map((loc) => (
-                    <DropdownMenuItem
-                      key={loc}
-                      onClick={() => setLocale(loc)}
-                      className={locale === loc ? "bg-secondary" : ""}
-                    >
-                      {localeNames[loc]}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Header - Search Bar */}
-      <div className="bg-background border-b border-border">
-        <div className="container mx-auto px-4">
-          <div
-            className={cn(
-              "flex items-center justify-between gap-4 transition-all duration-200",
-              isCollapsed ? "h-14" : "h-20"
-            )}
-          >
+          <div className="flex items-center justify-between gap-6 py-4">
             {/* Logo */}
-            <Link
-              to="/"
-              className={cn(
-                "flex items-center gap-3 hover:opacity-80 transition-all shrink-0",
-                isCollapsed ? "-mt-1" : ""
-              )}
-            >
-              <div
-                ref={logoRef}
-                className={cn(
-                  "rounded-lg bg-primary flex items-center justify-center shadow-soft transition-all duration-200",
-                  isCollapsed ? "w-10 h-10" : "w-12 h-12"
-                )}
-              >
-                <span
-                  className={cn(
-                    "text-primary-foreground font-bold transition-all duration-200",
-                    isCollapsed ? "text-lg" : "text-xl"
-                  )}
-                >
-                  {company.name.charAt(0)}
+            <Link to="/" className="flex items-center shrink-0 gap-3">
+              <img
+                src="/logo.png"
+                alt={company.name}
+                className="h-12 w-auto"
+              />
+              <div className="hidden lg:flex flex-col">
+                <span className="text-xl font-bold text-foreground leading-tight">
+                  {company.legalName}
                 </span>
-              </div>
-              <div
-                className={cn(
-                  "hidden sm:block transition-opacity duration-200",
-                  isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
-                )}
-              >
-                <div className="font-bold text-2xl text-foreground">
-                  {company.name}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Paiement échelonné simple
-                </div>
+                <span className="text-xs text-muted-foreground font-medium">
+                  {company.tagline}
+                </span>
               </div>
             </Link>
 
-            {/* Search Bar */}
-            <form
-              onSubmit={handleSearch}
-              className={cn(
-                "hidden md:flex flex-1 max-w-2xl mx-8 transition-all duration-200",
-                isCollapsed
-                  ? "md:opacity-0 md:pointer-events-none md:max-w-0"
-                  : "md:opacity-100 md:max-w-2xl"
-              )}
-            >
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
+            {/* Search Bar with Category Dropdown */}
+            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-3xl">
+              <div className="flex w-full border border-border rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 px-4 bg-background hover:bg-muted border-r border-border transition-colors whitespace-nowrap"
+                    >
+                      <span className="text-sm font-medium">{t("common.all")}</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem>
+                      <span className="font-medium">{t("nav.allCategories")}</span>
+                    </DropdownMenuItem>
+                    {categories.map((cat) => (
+                      <DropdownMenuItem key={cat.id} onClick={() => navigate(`/catalog?categories=${cat.id}`)}>
+                        {t(cat.labelKey)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <input
                   type="text"
-                  placeholder="Rechercher des produits, catégories..."
+                  placeholder={t("header.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-12 text-base"
+                  className="flex-1 px-4 py-2.5 text-sm outline-none"
                 />
+
+                <button
+                  type="submit"
+                  className="px-6 bg-foreground text-background hover:bg-foreground/90 transition-colors font-medium"
+                >
+                  {t("common.search")}
+                </button>
               </div>
             </form>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-3 shrink-0">
-              {/* Wishlist Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                title="Favoris"
-              >
-                <Heart className="h-5 w-5" />
+            {/* Right Icons */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Wishlist */}
+              <Link to="/wishlist" className="relative group p-2">
+                <Heart className="h-6 w-6 group-hover:text-primary transition-colors" />
                 {wishlistCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 text-xs font-bold flex items-center justify-center"
-                  >
+                  <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {wishlistCount}
-                  </Badge>
+                  </span>
                 )}
-              </Button>
-
-              {/* Cart Button */}
-              <Link to="/cart">
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="h-5 w-5" />
-                  {itemCount > 0 && (
-                    <Badge
-                      variant="default"
-                      className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 text-xs font-bold flex items-center justify-center"
-                    >
-                      {itemCount}
-                    </Badge>
-                  )}
-                </Button>
               </Link>
 
-              {/* Mobile Menu Button */}
+              {/* Cart */}
+              <Link to="/cart" className="relative group p-2">
+                <ShoppingCart className="h-6 w-6 group-hover:text-primary transition-colors" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-foreground text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Mobile Menu */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="lg:hidden"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Categories Navigation */}
-      <div className="bg-background/95 backdrop-blur-sm transition-all duration-200">
+      {/* Navigation Bar */}
+      <div className="bg-background border-t border-border/50">
         <div className="container mx-auto px-4">
-          <nav
-            ref={navRef}
-            className={cn(
-              "hidden lg:flex items-center justify-center gap-1 transition-all",
-              isCollapsed ? "py-1" : "py-3"
-            )}
-          >
-            <Link
-              to="/"
-              className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-            >
-              Accueil
-            </Link>
+          <nav className="hidden lg:flex items-center justify-center gap-1 h-11">
             <Link
               to="/catalog"
-              className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
             >
-              Tout le catalogue
+              {t("nav.deals")}
             </Link>
-            <div className="w-px h-6 bg-border mx-2" />
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                to={`/catalog?categories=${category.id}`}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <span>{category.icon}</span>
-                <span>{category.label}</span>
-              </Link>
-            ))}
-            <div className="w-px h-6 bg-border mx-2" />
             <Link
-              to="/order"
-              className="px-4 py-2 text-sm font-medium bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg transition-colors"
+              to="/catalog?categories=electronics"
+              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
             >
-              Faire une demande
+              {t("catalog.categories.electronics")}
+            </Link>
+            <Link
+              to="/catalog?categories=furniture"
+              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+            >
+              {t("catalog.categories.furniture")}
+            </Link>
+            <Link
+              to="/catalog?categories=equipment"
+              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+            >
+              {t("catalog.categories.equipment")}
+            </Link>
+            <Link
+              to="/catalog?categories=tools"
+              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+            >
+              {t("catalog.categories.tools")}
+            </Link>
+            <Link
+              to="/catalog?categories=vehicles"
+              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+            >
+              {t("catalog.categories.vehicles")}
             </Link>
           </nav>
         </div>
@@ -303,7 +223,7 @@ export function Header() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Rechercher..."
+                  placeholder={t("header.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4"
@@ -319,25 +239,24 @@ export function Header() {
                   className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Accueil
+                  {t("nav.home")}
                 </Link>
                 <Link
                   to="/catalog"
                   className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Tout le catalogue
+                  {t("nav.allCategories")}
                 </Link>
                 <div className="border-t border-border my-2" />
                 {categories.map((category) => (
                   <Link
                     key={category.id}
                     to={`/catalog?categories=${category.id}`}
-                    className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors flex items-center gap-2"
+                    className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <span>{category.icon}</span>
-                    <span>{category.label}</span>
+                    {t(category.labelKey)}
                   </Link>
                 ))}
                 <div className="border-t border-border my-2" />
@@ -346,7 +265,7 @@ export function Header() {
                   className="px-4 py-3 text-sm font-medium bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Faire une demande
+                  {t("order.title")}
                 </Link>
               </div>
             </nav>

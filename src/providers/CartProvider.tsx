@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useReducer, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect } from "react";
 import { paymentConfig } from "@/config/payments.config";
+
+const CART_STORAGE_KEY = "2si-cart-state";
 
 export interface CartItem {
   id: string;
@@ -21,7 +23,8 @@ type CartAction =
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "SET_PAYMENT_PLAN"; payload: string }
-  | { type: "CLEAR_CART" };
+  | { type: "CLEAR_CART" }
+  | { type: "LOAD_CART"; payload: CartState };
 
 interface CartContextType extends CartState {
   addItem: (item: Omit<CartItem, "quantity">) => void;
@@ -39,8 +42,41 @@ interface CartContextType extends CartState {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Load cart from localStorage
+function loadCartFromStorage(): CartState {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        items: parsed.items || [],
+        selectedPlanId: parsed.selectedPlanId || paymentConfig.defaultPlanId,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to load cart from localStorage:", error);
+  }
+  return {
+    items: [],
+    selectedPlanId: paymentConfig.defaultPlanId,
+  };
+}
+
+// Save cart to localStorage
+function saveCartToStorage(state: CartState): void {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save cart to localStorage:", error);
+  }
+}
+
 function cartReducer(state: CartState, action: CartAction): CartState {
+  let newState: CartState;
+
   switch (action.type) {
+    case "LOAD_CART":
+      return action.payload;
     case "ADD_ITEM": {
       const existingIndex = state.items.findIndex((item) => item.id === action.payload.id);
       if (existingIndex >= 0) {
@@ -49,35 +85,47 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           ...newItems[existingIndex],
           quantity: newItems[existingIndex].quantity + action.payload.quantity,
         };
-        return { ...state, items: newItems };
+        newState = { ...state, items: newItems };
+      } else {
+        newState = { ...state, items: [...state.items, action.payload] };
       }
-      return { ...state, items: [...state.items, action.payload] };
+      saveCartToStorage(newState);
+      return newState;
     }
     case "REMOVE_ITEM":
-      return {
+      newState = {
         ...state,
         items: state.items.filter((item) => item.id !== action.payload),
       };
+      saveCartToStorage(newState);
+      return newState;
     case "UPDATE_QUANTITY": {
       if (action.payload.quantity <= 0) {
-        return {
+        newState = {
           ...state,
           items: state.items.filter((item) => item.id !== action.payload.id),
         };
+      } else {
+        newState = {
+          ...state,
+          items: state.items.map((item) =>
+            item.id === action.payload.id
+              ? { ...item, quantity: action.payload.quantity }
+              : item
+          ),
+        };
       }
-      return {
-        ...state,
-        items: state.items.map((item) =>
-          item.id === action.payload.id
-            ? { ...item, quantity: action.payload.quantity }
-            : item
-        ),
-      };
+      saveCartToStorage(newState);
+      return newState;
     }
     case "SET_PAYMENT_PLAN":
-      return { ...state, selectedPlanId: action.payload };
+      newState = { ...state, selectedPlanId: action.payload };
+      saveCartToStorage(newState);
+      return newState;
     case "CLEAR_CART":
-      return { items: [], selectedPlanId: paymentConfig.defaultPlanId };
+      newState = { items: [], selectedPlanId: paymentConfig.defaultPlanId };
+      saveCartToStorage(newState);
+      return newState;
     default:
       return state;
   }
@@ -92,6 +140,12 @@ export function CartProvider({ children }: CartProviderProps) {
     items: [],
     selectedPlanId: paymentConfig.defaultPlanId,
   });
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = loadCartFromStorage();
+    dispatch({ type: "LOAD_CART", payload: savedCart });
+  }, []);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
     dispatch({ type: "ADD_ITEM", payload: { ...item, quantity: 1 } });

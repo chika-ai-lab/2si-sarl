@@ -1,15 +1,83 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, LogIn, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useCompany } from "@/providers/ConfigProvider";
 import { useTranslation } from "@/providers/I18nProvider";
+import { useI18n } from "@/providers/I18nProvider";
 
 export function Footer() {
   const company = useCompany();
   const { t } = useTranslation();
+  const { locale, setLocale, supportedLocales, localeNames } = useI18n();
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-primary text-primary-foreground">
+      {/* Top Bar with Auth CTAs and Language */}
+      <div className="bg-primary-foreground/10 border-b border-primary-foreground/20">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+            {/* Auth CTAs */}
+            <div className="flex items-center gap-3">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <Link to="/login" className="flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  <span>{t("header.signIn")}</span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              >
+                <Link to="/register" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  <span>{t("header.register")}</span>
+                </Link>
+              </Button>
+            </div>
+
+            {/* Language Selector */}
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 text-sm hover:opacity-80 transition-opacity">
+                    <span>{localeNames[locale]}</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {supportedLocales.map((loc) => (
+                    <DropdownMenuItem
+                      key={loc}
+                      onClick={() => setLocale(loc)}
+                      className={locale === loc ? "bg-secondary" : ""}
+                    >
+                      {localeNames[loc]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}

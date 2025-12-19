@@ -27,7 +27,7 @@ export const appConfig: AppConfig = {
   i18n: i18nConfig,
   features: featuresConfig,
   app: {
-    name: "ProgressPay Platform",
+    name: "2SI.Sarl Platform",
     version: "1.0.0",
     environment: "development",
   },

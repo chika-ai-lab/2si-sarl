@@ -1,4 +1,4 @@
-# Configurable Commerce Hub - ProgressPay
+# Configurable Commerce Hub - 2SI.Sarl
 
 Développé par **Kreatify.sn** - Agence de développement digital
 

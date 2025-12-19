@@ -9,7 +9,7 @@ import { formatCurrency } from "@/lib/currency";
 import { useTranslation } from "@/providers/I18nProvider";
 import { type FilterState } from "@/hooks/useProductFilters";
 import { cn } from "@/lib/utils";
-import { CategoryChip } from "./CategoryCard";
+import { categories as allCategories } from "@/data/products";
 
 interface ProductFiltersProps {
   filters: FilterState;
@@ -21,13 +21,6 @@ interface ProductFiltersProps {
   className?: string;
 }
 
-const categories = [
-  "informatique",
-  "mobilier",
-  "equipement",
-  "vehicule",
-  "outillage",
-] as const;
 
 const ratingOptions = [
   { value: 4, label: "4+ étoiles" },
@@ -106,20 +99,20 @@ export function ProductFilters({
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-3 pt-2">
-              {categories.map((category) => {
-                const isChecked = filters.categories.includes(category);
+              {allCategories.filter(cat => cat.id !== "all").map((category) => {
+                const isChecked = filters.categories.includes(category.id);
                 return (
-                  <div key={category} className="flex items-center space-x-3">
+                  <div key={category.id} className="flex items-center space-x-3">
                     <Checkbox
-                      id={`category-${category}`}
+                      id={`category-${category.id}`}
                       checked={isChecked}
-                      onCheckedChange={() => handleCategoryToggle(category)}
+                      onCheckedChange={() => handleCategoryToggle(category.id)}
                     />
                     <Label
-                      htmlFor={`category-${category}`}
-                      className="flex items-center gap-2 cursor-pointer flex-1"
+                      htmlFor={`category-${category.id}`}
+                      className="flex items-center gap-2 cursor-pointer flex-1 text-sm capitalize"
                     >
-                      <CategoryChip category={category} />
+                      {t(category.labelKey)}
                     </Label>
                   </div>
                 );

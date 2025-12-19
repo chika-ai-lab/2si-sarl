@@ -28,25 +28,25 @@ export interface CompanyConfig {
 }
 
 export const companyConfig: CompanyConfig = {
-  name: "ProgressPay",
-  legalName: "ProgressPay SARL",
-  tagline: "Équipez-vous aujourd'hui, payez progressivement",
+  name: "Sen Services International",
+  legalName: "2SI.Sarl",
+  tagline: "Équipement à Moindre Coût",
   description: "Votre partenaire pour l'achat d'équipements professionnels avec paiement échelonné adapté à vos besoins.",
-  email: "contact@progresspay.com",
-  phone: "+33 1 23 45 67 89",
+  email: "contact@sen-services.com",
+  phone: "+221 33 864 48 48",
   address: {
-    street: "123 Avenue des Affaires",
-    city: "Paris",
-    postalCode: "75001",
-    country: "France",
+    street: "En face Auto Pont BRT Liberté 5 Villa N°5492",
+    city: "Dakar",
+    postalCode: "",
+    country: "Sénégal",
   },
   socialLinks: {
     facebook: "https://facebook.com",
     linkedin: "https://linkedin.com",
   },
   legalInfo: {
-    registrationNumber: "RCS Paris 123 456 789",
-    vatNumber: "FR12345678901",
-    capital: "100 000 €",
+    registrationNumber: "NINEA 007835162",
+    vatNumber: "",
+    capital: "",
   },
 };

@@ -29,7 +29,17 @@
     "account": "Mon compte",
     "admin": "Administration",
     "contact": "Contact",
-    "about": "À propos"
+    "about": "À propos",
+    "deals": "Offres",
+    "allCategories": "Toutes les catégories"
+  },
+  "header": {
+    "support": "Support",
+    "contactEmail": "contact@sen-services.com",
+    "signIn": "Se connecter",
+    "or": "ou",
+    "register": "S'inscrire",
+    "searchPlaceholder": "Rechercher des produits..."
   },
   "catalog": {
     "title": "Notre Catalogue",
@@ -158,5 +168,69 @@
     "privacy": "Politique de confidentialité",
     "terms": "Conditions générales",
     "contact": "Nous contacter"
+  },
+  "home": {
+    "hero": {
+      "title": "Équipez votre entreprise",
+      "subtitle": "Solutions de financement flexibles"
+    },
+    "promo": {
+      "title": "0% d'intérêt sur 6 mois",
+      "description": "Financez vos équipements professionnels sans frais supplémentaires",
+      "cta": "Voir les conditions"
+    },
+    "categories": {
+      "title": "Nos Catégories",
+      "subtitle": "Trouvez l'équipement adapté à vos besoins professionnels"
+    },
+    "featured": {
+      "title": "Produits Vedettes",
+      "subtitle": "Nos équipements professionnels les plus populaires",
+      "viewAll": "Voir tout"
+    },
+    "new": {
+      "title": "Nouveautés",
+      "subtitle": "Découvrez nos derniers arrivages"
+    },
+    "trust": {
+      "title": "Pourquoi choisir Sen Services International ?",
+      "subtitle": "Une solution de financement fiable et transparente",
+      "stats": {
+        "clients": "Clients satisfaits",
+        "clientsDesc": "Professionnels nous font confiance",
+        "approval": "Taux d'approbation",
+        "approvalDesc": "Réponse rapide garantie",
+        "delay": "Délai de réponse",
+        "delayDesc": "Approbation ultra-rapide",
+        "interest": "Frais d'intérêt",
+        "interestDesc": "Sur plans 6 et 12 mois"
+      }
+    },
+    "cta": {
+      "title": "Prêt à vous équiper ?",
+      "description": "Découvrez notre catalogue complet et trouvez les équipements parfaits pour développer votre activité professionnelle.",
+      "browseCatalog": "Explorer le catalogue",
+      "makeRequest": "Faire une demande"
+    }
+  },
+  "trustBadges": {
+    "secure": "Paiement sécurisé",
+    "interest": "0% d'intérêt possible",
+    "approval": "Approbation rapide",
+    "shipping": "Livraison gratuite",
+    "warranty": "Garantie incluse"
+  },
+  "badges": {
+    "new": "Nouveau",
+    "sale": "Solde",
+    "featured": "Vedette",
+    "outOfStock": "Rupture de stock"
+  },
+  "productDetails": {
+    "from": "Dès",
+    "perMonth": "/mois",
+    "onlyLeft": "Seulement {count} en stock",
+    "addToWishlist": "Ajouter aux favoris",
+    "removeFromWishlist": "Retirer des favoris"
   }
 }

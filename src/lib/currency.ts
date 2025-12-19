@@ -4,15 +4,18 @@ import { paymentConfig } from "@/config/payments.config";
  * Format a number as currency based on config
  */
 export function formatCurrency(amount: number): string {
-  const { currencySymbol, currencyPosition, decimalSeparator, thousandSeparator } = paymentConfig;
-  
+  const { currencySymbol, currencyPosition, decimalSeparator, thousandSeparator, currency } = paymentConfig;
+
+  // XOF (Franc CFA) doesn't use decimal places
+  const decimals = currency === "XOF" ? 0 : 2;
+
   const formatted = amount
-    .toFixed(2)
+    .toFixed(decimals)
     .replace(".", decimalSeparator)
     .replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
-  
-  return currencyPosition === "before" 
-    ? `${currencySymbol}${formatted}` 
+
+  return currencyPosition === "before"
+    ? `${currencySymbol}${formatted}`
     : `${formatted} ${currencySymbol}`;
 }
 
