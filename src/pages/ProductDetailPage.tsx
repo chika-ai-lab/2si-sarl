@@ -56,7 +56,7 @@ export default function ProductDetailPage() {
     return null;
   }
 
-  const isProductInCart = items.some((item) => item.product.id === product.id);
+  const isProductInCart = items.some((item) => item.product?.id === product.id);
   const inWishlist = isInWishlist(product.id);
   const discount = product.compareAtPrice
     ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
