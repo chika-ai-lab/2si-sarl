@@ -39,7 +39,8 @@
     "signIn": "Se connecter",
     "or": "ou",
     "register": "S'inscrire",
-    "searchPlaceholder": "Rechercher des produits..."
+    "searchPlaceholder": "Rechercher des produits...",
+    "announcement": "Livraison gratuite à partir de 500 000 FCFA"
   },
   "catalog": {
     "title": "Notre Catalogue",

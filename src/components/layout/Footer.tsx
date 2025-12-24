@@ -19,8 +19,8 @@ export function Footer() {
 
   return (
     <footer className="bg-primary text-primary-foreground">
-      {/* Top Bar with Auth CTAs and Language */}
-      <div className="bg-primary-foreground/10 border-b border-primary-foreground/20">
+      {/* Top Bar with Auth CTAs and Language - Mobile Only */}
+      <div className="lg:hidden bg-primary-foreground/10 border-b border-primary-foreground/20">
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
             {/* Auth CTAs */}

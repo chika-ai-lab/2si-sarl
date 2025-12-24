@@ -14,6 +14,7 @@ import { TrustBadges } from "@/components/business/TrustBadges";
 import { CategoryCard } from "@/components/business/CategoryCard";
 import { PromoBanner } from "@/components/business/PromoBanner";
 import { HeroCarousel } from "@/components/business/HeroCarousel";
+import { PromoSection } from "@/components/promo/PromoSection";
 import { SEO } from "@/components/SEO";
 import { useCompany } from "@/providers/ConfigProvider";
 import { useTranslation } from "@/providers/I18nProvider";
@@ -56,6 +57,9 @@ export default function HomePage() {
       >
         <HeroCarousel slides={heroSlides(company)} autoplay interval={6000} />
       </motion.div>
+
+      {/* Seasonal Promotions Section */}
+      <PromoSection />
 
       {/* Promo Banner */}
       <section className="py-6">

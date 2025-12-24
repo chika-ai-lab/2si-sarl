@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Menu, X, Globe, Heart, Search } from "lucide-react";
+import { ShoppingCart, Menu, X, Globe, Heart, Search, Mail, Phone, LogIn, UserPlus, Megaphone } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PromoBanner } from "@/components/promo/PromoBanner";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -65,6 +66,86 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
+      {/* Promo Banner - Always visible */}
+      <PromoBanner />
+
+      {/* Top Bar - Desktop Only */}
+      <div className="hidden lg:block bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-10">
+            {/* Left: Contact Info */}
+            <div className="flex items-center gap-6">
+              <a
+                href={`mailto:${company.email}`}
+                className="flex items-center gap-2 text-xs hover:text-primary-foreground/80 transition-colors"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                <span>{company.email}</span>
+              </a>
+              <a
+                href={`tel:${company.phone}`}
+                className="flex items-center gap-2 text-xs hover:text-primary-foreground/80 transition-colors"
+              >
+                <Phone className="h-3.5 w-3.5" />
+                <span>{company.phone}</span>
+              </a>
+            </div>
+
+            {/* Center: Announcement */}
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <Megaphone className="h-3.5 w-3.5" />
+              <span>{t("header.announcement") || "Livraison gratuite à partir de 500 000 FCFA"}</span>
+            </div>
+
+            {/* Right: Language & Auth */}
+            <div className="flex items-center gap-3">
+              {/* Language Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 text-xs hover:text-primary-foreground/80 transition-colors">
+                    <Globe className="h-3.5 w-3.5" />
+                    <span className="uppercase font-medium">{locale}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[120px]">
+                  {supportedLocales.map((loc) => (
+                    <DropdownMenuItem
+                      key={loc}
+                      onClick={() => setLocale(loc)}
+                      className={cn(
+                        "cursor-pointer",
+                        locale === loc && "bg-accent"
+                      )}
+                    >
+                      <span className="font-medium">{localeNames[loc]}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="h-4 w-px bg-primary-foreground/30" />
+
+              {/* Auth Links */}
+              <Link
+                to="/login"
+                className="flex items-center gap-1.5 text-xs hover:text-primary-foreground/80 transition-colors"
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span>{t("header.signIn")}</span>
+              </Link>
+              <span className="text-xs text-primary-foreground/50">{t("header.or")}</span>
+              <Link
+                to="/register"
+                className="flex items-center gap-1.5 text-xs hover:text-primary-foreground/80 transition-colors"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>{t("header.register")}</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Header */}
       <div className="bg-white">
         <div className="container mx-auto px-4">
