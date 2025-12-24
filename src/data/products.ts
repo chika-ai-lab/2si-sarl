@@ -39,6 +39,7 @@ export interface Product {
   reviews?: ProductReview[];
   tags?: string[]; // Searchable tags
   relatedProducts?: string[]; // Product IDs
+  promoCode?: string; // Promo code like "christmas", "newyear", etc.
 }
 
 export const categories = [
@@ -91,6 +92,7 @@ export const products: Product[] = [
     ],
     tags: ["laptop", "ordinateur", "professionnel", "intel", "oled", "haute-performance"],
     relatedProducts: ["prod-008", "prod-003"],
+    promoCode: "christmas", // Promo de Noël
     reviews: [
       {
         id: "rev-001-01",
@@ -155,6 +157,7 @@ export const products: Product[] = [
     ],
     tags: ["bureau", "ergonomique", "réglable", "électrique", "standing-desk"],
     relatedProducts: ["prod-004"],
+    promoCode: "christmas", // Promo de Noël
     reviews: [
       {
         id: "rev-002-01",
@@ -209,6 +212,7 @@ export const products: Product[] = [
     ],
     tags: ["imprimante", "multifonction", "laser", "couleur", "scanner", "fax"],
     relatedProducts: ["prod-001"],
+    promoCode: "christmas", // Promo de Noël
   },
   {
     id: "prod-004",

@@ -9,6 +9,8 @@ export interface FilterState {
   inStockOnly: boolean;
   searchQuery: string;
   sortBy: "name" | "price-asc" | "price-desc" | "rating" | "newest";
+  promoOnly: boolean;
+  promoCode?: string; // For specific promo like "christmas", "newyear", etc.
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -18,6 +20,7 @@ const DEFAULT_FILTERS: FilterState = {
   inStockOnly: false,
   searchQuery: "",
   sortBy: "name",
+  promoOnly: false,
 };
 
 export function useProductFilters() {
@@ -62,6 +65,17 @@ export function useProductFilters() {
       urlFilters.sortBy = sortBy as FilterState["sortBy"];
     }
 
+    const promoOnly = searchParams.get("promoOnly");
+    if (promoOnly === "true") {
+      urlFilters.promoOnly = true;
+    }
+
+    const promo = searchParams.get("promo");
+    if (promo) {
+      urlFilters.promoCode = promo;
+      urlFilters.promoOnly = true; // Auto-enable promo filter if promo code present
+    }
+
     setFilters({ ...DEFAULT_FILTERS, ...urlFilters });
   }, [searchParams]);
 
@@ -100,6 +114,14 @@ export function useProductFilters() {
       params.set("sort", updatedFilters.sortBy);
     }
 
+    if (updatedFilters.promoOnly) {
+      params.set("promoOnly", "true");
+    }
+
+    if (updatedFilters.promoCode) {
+      params.set("promo", updatedFilters.promoCode);
+    }
+
     setSearchParams(params);
   };
 
@@ -130,6 +152,17 @@ export function useProductFilters() {
     // Filter by stock
     if (filters.inStockOnly) {
       result = result.filter((p) => p.inStock);
+    }
+
+    // Filter by promo
+    if (filters.promoOnly) {
+      if (filters.promoCode) {
+        // Filter by specific promo code
+        result = result.filter((p) => p.promoCode === filters.promoCode);
+      } else {
+        // Show all products with any promo
+        result = result.filter((p) => p.promoCode && p.promoCode.length > 0);
+      }
     }
 
     // Filter by search query
@@ -183,6 +216,7 @@ export function useProductFilters() {
     }
     if (filters.minRating > 0) count++;
     if (filters.inStockOnly) count++;
+    if (filters.promoOnly) count++;
     if (filters.searchQuery) count++;
 
     return count;

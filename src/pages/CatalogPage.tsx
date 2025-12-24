@@ -13,6 +13,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductCard } from "@/components/business/ProductCard";
 import { ProductFilters } from "@/components/business/ProductFilters";
 import { MobileFilters } from "@/components/business/MobileFilters";
+import { PromoPageBanner } from "@/components/promo/PromoPageBanner";
 import { SEO } from "@/components/SEO";
 import { useTranslation } from "@/providers/I18nProvider";
 import { useProductFilters } from "@/hooks/useProductFilters";
@@ -91,6 +92,9 @@ export default function CatalogPage() {
 
             {/* Products Section */}
             <div className="flex-1 min-w-0">
+              {/* Promo Banner (if promo code in URL) */}
+              <PromoPageBanner />
+
               {/* Toolbar */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 {/* Left: Search + Mobile Filters */}
