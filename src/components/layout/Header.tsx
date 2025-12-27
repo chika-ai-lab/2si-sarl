@@ -48,12 +48,18 @@ export function Header() {
 
   useEffect(() => {
     let ticking = false;
+    let lastScrollY = 0;
 
     const onScroll = () => {
       const current = window.scrollY || 0;
+
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          setIsCollapsed(current > 80);
+          // Only update if scroll difference is significant (prevents jitter at threshold)
+          if (Math.abs(current - lastScrollY) > 5) {
+            setIsCollapsed(current > 120);
+            lastScrollY = current;
+          }
           ticking = false;
         });
         ticking = true;
@@ -69,8 +75,11 @@ export function Header() {
       {/* Promo Banner - Always visible */}
       <PromoBanner />
 
-      {/* Top Bar - Desktop Only */}
-      <div className="hidden lg:block bg-primary text-primary-foreground">
+      {/* Top Bar - Desktop Only - Hidden on scroll */}
+      <div className={cn(
+        "hidden lg:block bg-primary text-primary-foreground transition-all duration-500 ease-in-out overflow-hidden",
+        isCollapsed ? "max-h-0 opacity-0" : "max-h-20 opacity-100"
+      )}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-10">
             {/* Left: Contact Info */}
