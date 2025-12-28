@@ -28,11 +28,11 @@ export const dashboardModuleConfig: ModuleConfig = {
       exact: true
     },
     {
-      path: "/dashboard",
+      path: "dashboard",
       component: lazy(() => import("../../pages/admin/DashboardPage"))
     },
     {
-      path: "/analytics",
+      path: "analytics",
       component: lazy(() => import("../../pages/admin/AnalyticsPage"))
     }
   ],

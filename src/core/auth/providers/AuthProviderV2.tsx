@@ -67,7 +67,26 @@ function loadUserFromStorage(): User | null {
         return adaptUserV1ToV2(parsed as UserV1);
       }
 
-      return parsed as User;
+      // Vérifier si l'utilisateur V2 a tous les modules (migration incomplète)
+      const user = parsed as User;
+      if (!user.moduleAccess || user.moduleAccess.length === 0) {
+        // Si admin ou super_admin, donner accès à tous les modules
+        if (user.roles?.includes("super_admin") || user.roles?.includes("admin")) {
+          user.moduleAccess = [
+            { moduleId: "dashboard", enabled: true },
+            { moduleId: "crm", enabled: true },
+            { moduleId: "orders", enabled: true },
+            { moduleId: "products", enabled: true },
+            { moduleId: "reports", enabled: true },
+            { moduleId: "commercial", enabled: true }
+          ];
+
+          // Sauvegarder la mise à jour
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+        }
+      }
+
+      return user;
     }
   } catch (error) {
     console.error("Failed to load user from localStorage:", error);

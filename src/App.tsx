@@ -77,8 +77,13 @@ function MainApp() {
         {/* Dynamic module routes */}
         {activeModules.flatMap((module) =>
           module.routes.map((route) => {
-            // Convert route path to relative path
-            const routePath = route.path === "/" ? "" : route.path.replace(/^\//, "");
+            // Combine basePath with route path
+            // basePath: "/admin/crm", route.path: "/"  -> "crm"
+            // basePath: "/admin/crm", route.path: "/customers"  -> "crm/customers"
+            const moduleBase = module.basePath.replace("/admin", "").replace(/^\//, "");
+            const routePath = route.path === "/"
+              ? moduleBase
+              : `${moduleBase}${route.path}`;
 
             return (
               <Route

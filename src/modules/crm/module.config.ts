@@ -29,17 +29,17 @@ export const crmModuleConfig: ModuleConfig = {
       exact: true
     },
     {
-      path: "/customers",
+      path: "customers",
       component: lazy(() => import("../../pages/admin/CustomersPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
     },
     {
-      path: "/contacts",
+      path: "contacts",
       component: lazy(() => import("../../pages/admin/ContactsPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
     },
     {
-      path: "/leads",
+      path: "leads",
       component: lazy(() => import("../../pages/admin/LeadsPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
     }
