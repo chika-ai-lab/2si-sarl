@@ -21,6 +21,16 @@ export const ordersModuleConfig: ModuleConfig = {
       component: lazy(() => import("../../pages/admin/OrdersPage")),
       requiresPermission: ["ORDERS:ORDER:READ"],
       exact: true
+    },
+    {
+      path: "/quotes",
+      component: lazy(() => import("../../pages/admin/QuotesPage")),
+      requiresPermission: ["ORDERS:ORDER:READ"]
+    },
+    {
+      path: "/invoices",
+      component: lazy(() => import("../../pages/admin/InvoicesPage")),
+      requiresPermission: ["ORDERS:ORDER:READ"]
     }
   ],
 
@@ -29,8 +39,25 @@ export const ordersModuleConfig: ModuleConfig = {
       label: "Commandes",
       path: "/admin/orders",
       icon: "ShoppingCart",
+      section: "sales",
       requiresPermission: ["ORDERS:ORDER:READ"],
-      order: 3
+      order: 6
+    },
+    {
+      label: "Devis",
+      path: "/admin/orders/quotes",
+      icon: "FileText",
+      section: "sales",
+      requiresPermission: ["ORDERS:ORDER:READ"],
+      order: 7
+    },
+    {
+      label: "Factures",
+      path: "/admin/orders/invoices",
+      icon: "Receipt",
+      section: "sales",
+      requiresPermission: ["ORDERS:ORDER:READ"],
+      order: 8
     }
   ],
 

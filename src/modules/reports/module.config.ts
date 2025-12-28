@@ -29,8 +29,9 @@ export const reportsModuleConfig: ModuleConfig = {
       label: "Rapports",
       path: "/admin/reports",
       icon: "BarChart3",
+      section: "reporting",
       requiresPermission: ["REPORTS:REPORT:READ"],
-      order: 5
+      order: 12
     }
   ],
 

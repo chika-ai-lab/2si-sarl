@@ -29,8 +29,9 @@ export const commercialModuleConfig: ModuleConfig = {
       label: "Paramètres",
       path: "/admin/settings",
       icon: "Settings",
+      section: "system",
       requiresPermission: ["COMMERCIAL:SETTINGS:READ"],
-      order: 6
+      order: 13
     }
   ],
 

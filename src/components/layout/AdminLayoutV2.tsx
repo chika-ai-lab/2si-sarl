@@ -4,7 +4,7 @@ import { useAuth } from "@/core/auth/providers/AuthProviderV2";
 import { companyConfig } from "@/config/company.config";
 import { getModuleNavigation } from "@/config/modules.config";
 import * as Icons from "lucide-react";
-import { Home, LogOut, Menu, X, User } from "lucide-react";
+import { Home, LogOut, Menu, X, User, ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +23,7 @@ export function AdminLayoutV2() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   // Générer la navigation dynamiquement basée sur les modules accessibles
   const navigation = useMemo(() => {
@@ -30,9 +31,42 @@ export function AdminLayoutV2() {
     return getModuleNavigation(user);
   }, [user]);
 
+  // Organiser la navigation par sections
+  const navigationBySection = useMemo(() => {
+    const sections: Record<string, { label: string; items: typeof navigation; order: number }> = {
+      general: { label: "Général", items: [], order: 1 },
+      crm: { label: "CRM", items: [], order: 2 },
+      sales: { label: "Ventes", items: [], order: 3 },
+      reporting: { label: "Rapports", items: [], order: 4 },
+      system: { label: "Système", items: [], order: 5 },
+    };
+
+    navigation.forEach((item) => {
+      const section = item.section || "general";
+      if (sections[section]) {
+        sections[section].items.push(item);
+      }
+    });
+
+    // Filtrer les sections vides et trier par ordre
+    return Object.entries(sections)
+      .filter(([_, section]) => section.items.length > 0)
+      .sort(([_, a], [__, b]) => a.order - b.order);
+  }, [navigation]);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const toggleSection = (sectionKey: string) => {
+    const newCollapsed = new Set(collapsedSections);
+    if (newCollapsed.has(sectionKey)) {
+      newCollapsed.delete(sectionKey);
+    } else {
+      newCollapsed.add(sectionKey);
+    }
+    setCollapsedSections(newCollapsed);
   };
 
   // Afficher les rôles de l'utilisateur
@@ -82,53 +116,79 @@ export function AdminLayoutV2() {
         </div>
 
         {/* Navigation Dynamique */}
-        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+        <nav className="flex-1 space-y-6 p-4 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-secondary-foreground/20 hover:scrollbar-thumb-secondary-foreground/30">
           {navigation.length === 0 ? (
             <div className="text-center text-sm text-secondary-foreground/50 py-8">
               {sidebarOpen && <p>Aucun module accessible</p>}
             </div>
           ) : (
-            navigation.map((item) => {
-              const isActive =
-                location.pathname === item.path ||
-                (item.path !== "/admin" && location.pathname.startsWith(item.path));
-
-              // Récupérer l'icône dynamiquement
-              const IconComponent = (Icons as any)[item.icon] || Icons.Circle;
+            navigationBySection.map(([sectionKey, section]) => {
+              const isCollapsed = collapsedSections.has(sectionKey);
 
               return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors relative",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary-foreground/10"
-                  )}
-                  title={!sidebarOpen ? item.label : undefined}
-                >
-                  <IconComponent className="h-5 w-5 shrink-0" />
+                <div key={sectionKey} className="space-y-1">
+                  {/* Section Header */}
                   {sidebarOpen && (
-                    <>
-                      <span className="flex-1">{item.label}</span>
-                      {item.badge && (
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-medium",
-                            item.badge.variant === "primary" && "bg-primary text-primary-foreground",
-                            item.badge.variant === "success" && "bg-green-500 text-white",
-                            item.badge.variant === "warning" && "bg-yellow-500 text-white",
-                            item.badge.variant === "danger" && "bg-red-500 text-white",
-                            item.badge.variant === "default" && "bg-secondary-foreground/20"
-                          )}
-                        >
-                          {item.badge.value}
-                        </span>
+                    <button
+                      onClick={() => toggleSection(sectionKey)}
+                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-secondary-foreground/5 rounded-lg transition-colors group"
+                    >
+                      <h3 className="text-xs font-semibold text-secondary-foreground/70 uppercase tracking-wider">
+                        {section.label}
+                      </h3>
+                      {isCollapsed ? (
+                        <ChevronRight className="h-3.5 w-3.5 text-secondary-foreground/50 group-hover:text-secondary-foreground/70 transition-colors" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5 text-secondary-foreground/50 group-hover:text-secondary-foreground/70 transition-colors" />
                       )}
-                    </>
+                    </button>
                   )}
-                </Link>
+
+                  {/* Section Items */}
+                  {!isCollapsed && section.items.map((item) => {
+                    const isActive =
+                      location.pathname === item.path ||
+                      (item.path !== "/admin" && location.pathname.startsWith(item.path));
+
+                    // Récupérer l'icône dynamiquement
+                    const IconComponent = (Icons as any)[item.icon] || Icons.Circle;
+
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors relative",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-secondary-foreground/10"
+                        )}
+                        title={!sidebarOpen ? item.label : undefined}
+                      >
+                        <IconComponent className="h-5 w-5 shrink-0" />
+                        {sidebarOpen && (
+                          <>
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge && (
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                                  item.badge.variant === "primary" && "bg-primary text-primary-foreground",
+                                  item.badge.variant === "success" && "bg-green-500 text-white",
+                                  item.badge.variant === "warning" && "bg-yellow-500 text-white",
+                                  item.badge.variant === "danger" && "bg-red-500 text-white",
+                                  item.badge.variant === "default" && "bg-secondary-foreground/20"
+                                )}
+                              >
+                                {item.badge.value}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               );
             })
           )}

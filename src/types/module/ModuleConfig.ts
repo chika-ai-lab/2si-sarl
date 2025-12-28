@@ -52,9 +52,17 @@ export interface NavigationItem {
   badge?: NavigationBadge;
   children?: NavigationItem[];
   order?: number; // Pour organiser l'affichage
+  section?: string; // Section/groupe pour organiser la navigation
 }
 
 export interface NavigationBadge {
   value: string | number;
   variant: "default" | "primary" | "success" | "warning" | "danger";
+}
+
+export interface NavigationSection {
+  id: string;
+  label: string;
+  order: number;
+  collapsed?: boolean;
 }

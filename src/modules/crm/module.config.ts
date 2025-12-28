@@ -32,6 +32,16 @@ export const crmModuleConfig: ModuleConfig = {
       path: "/customers",
       component: lazy(() => import("../../pages/admin/CustomersPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
+    },
+    {
+      path: "/contacts",
+      component: lazy(() => import("../../pages/admin/ContactsPage")),
+      requiresPermission: ["CRM:CUSTOMER:READ"]
+    },
+    {
+      path: "/leads",
+      component: lazy(() => import("../../pages/admin/LeadsPage")),
+      requiresPermission: ["CRM:CUSTOMER:READ"]
     }
   ],
 
@@ -41,8 +51,25 @@ export const crmModuleConfig: ModuleConfig = {
       label: "Clients",
       path: "/admin/crm/customers",
       icon: "Users",
+      section: "crm",
       requiresPermission: ["CRM:CUSTOMER:READ"],
-      order: 2
+      order: 3
+    },
+    {
+      label: "Contacts",
+      path: "/admin/crm/contacts",
+      icon: "UserCircle",
+      section: "crm",
+      requiresPermission: ["CRM:CUSTOMER:READ"],
+      order: 4
+    },
+    {
+      label: "Prospects",
+      path: "/admin/crm/leads",
+      icon: "UserPlus",
+      section: "crm",
+      requiresPermission: ["CRM:CUSTOMER:READ"],
+      order: 5
     }
   ],
 

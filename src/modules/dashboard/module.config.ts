@@ -30,6 +30,10 @@ export const dashboardModuleConfig: ModuleConfig = {
     {
       path: "/dashboard",
       component: lazy(() => import("../../pages/admin/DashboardPage"))
+    },
+    {
+      path: "/analytics",
+      component: lazy(() => import("../../pages/admin/AnalyticsPage"))
     }
   ],
 
@@ -39,7 +43,15 @@ export const dashboardModuleConfig: ModuleConfig = {
       label: "Tableau de Bord",
       path: "/admin",
       icon: "LayoutDashboard",
+      section: "general",
       order: 1
+    },
+    {
+      label: "Analytiques",
+      path: "/admin/analytics",
+      icon: "TrendingUp",
+      section: "general",
+      order: 2
     }
   ],
 
