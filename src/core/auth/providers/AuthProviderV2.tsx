@@ -179,7 +179,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
           updatedAt: new Date().toISOString()
         };
       }
-      // Commercial - CRM, produits, commandes et ventes
+      // Commercial - Accès complet au module commercial
       else if (email === "commercial@2si.sarl" && password === "commercial123") {
         user = {
           id: "3",
@@ -187,16 +187,18 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
           name: "Département Commercial",
           roles: ["commercial"],
           customPermissions: [
-            "CRM:*:*",
-            "ORDERS:*:*",
-            "PRODUCTS:*:*",
-            "COMMERCIAL:*:*"
+            "COMMERCIAL:*:*",
+            "COMMERCIAL:CLIENTS:*",
+            "COMMERCIAL:ORDERS:*",
+            "COMMERCIAL:SCAN:*",
+            "COMMERCIAL:CATALOG:*",
+            "COMMERCIAL:ACCREDITIF:*",
+            "COMMERCIAL:SIMULATION:*",
+            "COMMERCIAL:SAV:*",
+            "COMMERCIAL:REPORTS:*"
           ],
           moduleAccess: [
             { moduleId: "dashboard", enabled: true },
-            { moduleId: "crm", enabled: true },
-            { moduleId: "orders", enabled: true },
-            { moduleId: "products", enabled: true },
             { moduleId: "commercial", enabled: true }
           ],
           status: "active" as UserStatus,
