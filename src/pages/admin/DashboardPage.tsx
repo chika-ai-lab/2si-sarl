@@ -9,11 +9,18 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  ScanLine,
+  BookOpen,
+  FileText,
+  Calculator,
+  Wrench,
+  BarChart3,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { isCommercialFeatureEnabled } from "@/config/env.config";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -250,57 +257,180 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card className="bg-gradient-to-br from-card via-card to-primary/5">
-          <CardHeader>
-            <CardTitle className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Actions rapides
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Link to="/admin/products" className="block">
-              <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 bg-background hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 transition-all cursor-pointer group">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
-                  <Package className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">Produits</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Gérer le catalogue
-                  </p>
-                </div>
-              </div>
-            </Link>
+      </div>
 
-            <Link to="/admin/customers" className="block">
-              <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 bg-background hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 transition-all cursor-pointer group">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">Clients</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Voir les clients
-                  </p>
-                </div>
-              </div>
+      {/* Accès Rapide - Module Commercial */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Accès rapide</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Clients */}
+          {isCommercialFeatureEnabled("clients") && (
+            <Link to="/admin/commercial/clients">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Clients</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Gérer les clients
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
+          )}
 
-            <Link to="/admin/reports" className="block">
-              <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 bg-background hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 transition-all cursor-pointer group">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">Rapports</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Statistiques détaillées
-                  </p>
-                </div>
-              </div>
+          {/* Commandes */}
+          {isCommercialFeatureEnabled("commandes") && (
+            <Link to="/admin/commercial/commandes">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <ShoppingCart className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Commandes</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Voir les commandes
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
-          </CardContent>
-        </Card>
+          )}
+
+          {/* Scan BL */}
+          {isCommercialFeatureEnabled("scanBL") && (
+            <Link to="/admin/commercial/scan-bl">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <ScanLine className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Scan BL</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Scanner les BL
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Catalogue */}
+          {isCommercialFeatureEnabled("catalogue") && (
+            <Link to="/admin/commercial/catalogue">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <BookOpen className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Catalogue</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Parcourir le catalogue
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Accréditif */}
+          {isCommercialFeatureEnabled("accreditif") && (
+            <Link to="/admin/commercial/accreditif">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <FileText className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Accréditif</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Documents accréditifs
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Simulation */}
+          {isCommercialFeatureEnabled("simulation") && (
+            <Link to="/admin/commercial/simulation">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <Calculator className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Simulation</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tableau de simulation
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* SAV */}
+          {isCommercialFeatureEnabled("sav") && (
+            <Link to="/admin/commercial/sav">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <Wrench className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">S.A.V</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Service après-vente
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Rapports */}
+          {isCommercialFeatureEnabled("rapports") && (
+            <Link to="/admin/commercial/rapports">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <BarChart3 className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Rapports</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Voir les rapports
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

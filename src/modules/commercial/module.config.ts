@@ -5,13 +5,6 @@ import { isCommercialFeatureEnabled } from "@/config/env.config";
 // Fonction helper pour filtrer les routes selon les feature flags
 function filterRoutesByFeatureFlags() {
   const allRoutes = [
-    // Vue principale (toujours active)
-    {
-      path: "/",
-      component: lazy(() => import("./pages/CommercialDashboard")),
-      exact: true,
-      enabled: true,
-    },
     // Clients
     {
       path: "/clients",
@@ -97,14 +90,6 @@ function filterRoutesByFeatureFlags() {
 // Fonction helper pour filtrer la navigation selon les feature flags
 function filterNavigationByFeatureFlags() {
   const allNavigation = [
-    {
-      label: "Commercial",
-      path: "/admin/commercial",
-      icon: "ShoppingBag",
-      section: "sales",
-      order: 7,
-      enabled: true, // Toujours visible si le module est activé
-    },
     {
       label: "Clients",
       path: "/admin/commercial/clients",
