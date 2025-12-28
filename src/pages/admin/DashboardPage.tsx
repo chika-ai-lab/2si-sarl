@@ -111,71 +111,79 @@ export function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Orders */}
-        <Card>
+        <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.totalOrders")}
             </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+              <ShoppingCart className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">{stats.ordersChange}</span> ce
-              mois
+            <div className="text-2xl font-bold text-foreground">{stats.totalOrders}</div>
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">{stats.ordersChange}</span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Pending Orders */}
-        <Card>
+        <Card className="border-2 hover:border-yellow-500/50 transition-all hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.pendingOrders")}
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-md">
+              <Clock className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-red-600">{stats.pendingChange}</span> ce
-              mois
+            <div className="text-2xl font-bold text-foreground">{stats.pendingOrders}</div>
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">{stats.pendingChange}</span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Revenue */}
-        <Card>
+        <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-gradient-to-br from-card via-card to-primary/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.revenue")}
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+              <TrendingUp className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(stats.revenue)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">{stats.revenueChange}</span> ce
-              mois
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">{stats.revenueChange}</span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Customers */}
-        <Card>
+        <Card className="border-2 hover:border-purple-500/50 transition-all hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.customers")}
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md">
+              <Users className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.customers}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">{stats.customersChange}</span> ce
-              mois
+            <div className="text-2xl font-bold text-foreground">{stats.customers}</div>
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">{stats.customersChange}</span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
@@ -243,39 +251,53 @@ export function DashboardPage() {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="bg-gradient-to-br from-card via-card to-primary/5">
           <CardHeader>
-            <CardTitle>Actions rapides</CardTitle>
+            <CardTitle className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Actions rapides
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Link to="/admin/products">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Package className="mr-2 h-5 w-5" />
-                Produits
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Gérer le catalogue
-                </span>
-              </Button>
+            <Link to="/admin/products" className="block">
+              <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 bg-background hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 transition-all cursor-pointer group">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground">Produits</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Gérer le catalogue
+                  </p>
+                </div>
+              </div>
             </Link>
 
-            <Link to="/admin/customers">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Users className="mr-2 h-5 w-5" />
-                Clients
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Voir les clients
-                </span>
-              </Button>
+            <Link to="/admin/customers" className="block">
+              <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 bg-background hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 transition-all cursor-pointer group">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground">Clients</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Voir les clients
+                  </p>
+                </div>
+              </div>
             </Link>
 
-            <Link to="/admin/reports">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                Rapports
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Statistiques détaillées
-                </span>
-              </Button>
+            <Link to="/admin/reports" className="block">
+              <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 bg-background hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 transition-all cursor-pointer group">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground">Rapports</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Statistiques détaillées
+                  </p>
+                </div>
+              </div>
             </Link>
           </CardContent>
         </Card>

@@ -58,13 +58,13 @@ export function LoginPage() {
     }
   };
 
-  // Fonction pour remplir automatiquement avec les identifiants admin
-  const fillAdminCredentials = () => {
-    form.setValue("email", "admin@2si.sarl");
-    form.setValue("password", "admin123");
+  // Fonction pour remplir automatiquement les identifiants
+  const fillCredentials = (email: string, password: string, role: string) => {
+    form.setValue("email", email);
+    form.setValue("password", password);
     toast({
       title: "Identifiants remplis",
-      description: "Vous pouvez maintenant vous connecter",
+      description: `Connectez-vous en tant que ${role}`,
     });
   };
 
@@ -75,26 +75,29 @@ export function LoginPage() {
         description="Accès administrateur au tableau de bord 2SI"
         noindex={true}
       />
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background via-50% to-accent/10 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back to Home */}
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6 transition-all hover:gap-3"
         >
           <ArrowLeft className="h-4 w-4" />
           Retour à l'accueil
         </Link>
 
-        <Card className="shadow-xl">
-          <CardHeader className="space-y-1 text-center">
+        <Card className="shadow-2xl border-2 border-border/50 backdrop-blur-sm bg-card/95">
+          <CardHeader className="space-y-1 text-center pb-6">
             <div className="flex justify-center mb-4">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Lock className="h-8 w-8 text-primary" />
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-full blur-xl opacity-50" />
+                <Lock className="h-8 w-8 text-primary-foreground relative z-10" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Connexion Admin</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Connexion Admin
+            </CardTitle>
+            <CardDescription className="text-sm">
               Connectez-vous pour accéder au tableau de bord administrateur
             </CardDescription>
           </CardHeader>
@@ -155,7 +158,7 @@ export function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                  className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all"
                   disabled={isSubmitting}
                   size="lg"
                 >
@@ -172,33 +175,78 @@ export function LoginPage() {
             </Form>
 
             {/* Demo Credentials - Clickable */}
-            <div className="mt-6">
-              <p className="text-sm font-semibold text-muted-foreground mb-3 text-center">
-                Identifiants de test
-              </p>
-              <button
-                type="button"
-                onClick={fillAdminCredentials}
-                disabled={isSubmitting}
-                className="w-full p-4 bg-gradient-to-r from-blue-50 to-primary/5 border-2 border-blue-200 hover:border-primary rounded-lg transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <UserCog className="h-5 w-5 text-primary" />
+            <div className="mt-6 pt-6 border-t border-border">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
+                <p className="text-xs font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent uppercase tracking-wide">
+                  Identifiants de test
+                </p>
+                <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
+              </div>
+              <div className="space-y-2">
+                {/* Administrateur */}
+                <button
+                  type="button"
+                  onClick={() => fillCredentials("admin@2si.sarl", "admin123", "Administrateur")}
+                  disabled={isSubmitting}
+                  className="w-full p-3 bg-gradient-to-r from-red-50 to-red-100/50 border-2 border-red-200 hover:border-red-400 rounded-lg transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                      <UserCog className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-xs font-semibold text-foreground">Administrateur</p>
+                      <p className="text-xs text-muted-foreground">Accès total au système</p>
+                    </div>
+                    <div className="text-xs text-red-600 font-medium group-hover:translate-x-1 transition-transform">
+                      →
+                    </div>
                   </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-foreground">
-                      Admin Test
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      admin@2si.sarl
-                    </p>
+                </button>
+
+                {/* Comptabilité */}
+                <button
+                  type="button"
+                  onClick={() => fillCredentials("comptabilite@2si.sarl", "compta123", "Comptabilité")}
+                  disabled={isSubmitting}
+                  className="w-full p-3 bg-gradient-to-r from-blue-50 to-blue-100/50 border-2 border-blue-200 hover:border-blue-400 rounded-lg transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      <UserCog className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-xs font-semibold text-foreground">Comptabilité</p>
+                      <p className="text-xs text-muted-foreground">Finances, commandes, rapports</p>
+                    </div>
+                    <div className="text-xs text-blue-600 font-medium group-hover:translate-x-1 transition-transform">
+                      →
+                    </div>
                   </div>
-                  <div className="text-xs text-primary font-medium group-hover:translate-x-1 transition-transform">
-                    Cliquer pour remplir →
+                </button>
+
+                {/* Commercial */}
+                <button
+                  type="button"
+                  onClick={() => fillCredentials("commercial@2si.sarl", "commercial123", "Commercial")}
+                  disabled={isSubmitting}
+                  className="w-full p-3 bg-gradient-to-r from-green-50 to-green-100/50 border-2 border-green-200 hover:border-green-400 rounded-lg transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                      <UserCog className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-xs font-semibold text-foreground">Commercial</p>
+                      <p className="text-xs text-muted-foreground">CRM, produits, ventes, commandes</p>
+                    </div>
+                    <div className="text-xs text-green-600 font-medium group-hover:translate-x-1 transition-transform">
+                      →
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
