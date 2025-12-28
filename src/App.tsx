@@ -18,6 +18,7 @@ import OrderPage from "./pages/OrderPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
+import NotFoundAdminPage from "./pages/admin/NotFoundAdminPage";
 import { AdminLayoutV2 } from "./components/layout/AdminLayoutV2";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { isMaintenanceModeEnabled } from "./services/settingsService";
@@ -101,8 +102,12 @@ function MainApp() {
             );
           })
         )}
+
+        {/* 404 inside admin layout */}
+        <Route path="*" element={<NotFoundAdminPage />} />
       </Route>
 
+      {/* 404 for public routes */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
