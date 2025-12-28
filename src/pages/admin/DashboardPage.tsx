@@ -110,9 +110,7 @@ export function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">
           {t("admin.dashboard")}
         </h2>
-        <p className="text-muted-foreground">
-          Tableau de bord
-        </p>
+        <p className="text-muted-foreground">Tableau de bord</p>
       </div>
 
       {/* Stats Grid */}
@@ -128,9 +126,13 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{stats.totalOrders}</div>
+            <div className="text-2xl font-bold text-foreground">
+              {stats.totalOrders}
+            </div>
             <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">{stats.ordersChange}</span>
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                {stats.ordersChange}
+              </span>
               <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
@@ -147,9 +149,13 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{stats.pendingOrders}</div>
+            <div className="text-2xl font-bold text-foreground">
+              {stats.pendingOrders}
+            </div>
             <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">{stats.pendingChange}</span>
+              <span className="font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                {stats.pendingChange}
+              </span>
               <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
@@ -170,7 +176,9 @@ export function DashboardPage() {
               {formatCurrency(stats.revenue)}
             </div>
             <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">{stats.revenueChange}</span>
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                {stats.revenueChange}
+              </span>
               <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
@@ -187,9 +195,13 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{stats.customers}</div>
+            <div className="text-2xl font-bold text-foreground">
+              {stats.customers}
+            </div>
             <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">{stats.customersChange}</span>
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                {stats.customersChange}
+              </span>
               <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
@@ -197,67 +209,64 @@ export function DashboardPage() {
       </div>
 
       {/* Recent Orders & Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Recent Orders */}
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Commandes récentes</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Dernières commandes en attente de traitement
-              </p>
-            </div>
-            <Link to="/admin/orders">
-              <Button variant="outline" size="sm">
-                Voir tout
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentOrders.map((order) => {
-                const StatusIcon = statusConfig[order.status].icon;
-                return (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <Package className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{order.id}</p>
-                          <Badge
-                            variant="outline"
-                            className={statusConfig[order.status].color}
-                          >
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusConfig[order.status].label}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer}
-                        </p>
-                      </div>
+      {/* Recent Orders */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Commandes récentes</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Dernières commandes en attente de traitement
+            </p>
+          </div>
+          <Link to="/admin/orders">
+            <Button variant="outline" size="sm">
+              Voir tout
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentOrders.map((order) => {
+              const StatusIcon = statusConfig[order.status].icon;
+              return (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <Package className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        {formatCurrency(order.amount)}
-                      </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{order.id}</p>
+                        <Badge
+                          variant="outline"
+                          className={statusConfig[order.status].color}
+                        >
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {statusConfig[order.status].label}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {order.date}
+                        {order.customer}
                       </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-      </div>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      {formatCurrency(order.amount)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {order.date}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Accès Rapide - Module Commercial */}
       <div>
@@ -357,7 +366,9 @@ export function DashboardPage() {
                       <FileText className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">Accréditif</p>
+                      <p className="font-semibold text-foreground">
+                        Accréditif
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Documents accréditifs
                       </p>
@@ -378,7 +389,9 @@ export function DashboardPage() {
                       <Calculator className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">Simulation</p>
+                      <p className="font-semibold text-foreground">
+                        Simulation
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Tableau de simulation
                       </p>
