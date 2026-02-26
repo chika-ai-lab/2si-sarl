@@ -164,14 +164,16 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
           name: "Département Comptabilité",
           roles: ["comptabilite"],
           customPermissions: [
+            "DASHBOARD:*:READ",
             "ORDERS:*:READ",
             "REPORTS:*:*",
-            "DASHBOARD:*:READ"
+            "COMMERCIAL:*:READ"
           ],
           moduleAccess: [
             { moduleId: "dashboard", enabled: true },
             { moduleId: "orders", enabled: true },
-            { moduleId: "reports", enabled: true }
+            { moduleId: "reports", enabled: true },
+            { moduleId: "commercial", enabled: true }
           ],
           status: "active" as UserStatus,
           lastLogin: new Date().toISOString(),

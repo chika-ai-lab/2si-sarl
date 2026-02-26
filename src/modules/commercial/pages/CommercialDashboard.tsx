@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import {
   Users,
   ShoppingCart,
-  ScanLine,
   BookOpen,
   FileText,
   Calculator,
@@ -41,13 +40,6 @@ export default function CommercialDashboard() {
       icon: ShoppingCart,
       path: "/admin/commercial/commandes",
       color: "from-green-500 to-green-600"
-    },
-    {
-      label: "Scan BL",
-      description: "Scanner les BL",
-      icon: ScanLine,
-      path: "/admin/commercial/scan-bl",
-      color: "from-purple-500 to-purple-600"
     },
     {
       label: "Catalogue",

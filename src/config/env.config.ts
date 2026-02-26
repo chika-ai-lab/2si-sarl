@@ -86,7 +86,6 @@ export const modulesConfig = {
 export const commercialFeatures = {
   clients: getEnvBoolean('VITE_COMMERCIAL_CLIENTS_ENABLED', true),
   commandes: getEnvBoolean('VITE_COMMERCIAL_COMMANDES_ENABLED', true),
-  scanBL: getEnvBoolean('VITE_COMMERCIAL_SCAN_BL_ENABLED', false),
   catalogue: getEnvBoolean('VITE_COMMERCIAL_CATALOGUE_ENABLED', true),
   accreditif: getEnvBoolean('VITE_COMMERCIAL_ACCREDITIF_ENABLED', false),
   simulation: getEnvBoolean('VITE_COMMERCIAL_SIMULATION_ENABLED', true),

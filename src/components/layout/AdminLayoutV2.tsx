@@ -160,9 +160,22 @@ export function AdminLayoutV2() {
 
                   {/* Section Items */}
                   {!isCollapsed && section.items.map((item) => {
-                    const isActive =
+                    const exactOrDescendant =
                       location.pathname === item.path ||
-                      (item.path !== "/admin" && location.pathname.startsWith(item.path));
+                      location.pathname.startsWith(item.path + "/");
+                    // A more specific sibling (e.g. /admin/orders/quotes) takes priority
+                    // over a parent (e.g. /admin/orders) — only the deepest match is active
+                    const hasMoreSpecificSibling = section.items.some(
+                      (other) =>
+                        other.path !== item.path &&
+                        other.path.startsWith(item.path + "/") &&
+                        (location.pathname === other.path ||
+                          location.pathname.startsWith(other.path + "/"))
+                    );
+                    const isActive =
+                      item.path === "/admin"
+                        ? location.pathname === item.path
+                        : exactOrDescendant && !hasMoreSpecificSibling;
 
                     // Récupérer l'icône dynamiquement
                     const IconComponent = (Icons as any)[item.icon] || Icons.Circle;

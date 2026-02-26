@@ -29,6 +29,7 @@ export function hasPermission(
   const wildcards = [
     `${module}:*:*`,
     `${module}:${resource}:*`,
+    `${module}:*:${action}`,
     `*:${resource}:*`,
     `*:*:${action}`
   ];

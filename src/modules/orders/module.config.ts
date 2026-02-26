@@ -23,12 +23,12 @@ export const ordersModuleConfig: ModuleConfig = {
       exact: true
     },
     {
-      path: "quotes",
+      path: "/quotes",
       component: lazy(() => import("../../pages/admin/QuotesPage")),
       requiresPermission: ["ORDERS:ORDER:READ"]
     },
     {
-      path: "invoices",
+      path: "/invoices",
       component: lazy(() => import("../../pages/admin/InvoicesPage")),
       requiresPermission: ["ORDERS:ORDER:READ"]
     }

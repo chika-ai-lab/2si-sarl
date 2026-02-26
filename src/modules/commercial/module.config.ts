@@ -31,13 +31,6 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       enabled: isCommercialFeatureEnabled("commandes"),
     },
-    // Scan BL
-    {
-      path: "/scan-bl",
-      component: lazy(() => import("./pages/ScanBLPage")),
-      requiresPermission: ["COMMERCIAL:SCAN:READ"],
-      enabled: isCommercialFeatureEnabled("scanBL"),
-    },
     // Catalogue
     {
       path: "/catalogue",
@@ -107,15 +100,6 @@ function filterNavigationByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       order: 9,
       enabled: isCommercialFeatureEnabled("commandes"),
-    },
-    {
-      label: "Scan BL",
-      path: "/admin/commercial/scan-bl",
-      icon: "ScanLine",
-      section: "sales",
-      requiresPermission: ["COMMERCIAL:SCAN:READ"],
-      order: 10,
-      enabled: isCommercialFeatureEnabled("scanBL"),
     },
     {
       label: "Catalogue",

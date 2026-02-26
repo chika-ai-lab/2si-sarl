@@ -9,7 +9,6 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  ScanLine,
   BookOpen,
   FileText,
   Calculator,
@@ -306,27 +305,6 @@ export function DashboardPage() {
                       <p className="font-semibold text-foreground">Commandes</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Voir les commandes
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          )}
-
-          {/* Scan BL */}
-          {isCommercialFeatureEnabled("scanBL") && (
-            <Link to="/admin/commercial/scan-bl">
-              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
-                <CardContent className="p-6">
-                  <div className="flex flex-col items-center text-center gap-3">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
-                      <ScanLine className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">Scan BL</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Scanner les BL
                       </p>
                     </div>
                   </div>
