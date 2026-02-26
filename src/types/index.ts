@@ -1,5 +1,10 @@
 import { LucideIcon } from "lucide-react";
 
+// V2 Modular Types
+export * from "./entities";
+export * from "./module";
+
+// Legacy V1 Types (kept for backward compatibility)
 export interface CategoryCardProps {
   id: string;
   name: string;

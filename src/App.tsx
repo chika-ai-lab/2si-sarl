@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ConfigProvider } from "@/providers/ConfigProvider";
 import { I18nProvider } from "@/providers/I18nProvider";
 import { CartProvider } from "@/providers/CartProvider";
 import { WishlistProvider } from "@/providers/WishlistProvider";
-import { AuthProvider } from "@/providers/AuthProvider";
+import { AuthProviderV2, useAuth } from "@/core/auth/providers/AuthProviderV2";
 import HomePage from "./pages/HomePage";
 import CatalogPage from "./pages/CatalogPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -18,21 +18,19 @@ import OrderPage from "./pages/OrderPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
-import { AdminLayout } from "./components/layout/AdminLayout";
-import { DashboardPage } from "./pages/admin/DashboardPage";
-import { OrdersPage } from "./pages/admin/OrdersPage";
-import { ProductsPage } from "./pages/admin/ProductsPage";
-import { CustomersPage } from "./pages/admin/CustomersPage";
-import { ReportsPage } from "./pages/admin/ReportsPage";
-import { SettingsPage } from "./pages/admin/SettingsPage";
+import { AdminLayoutV2 } from "./components/layout/AdminLayoutV2";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { isMaintenanceModeEnabled } from "./services/settingsService";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { getActiveModules } from "@/config/modules.config";
+import { ProtectedModuleRoute } from "@/core/router/ProtectedModuleRoute";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 function MainApp() {
   const [isInMaintenance, setIsInMaintenance] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     // Check maintenance mode on mount and listen for storage changes
@@ -52,8 +50,12 @@ function MainApp() {
     return <MaintenancePage />;
   }
 
+  // Get active modules for the current user
+  const activeModules = getActiveModules(user);
+
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/catalog" element={<CatalogPage />} />
       <Route path="/product/:id" element={<ProductDetailPage />} />
@@ -62,22 +64,43 @@ function MainApp() {
       <Route path="/order" element={<OrderPage />} />
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Admin Routes - Protected */}
+      {/* Admin Routes - Dynamic with Modules */}
       <Route
         path="/admin"
         element={
           <ProtectedRoute requireAdmin>
-            <AdminLayout />
+            <AdminLayoutV2 />
           </ProtectedRoute>
         }
       >
-        <Route index element={<DashboardPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="customers" element={<CustomersPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        {/* Dynamic module routes */}
+        {activeModules.flatMap((module) =>
+          module.routes.map((route) => {
+            // Convert route path to relative path
+            const routePath = route.path === "/" ? "" : route.path.replace(/^\//, "");
+
+            return (
+              <Route
+                key={`${module.id}-${route.path}`}
+                path={routePath}
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex h-screen items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    }
+                  >
+                    <ProtectedModuleRoute
+                      permissions={route.requiresPermission || []}
+                      component={route.component}
+                    />
+                  </Suspense>
+                }
+              />
+            );
+          })
+        )}
       </Route>
 
       <Route path="*" element={<NotFound />} />
@@ -90,7 +113,7 @@ const App = () => (
     <HelmetProvider>
       <ConfigProvider>
         <I18nProvider>
-          <AuthProvider>
+          <AuthProviderV2>
             <WishlistProvider>
               <CartProvider>
                 <TooltipProvider>
@@ -102,7 +125,7 @@ const App = () => (
                 </TooltipProvider>
               </CartProvider>
             </WishlistProvider>
-          </AuthProvider>
+          </AuthProviderV2>
         </I18nProvider>
       </ConfigProvider>
     </HelmetProvider>

@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/core/auth/providers/AuthProviderV2";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { SEO } from "@/components/SEO";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Lock, Mail, ArrowLeft, UserCog } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -56,6 +56,16 @@ export function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Fonction pour remplir automatiquement avec les identifiants admin
+  const fillAdminCredentials = () => {
+    form.setValue("email", "admin@2si.sarl");
+    form.setValue("password", "admin123");
+    toast({
+      title: "Identifiants remplis",
+      description: "Vous pouvez maintenant vous connecter",
+    });
   };
 
   return (
@@ -161,19 +171,34 @@ export function LoginPage() {
               </form>
             </Form>
 
-            {/* Demo Credentials Info */}
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-semibold text-blue-900 mb-2">
-                Identifiants de démonstration :
+            {/* Demo Credentials - Clickable */}
+            <div className="mt-6">
+              <p className="text-sm font-semibold text-muted-foreground mb-3 text-center">
+                Identifiants de test
               </p>
-              <div className="space-y-1 text-sm text-blue-700">
-                <p>
-                  <strong>Email:</strong> admin@2si.sarl
-                </p>
-                <p>
-                  <strong>Mot de passe:</strong> admin123
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={fillAdminCredentials}
+                disabled={isSubmitting}
+                className="w-full p-4 bg-gradient-to-r from-blue-50 to-primary/5 border-2 border-blue-200 hover:border-primary rounded-lg transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <UserCog className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-foreground">
+                      Admin Test
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      admin@2si.sarl
+                    </p>
+                  </div>
+                  <div className="text-xs text-primary font-medium group-hover:translate-x-1 transition-transform">
+                    Cliquer pour remplir →
+                  </div>
+                </div>
+              </button>
             </div>
           </CardContent>
         </Card>
