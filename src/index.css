@@ -25,8 +25,8 @@
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - 2SI Gray/Dark */
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 215 25% 17%;
+    --secondary-foreground: 210 20% 95%;
 
     /* Muted - Subtle backgrounds */
     --muted: 0 0% 96%;

@@ -67,7 +67,26 @@ function loadUserFromStorage(): User | null {
         return adaptUserV1ToV2(parsed as UserV1);
       }
 
-      return parsed as User;
+      // Vérifier si l'utilisateur V2 a tous les modules (migration incomplète)
+      const user = parsed as User;
+      if (!user.moduleAccess || user.moduleAccess.length === 0) {
+        // Si admin ou super_admin, donner accès à tous les modules
+        if (user.roles?.includes("super_admin") || user.roles?.includes("admin")) {
+          user.moduleAccess = [
+            { moduleId: "dashboard", enabled: true },
+            { moduleId: "crm", enabled: true },
+            { moduleId: "orders", enabled: true },
+            { moduleId: "products", enabled: true },
+            { moduleId: "reports", enabled: true },
+            { moduleId: "commercial", enabled: true }
+          ];
+
+          // Sauvegarder la mise à jour
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+        }
+      }
+
+      return user;
     }
   } catch (error) {
     console.error("Failed to load user from localStorage:", error);
@@ -113,13 +132,16 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Credentials de démonstration
+      let user: User | null = null;
+
+      // Administrateur - Accès total
       if (email === "admin@2si.sarl" && password === "admin123") {
-        const user: User = {
+        user = {
           id: "1",
           email: "admin@2si.sarl",
           name: "Administrateur",
           roles: ["super_admin"],
-          customPermissions: ["*:*:*"], // Toutes les permissions
+          customPermissions: ["*:*:*"],
           moduleAccess: [
             { moduleId: "dashboard", enabled: true },
             { moduleId: "crm", enabled: true },
@@ -133,7 +155,60 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
+      }
+      // Comptabilité - Finances et rapports
+      else if (email === "comptabilite@2si.sarl" && password === "compta123") {
+        user = {
+          id: "2",
+          email: "comptabilite@2si.sarl",
+          name: "Département Comptabilité",
+          roles: ["comptabilite"],
+          customPermissions: [
+            "ORDERS:*:READ",
+            "REPORTS:*:*",
+            "DASHBOARD:*:READ"
+          ],
+          moduleAccess: [
+            { moduleId: "dashboard", enabled: true },
+            { moduleId: "orders", enabled: true },
+            { moduleId: "reports", enabled: true }
+          ],
+          status: "active" as UserStatus,
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+      // Commercial - Accès complet au module commercial
+      else if (email === "commercial@2si.sarl" && password === "commercial123") {
+        user = {
+          id: "3",
+          email: "commercial@2si.sarl",
+          name: "Département Commercial",
+          roles: ["commercial"],
+          customPermissions: [
+            "COMMERCIAL:*:*",
+            "COMMERCIAL:CLIENTS:*",
+            "COMMERCIAL:ORDERS:*",
+            "COMMERCIAL:SCAN:*",
+            "COMMERCIAL:CATALOG:*",
+            "COMMERCIAL:ACCREDITIF:*",
+            "COMMERCIAL:SIMULATION:*",
+            "COMMERCIAL:SAV:*",
+            "COMMERCIAL:REPORTS:*"
+          ],
+          moduleAccess: [
+            { moduleId: "dashboard", enabled: true },
+            { moduleId: "commercial", enabled: true }
+          ],
+          status: "active" as UserStatus,
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
 
+      if (user) {
         setUser(user);
         saveUserToStorage(user);
 
@@ -167,7 +242,10 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   };
 
   const isAdmin = (): boolean => {
-    return user?.roles.includes("admin") || user?.roles.includes("super_admin") || false;
+    // Allow admin, super_admin, and all department roles to access admin area
+    return user?.roles.some(role =>
+      ["admin", "super_admin", "comptabilite", "commercial"].includes(role)
+    ) || false;
   };
 
   const value: AuthContextType = {

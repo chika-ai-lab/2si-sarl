@@ -23,12 +23,12 @@ export const productsModuleConfig: ModuleConfig = {
       exact: true
     },
     {
-      path: "/categories",
+      path: "categories",
       component: lazy(() => import("../../pages/admin/CategoriesPage")),
       requiresPermission: ["PRODUCTS:PRODUCT:READ"]
     },
     {
-      path: "/inventory",
+      path: "inventory",
       component: lazy(() => import("../../pages/admin/InventoryPage")),
       requiresPermission: ["PRODUCTS:PRODUCT:READ"]
     }

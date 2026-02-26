@@ -1,5 +1,6 @@
 import { ModuleConfig, User, NavigationItem } from "@/types";
 import { hasPermission, hasModuleAccess } from "@/core/auth/services/permissionService";
+import { isModuleEnabled, isCommercialFeatureEnabled } from "@/config/env.config";
 
 // Import modules configurations
 import dashboardModule from "@/modules/dashboard/module.config";
@@ -11,14 +12,33 @@ import commercialModule from "@/modules/commercial/module.config";
 
 /**
  * Registre central de tous les modules de la plateforme
+ * L'activation des modules est contrôlée par les variables d'environnement
  */
 export const MODULES_REGISTRY: Record<string, ModuleConfig> = {
-  dashboard: dashboardModule,
-  crm: crmModule,
-  orders: ordersModule,
-  products: productsModule,
-  reports: reportsModule,
-  commercial: commercialModule
+  dashboard: {
+    ...dashboardModule,
+    enabled: true, // Toujours activé (core module)
+  },
+  crm: {
+    ...crmModule,
+    enabled: isModuleEnabled('crm') && crmModule.enabled,
+  },
+  orders: {
+    ...ordersModule,
+    enabled: isModuleEnabled('orders') && ordersModule.enabled,
+  },
+  products: {
+    ...productsModule,
+    enabled: isModuleEnabled('products') && productsModule.enabled,
+  },
+  reports: {
+    ...reportsModule,
+    enabled: isModuleEnabled('reports') && reportsModule.enabled,
+  },
+  commercial: {
+    ...commercialModule,
+    enabled: isModuleEnabled('commercial') && commercialModule.enabled,
+  },
 };
 
 /**

@@ -21,9 +21,9 @@ export interface ModuleAccess {
  * Rôles système prédéfinis
  */
 export enum SystemRole {
-  SUPER_ADMIN = "super_admin",
-  ADMIN = "admin",
-  MANAGER = "manager",
-  STAFF = "staff",
-  CLIENT = "client"
+  SUPER_ADMIN = "super_admin",  // Accès total à tout
+  ADMIN = "admin",               // Administrateur général
+  COMPTABILITE = "comptabilite", // Département Comptabilité
+  COMMERCIAL = "commercial",     // Département Commercial
+  CLIENT = "client"              // Client externe
 }

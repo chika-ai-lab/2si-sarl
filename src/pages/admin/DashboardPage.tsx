@@ -9,11 +9,18 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  ScanLine,
+  BookOpen,
+  FileText,
+  Calculator,
+  Wrench,
+  BarChart3,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { isCommercialFeatureEnabled } from "@/config/env.config";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -103,182 +110,340 @@ export function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">
           {t("admin.dashboard")}
         </h2>
-        <p className="text-muted-foreground">
-          Tableau de bord
-        </p>
+        <p className="text-muted-foreground">Tableau de bord</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Orders */}
-        <Card>
+        <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.totalOrders")}
             </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+              <ShoppingCart className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">{stats.ordersChange}</span> ce
-              mois
+            <div className="text-2xl font-bold text-foreground">
+              {stats.totalOrders}
+            </div>
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                {stats.ordersChange}
+              </span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Pending Orders */}
-        <Card>
+        <Card className="border-2 hover:border-yellow-500/50 transition-all hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.pendingOrders")}
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-md">
+              <Clock className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-red-600">{stats.pendingChange}</span> ce
-              mois
+            <div className="text-2xl font-bold text-foreground">
+              {stats.pendingOrders}
+            </div>
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                {stats.pendingChange}
+              </span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Revenue */}
-        <Card>
+        <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg bg-gradient-to-br from-card via-card to-primary/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.revenue")}
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+              <TrendingUp className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(stats.revenue)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">{stats.revenueChange}</span> ce
-              mois
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                {stats.revenueChange}
+              </span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
 
         {/* Customers */}
-        <Card>
+        <Card className="border-2 hover:border-purple-500/50 transition-all hover:shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-foreground">
               {t("admin.stats.customers")}
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md">
+              <Users className="h-4 w-4 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.customers}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">{stats.customersChange}</span> ce
-              mois
+            <div className="text-2xl font-bold text-foreground">
+              {stats.customers}
+            </div>
+            <p className="text-xs flex items-center gap-1 mt-1">
+              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                {stats.customersChange}
+              </span>
+              <span className="text-muted-foreground">ce mois</span>
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Recent Orders & Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Recent Orders */}
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Commandes récentes</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Dernières commandes en attente de traitement
-              </p>
-            </div>
-            <Link to="/admin/orders">
-              <Button variant="outline" size="sm">
-                Voir tout
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentOrders.map((order) => {
-                const StatusIcon = statusConfig[order.status].icon;
-                return (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <Package className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{order.id}</p>
-                          <Badge
-                            variant="outline"
-                            className={statusConfig[order.status].color}
-                          >
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusConfig[order.status].label}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {order.customer}
-                        </p>
-                      </div>
+      {/* Recent Orders */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Commandes récentes</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Dernières commandes en attente de traitement
+            </p>
+          </div>
+          <Link to="/admin/orders">
+            <Button variant="outline" size="sm">
+              Voir tout
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentOrders.map((order) => {
+              const StatusIcon = statusConfig[order.status].icon;
+              return (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <Package className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        {formatCurrency(order.amount)}
-                      </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{order.id}</p>
+                        <Badge
+                          variant="outline"
+                          className={statusConfig[order.status].color}
+                        >
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {statusConfig[order.status].label}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {order.date}
+                        {order.customer}
                       </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      {formatCurrency(order.amount)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {order.date}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions rapides</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Link to="/admin/products">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Package className="mr-2 h-5 w-5" />
-                Produits
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Gérer le catalogue
-                </span>
-              </Button>
+      {/* Accès Rapide - Module Commercial */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Accès rapide</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Clients */}
+          {isCommercialFeatureEnabled("clients") && (
+            <Link to="/admin/commercial/clients">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Clients</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Gérer les clients
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
+          )}
 
-            <Link to="/admin/customers">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Users className="mr-2 h-5 w-5" />
-                Clients
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Voir les clients
-                </span>
-              </Button>
+          {/* Commandes */}
+          {isCommercialFeatureEnabled("commandes") && (
+            <Link to="/admin/commercial/commandes">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <ShoppingCart className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Commandes</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Voir les commandes
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
+          )}
 
-            <Link to="/admin/reports">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                Rapports
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Statistiques détaillées
-                </span>
-              </Button>
+          {/* Scan BL */}
+          {isCommercialFeatureEnabled("scanBL") && (
+            <Link to="/admin/commercial/scan-bl">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <ScanLine className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Scan BL</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Scanner les BL
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
-          </CardContent>
-        </Card>
+          )}
+
+          {/* Catalogue */}
+          {isCommercialFeatureEnabled("catalogue") && (
+            <Link to="/admin/commercial/catalogue">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <BookOpen className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Catalogue</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Parcourir le catalogue
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Accréditif */}
+          {isCommercialFeatureEnabled("accreditif") && (
+            <Link to="/admin/commercial/accreditif">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <FileText className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Accréditif
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Documents accréditifs
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Simulation */}
+          {isCommercialFeatureEnabled("simulation") && (
+            <Link to="/admin/commercial/simulation">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <Calculator className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Simulation
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tableau de simulation
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* SAV */}
+          {isCommercialFeatureEnabled("sav") && (
+            <Link to="/admin/commercial/sav">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <Wrench className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">S.A.V</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Service après-vente
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Rapports */}
+          {isCommercialFeatureEnabled("rapports") && (
+            <Link to="/admin/commercial/rapports">
+              <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all">
+                      <BarChart3 className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Rapports</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Voir les rapports
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

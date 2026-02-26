@@ -3,7 +3,12 @@ import { paymentConfig } from "@/config/payments.config";
 /**
  * Format a number as currency based on config
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | undefined | null): string {
+  // Handle undefined/null values
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return "0";
+  }
+
   const { currencySymbol, currencyPosition, decimalSeparator, thousandSeparator, currency } = paymentConfig;
 
   // XOF (Franc CFA) doesn't use decimal places

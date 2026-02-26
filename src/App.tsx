@@ -18,6 +18,7 @@ import OrderPage from "./pages/OrderPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
+import NotFoundAdminPage from "./pages/admin/NotFoundAdminPage";
 import { AdminLayoutV2 } from "./components/layout/AdminLayoutV2";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { isMaintenanceModeEnabled } from "./services/settingsService";
@@ -76,8 +77,13 @@ function MainApp() {
         {/* Dynamic module routes */}
         {activeModules.flatMap((module) =>
           module.routes.map((route) => {
-            // Convert route path to relative path
-            const routePath = route.path === "/" ? "" : route.path.replace(/^\//, "");
+            // Combine basePath with route path
+            // basePath: "/admin/crm", route.path: "/"  -> "crm"
+            // basePath: "/admin/crm", route.path: "/customers"  -> "crm/customers"
+            const moduleBase = module.basePath.replace("/admin", "").replace(/^\//, "");
+            const routePath = route.path === "/"
+              ? moduleBase
+              : `${moduleBase}${route.path}`;
 
             return (
               <Route
@@ -101,8 +107,12 @@ function MainApp() {
             );
           })
         )}
+
+        {/* 404 inside admin layout */}
+        <Route path="*" element={<NotFoundAdminPage />} />
       </Route>
 
+      {/* 404 for public routes */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

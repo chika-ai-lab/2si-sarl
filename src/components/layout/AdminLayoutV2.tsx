@@ -72,29 +72,43 @@ export function AdminLayoutV2() {
   // Afficher les rôles de l'utilisateur
   const userRoleDisplay = useMemo(() => {
     if (!user) return "";
-    if (user.roles.includes("super_admin")) return "Super Admin";
+    if (user.roles.includes("super_admin")) return "Administrateur";
     if (user.roles.includes("admin")) return "Admin";
-    if (user.roles.includes("manager")) return "Manager";
-    if (user.roles.includes("staff")) return "Staff";
+    if (user.roles.includes("comptabilite")) return "Comptabilité";
+    if (user.roles.includes("commercial")) return "Commercial";
     return "Utilisateur";
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-gradient-to-br from-muted/30 via-background to-muted/20">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col bg-secondary text-secondary-foreground transition-all duration-300",
-          sidebarOpen ? "w-64" : "w-20"
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-gradient-to-b from-secondary via-secondary to-secondary/95 text-secondary-foreground border-r border-border/50 shadow-2xl transition-all duration-300",
+          sidebarOpen ? "w-64" : "w-20",
+          // Mobile responsiveness
+          "max-lg:w-64",
+          sidebarOpen ? "translate-x-0" : "max-lg:-translate-x-full"
         )}
       >
         {/* Header */}
-        <div className="flex h-16 items-center justify-between border-b border-secondary-foreground/10 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-secondary-foreground/10 px-4 bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10">
           {sidebarOpen && (
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="relative">
+                <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg blur-xl group-hover:blur-2xl transition-all opacity-0 group-hover:opacity-100" />
+              </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold leading-tight">
+                <span className="text-sm font-bold leading-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   {companyConfig.legalName}
                 </span>
                 <span className="text-xs text-secondary-foreground/70">
@@ -105,12 +119,12 @@ export function AdminLayoutV2() {
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-lg p-2 hover:bg-secondary-foreground/10 transition-colors"
+            className="rounded-lg p-2 hover:bg-gradient-to-r hover:from-primary/20 hover:to-accent/20 transition-all hover:shadow-md active:scale-95 lg:hover:bg-secondary-foreground/10"
           >
             {sidebarOpen ? (
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 text-primary" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-primary" />
             )}
           </button>
         </div>
@@ -131,15 +145,15 @@ export function AdminLayoutV2() {
                   {sidebarOpen && (
                     <button
                       onClick={() => toggleSection(sectionKey)}
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-secondary-foreground/5 rounded-lg transition-colors group"
+                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 rounded-lg transition-all group"
                     >
-                      <h3 className="text-xs font-semibold text-secondary-foreground/70 uppercase tracking-wider">
+                      <h3 className="text-xs font-semibold text-secondary-foreground/90 group-hover:text-primary uppercase tracking-wider">
                         {section.label}
                       </h3>
                       {isCollapsed ? (
-                        <ChevronRight className="h-3.5 w-3.5 text-secondary-foreground/50 group-hover:text-secondary-foreground/70 transition-colors" />
+                        <ChevronRight className="h-3.5 w-3.5 text-secondary-foreground/60 group-hover:text-primary transition-colors" />
                       ) : (
-                        <ChevronDown className="h-3.5 w-3.5 text-secondary-foreground/50 group-hover:text-secondary-foreground/70 transition-colors" />
+                        <ChevronDown className="h-3.5 w-3.5 text-secondary-foreground/60 group-hover:text-primary transition-colors" />
                       )}
                     </button>
                   )}
@@ -157,22 +171,35 @@ export function AdminLayoutV2() {
                       <Link
                         key={item.path}
                         to={item.path}
+                        onClick={() => {
+                          // Fermer le drawer sur mobile après navigation
+                          if (window.innerWidth < 1024) {
+                            setSidebarOpen(false);
+                          }
+                        }}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors relative",
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all relative group/item",
                           isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-secondary-foreground/10"
+                            ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30"
+                            : "text-secondary-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-foreground hover:shadow-sm"
                         )}
                         title={!sidebarOpen ? item.label : undefined}
                       >
-                        <IconComponent className="h-5 w-5 shrink-0" />
+                        {/* Active indicator */}
+                        {isActive && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-foreground rounded-r-full" />
+                        )}
+                        <IconComponent className={cn(
+                          "h-5 w-5 shrink-0 transition-transform group-hover/item:scale-110",
+                          isActive && "drop-shadow-sm"
+                        )} />
                         {sidebarOpen && (
                           <>
                             <span className="flex-1">{item.label}</span>
                             {item.badge && (
                               <span
                                 className={cn(
-                                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                                  "rounded-full px-2 py-0.5 text-xs font-medium shadow-sm",
                                   item.badge.variant === "primary" && "bg-primary text-primary-foreground",
                                   item.badge.variant === "success" && "bg-green-500 text-white",
                                   item.badge.variant === "warning" && "bg-yellow-500 text-white",
@@ -195,25 +222,30 @@ export function AdminLayoutV2() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-secondary-foreground/10 p-4 space-y-1">
+        <div className="border-t border-secondary-foreground/10 p-4 space-y-1 bg-gradient-to-b from-transparent to-secondary/50">
           <Link
             to="/"
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                setSidebarOpen(false);
+              }
+            }}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-secondary-foreground/10"
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-blue-600/10 text-secondary-foreground hover:text-blue-600 hover:shadow-sm group"
             )}
             title={!sidebarOpen ? "Retour au site" : undefined}
           >
-            <Home className="h-5 w-5 shrink-0" />
+            <Home className="h-5 w-5 shrink-0 group-hover:scale-110 transition-transform" />
             {sidebarOpen && <span>Retour au site</span>}
           </Link>
           <button
             onClick={handleLogout}
             className={cn(
-              "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-red-500/10 text-red-600 hover:text-red-700"
+              "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-600/10 text-red-600 hover:text-red-700 hover:shadow-sm group"
             )}
             title={!sidebarOpen ? "Déconnexion" : undefined}
           >
-            <LogOut className="h-5 w-5 shrink-0" />
+            <LogOut className="h-5 w-5 shrink-0 group-hover:scale-110 transition-transform" />
             {sidebarOpen && <span>Déconnexion</span>}
           </button>
         </div>
@@ -223,28 +255,36 @@ export function AdminLayoutV2() {
       <div
         className={cn(
           "transition-all duration-300",
-          sidebarOpen ? "pl-64" : "pl-20"
+          "lg:pl-64",
+          !sidebarOpen && "lg:pl-20"
         )}
       >
         {/* Top Bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-6">
-          <div className="flex flex-1 items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-gradient-to-r from-background via-background to-background/95 backdrop-blur-sm px-4 md:px-6 shadow-sm">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden p-2 hover:bg-primary/10 rounded-lg transition-colors"
+          >
+            <Menu className="h-5 w-5 text-primary" />
+          </button>
+
+          <div className="flex flex-1 items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
                 Administration
               </h1>
               {user && (
-                <p className="text-xs text-muted-foreground">
-                  {userRoleDisplay} • {user.moduleAccess.filter(m => m.enabled).length} modules actifs
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  <span className="font-medium text-primary">{userRoleDisplay}</span> • {user.moduleAccess.filter(m => m.enabled).length} modules actifs
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">{user?.name}</span>
+                  <Button variant="ghost" size="sm" className="gap-2 hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10">
+                    <User className="h-4 w-4 text-primary" />
+                    <span className="hidden md:inline max-w-[120px] truncate">{user?.name}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -279,7 +319,7 @@ export function AdminLayoutV2() {
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main className="p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
