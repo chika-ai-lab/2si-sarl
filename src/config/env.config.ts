@@ -91,6 +91,7 @@ export const commercialFeatures = {
   simulation: getEnvBoolean('VITE_COMMERCIAL_SIMULATION_ENABLED', true),
   sav: getEnvBoolean('VITE_COMMERCIAL_SAV_ENABLED', false),
   rapports: getEnvBoolean('VITE_COMMERCIAL_RAPPORTS_ENABLED', false),
+  promotions: getEnvBoolean('VITE_COMMERCIAL_PROMOTIONS_ENABLED', true),
 };
 
 /**

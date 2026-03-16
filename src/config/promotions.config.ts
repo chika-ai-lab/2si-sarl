@@ -1,6 +1,8 @@
 // Seasonal promotions configuration
 // Configure promotional banners for special occasions
 
+export const LOCAL_STORAGE_PROMO_KEY = "2si-promotions-config";
+
 export interface Promotion {
   id: string;
   enabled: boolean;
@@ -121,7 +123,20 @@ export function getActivePromotions(): Promotion[] {
   const now = new Date();
   const today = now.toISOString().split("T")[0];
 
-  return promotionsConfig.promotions.filter((promo) => {
+  let promosToEvaluate = promotionsConfig.promotions;
+
+  // Attempt to load from localStorage first
+  try {
+    const savedConfig = localStorage.getItem(LOCAL_STORAGE_PROMO_KEY);
+    if (savedConfig) {
+      const parsed = JSON.parse(savedConfig);
+      promosToEvaluate = parsed.promotions || promosToEvaluate;
+    }
+  } catch (e) {
+    console.warn("Could not read dynamic promotion config from local storage", e);
+  }
+
+  return promosToEvaluate.filter((promo) => {
     if (!promo.enabled) return false;
 
     // If no dates specified, promo is always active

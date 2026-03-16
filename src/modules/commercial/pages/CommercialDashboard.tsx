@@ -75,6 +75,13 @@ export default function CommercialDashboard() {
       icon: BarChart3,
       path: "/admin/commercial/rapports",
       color: "from-indigo-500 to-indigo-600"
+    },
+    {
+      label: "Promotions",
+      description: "Gérer les bannières",
+      icon: FileText,
+      path: "/admin/commercial/promotions",
+      color: "from-amber-500 to-amber-600"
     }
   ];
 

@@ -72,6 +72,13 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:REPORTS:READ"],
       enabled: isCommercialFeatureEnabled("rapports"),
     },
+    // Promotions
+    {
+      path: "/promotions",
+      component: lazy(() => import("./pages/PromotionsPage")),
+      requiresPermission: ["COMMERCIAL:CATALOG:READ"] as any,
+      enabled: isCommercialFeatureEnabled("promotions"),
+    },
   ];
 
   // Filtrer uniquement les routes activées
@@ -145,6 +152,15 @@ function filterNavigationByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:REPORTS:READ"],
       order: 15,
       enabled: isCommercialFeatureEnabled("rapports"),
+    },
+    {
+      label: "Promotions",
+      path: "/admin/commercial/promotions",
+      icon: "Tag",
+      section: "sales",
+      requiresPermission: ["COMMERCIAL:CATALOG:READ"] as any,
+      order: 16,
+      enabled: isCommercialFeatureEnabled("promotions"),
     },
   ];
 
