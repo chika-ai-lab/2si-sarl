@@ -99,3 +99,44 @@ export async function getProduitsStats() {
 
 // Alias conservé pour compatibilité
 export const MOCK_PRODUITS: ProduitCatalogue[] = [];
+
+export async function createProduit(data: Partial<ProduitCatalogue>): Promise<ProduitCatalogue> {
+  const payload = {
+    libelle: data.nom,
+    description: data.description,
+    reference: data.reference,
+    prix: data.prixVente,
+    prix_achat: data.prixAchat,
+    quantite: data.stock?.quantite,
+    seuil_alerte: data.stock?.seuilAlerte,
+    statut: data.statut || 'actif',
+    categorie_id: data.categorie,
+    banque: data.banque,
+    marque: data.marque,
+  };
+  const res = await apiClient.post<any>(API_ENDPOINTS.produits.create, payload);
+  return mapBackendToProduct(res.data || res);
+}
+
+export async function updateProduit(id: string, data: Partial<ProduitCatalogue>): Promise<ProduitCatalogue> {
+  const payload = {
+    libelle: data.nom,
+    description: data.description,
+    reference: data.reference,
+    prix: data.prixVente,
+    prix_achat: data.prixAchat,
+    quantite: data.stock?.quantite,
+    seuil_alerte: data.stock?.seuilAlerte,
+    statut: data.statut,
+    categorie_id: data.categorie,
+    banque: data.banque,
+    marque: data.marque,
+  };
+  const res = await apiClient.put<any>(API_ENDPOINTS.produits.update(id), payload);
+  return mapBackendToProduct(res.data || res);
+}
+
+export async function deleteProduit(id: string): Promise<void> {
+  await apiClient.delete(API_ENDPOINTS.produits.delete(id));
+}
+

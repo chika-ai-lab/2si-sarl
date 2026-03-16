@@ -36,7 +36,7 @@ function adaptUserV1ToV2(oldUser: UserV1): User {
         "REPORTS:*:READ",
         "COMMERCIAL:*:*"
       ]
-      : [],
+      : [] as any,
     moduleAccess: isAdmin
       ? [
         { moduleId: "dashboard", enabled: true },
@@ -160,7 +160,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
           : [
             "COMMERCIAL:*:*",
             "DASHBOARD:*:READ",
-          ],
+          ] as any,
         moduleAccess: [
           { moduleId: "dashboard", enabled: true },
           { moduleId: "crm", enabled: isAdmin },
@@ -168,6 +168,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
           { moduleId: "products", enabled: true },
           { moduleId: "reports", enabled: true },
           { moduleId: "commercial", enabled: true },
+          { moduleId: "admin", enabled: isAdmin },
         ],
         status: "active" as UserStatus,
         lastLogin: new Date().toISOString(),
@@ -187,16 +188,32 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    saveUserToStorage(null);
-    localStorage.removeItem("auth-token");
-    localStorage.removeItem("refresh-token");
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem('auth-token');
+      if (token) {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Failed to invalidate session on server:", error);
+    } finally {
+      setUser(null);
+      saveUserToStorage(null);
+      localStorage.removeItem("auth-token");
+      localStorage.removeItem("refresh-token");
 
-    toast({
-      title: "Déconnexion",
-      description: "Vous avez été déconnecté avec succès"
-    });
+      toast({
+        title: "Déconnexion",
+        description: "Vous avez été déconnecté avec succès"
+      });
+    }
   };
 
   const updateUser = (updatedUser: User) => {

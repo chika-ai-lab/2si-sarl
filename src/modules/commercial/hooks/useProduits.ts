@@ -3,7 +3,7 @@
  * Facilite l'utilisation des services avec cache automatique
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ProduitCatalogue,
   ProduitFilters,
@@ -85,3 +85,50 @@ export function useProduitsStats() {
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
+
+// ============================================
+// MUTATIONS — invalident le cache automatiquement
+// ============================================
+
+/**
+ * Hook pour créer un produit. Invalide la liste des produits après succès,
+ * ce qui déclenche un rechargement automatique dans CataloguePage.
+ */
+export function useCreateProduit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<import('../types').ProduitCatalogue>) =>
+      produitsService.createProduit(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: produitsKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook pour mettre à jour un produit. Invalide la liste après succès.
+ */
+export function useUpdateProduit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<import('../types').ProduitCatalogue> }) =>
+      produitsService.updateProduit(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: produitsKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook pour supprimer un produit. Invalide la liste après succès.
+ */
+export function useDeleteProduit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => produitsService.deleteProduit(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: produitsKeys.all });
+    },
+  });
+}
+

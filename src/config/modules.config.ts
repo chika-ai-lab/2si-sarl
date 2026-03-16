@@ -9,6 +9,8 @@ import ordersModule from "@/modules/orders/module.config";
 import productsModule from "@/modules/products/module.config";
 import reportsModule from "@/modules/reports/module.config";
 import commercialModule from "@/modules/commercial/module.config";
+import adminModule from "@/modules/admin/module.config";
+import achatsModule from "@/modules/achats/module.config";
 
 /**
  * Registre central de tous les modules de la plateforme
@@ -38,6 +40,14 @@ export const MODULES_REGISTRY: Record<string, ModuleConfig> = {
   commercial: {
     ...commercialModule,
     enabled: isModuleEnabled('commercial') && commercialModule.enabled,
+  },
+  admin: {
+    ...adminModule,
+    enabled: true,
+  },
+  achats: {
+    ...achatsModule,
+    enabled: isModuleEnabled('achats') ?? true,
   },
 };
 
