@@ -29,23 +29,23 @@ function adaptUserV1ToV2(oldUser: UserV1): User {
     roles: isAdmin ? ["admin"] : ["client"],
     customPermissions: isAdmin
       ? [
-          "DASHBOARD:*:*",
-          "CRM:*:*",
-          "ORDERS:*:*",
-          "PRODUCTS:*:*",
-          "REPORTS:*:READ",
-          "COMMERCIAL:*:*"
-        ]
+        "DASHBOARD:*:*",
+        "CRM:*:*",
+        "ORDERS:*:*",
+        "PRODUCTS:*:*",
+        "REPORTS:*:READ",
+        "COMMERCIAL:*:*"
+      ]
       : [],
     moduleAccess: isAdmin
       ? [
-          { moduleId: "dashboard", enabled: true },
-          { moduleId: "crm", enabled: true },
-          { moduleId: "orders", enabled: true },
-          { moduleId: "products", enabled: true },
-          { moduleId: "reports", enabled: true },
-          { moduleId: "commercial", enabled: true }
-        ]
+        { moduleId: "dashboard", enabled: true },
+        { moduleId: "crm", enabled: true },
+        { moduleId: "orders", enabled: true },
+        { moduleId: "products", enabled: true },
+        { moduleId: "reports", enabled: true },
+        { moduleId: "commercial", enabled: true }
+      ]
       : [],
     status: "active" as UserStatus,
     createdAt: new Date().toISOString(),
@@ -128,99 +128,60 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     setIsLoading(true);
 
     try {
-      // TODO: Remplacer par un vrai appel API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-      // Credentials de démonstration
-      let user: User | null = null;
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Administrateur - Accès total
-      if (email === "admin@2si.sarl" && password === "admin123") {
-        user = {
-          id: "1",
-          email: "admin@2si.sarl",
-          name: "Administrateur",
-          roles: ["super_admin"],
-          customPermissions: ["*:*:*"],
-          moduleAccess: [
-            { moduleId: "dashboard", enabled: true },
-            { moduleId: "crm", enabled: true },
-            { moduleId: "orders", enabled: true },
-            { moduleId: "products", enabled: true },
-            { moduleId: "reports", enabled: true },
-            { moduleId: "commercial", enabled: true }
-          ],
-          status: "active" as UserStatus,
-          lastLogin: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || "Email ou mot de passe incorrect");
       }
-      // Comptabilité - Finances et rapports
-      else if (email === "comptabilite@2si.sarl" && password === "compta123") {
-        user = {
-          id: "2",
-          email: "comptabilite@2si.sarl",
-          name: "Département Comptabilité",
-          roles: ["comptabilite"],
-          customPermissions: [
-            "DASHBOARD:*:READ",
-            "ORDERS:*:READ",
-            "REPORTS:*:*",
-            "COMMERCIAL:*:READ"
-          ],
-          moduleAccess: [
-            { moduleId: "dashboard", enabled: true },
-            { moduleId: "orders", enabled: true },
-            { moduleId: "reports", enabled: true },
-            { moduleId: "commercial", enabled: true }
-          ],
-          status: "active" as UserStatus,
-          lastLogin: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-      }
-      // Commercial - Accès complet au module commercial
-      else if (email === "commercial@2si.sarl" && password === "commercial123") {
-        user = {
-          id: "3",
-          email: "commercial@2si.sarl",
-          name: "Département Commercial",
-          roles: ["commercial"],
-          customPermissions: [
+
+      const data = await response.json();
+      // data = { access_token, token_type, user: { id, name, email, roles: [{title}] } }
+
+      localStorage.setItem('auth-token', data.access_token);
+
+      const backendUser = data.user;
+      const roleTitle: string = backendUser.roles?.[0]?.title || 'commercial';
+      const isAdmin = roleTitle.toLowerCase() === 'admin' || roleTitle.toLowerCase() === 'super_admin';
+
+      const user: User = {
+        id: String(backendUser.id),
+        email: backendUser.email,
+        name: backendUser.name,
+        roles: [roleTitle],
+        customPermissions: isAdmin
+          ? ["*:*:*"]
+          : [
             "COMMERCIAL:*:*",
-            "COMMERCIAL:CLIENTS:*",
-            "COMMERCIAL:ORDERS:*",
-            "COMMERCIAL:SCAN:*",
-            "COMMERCIAL:CATALOG:*",
-            "COMMERCIAL:ACCREDITIF:*",
-            "COMMERCIAL:SIMULATION:*",
-            "COMMERCIAL:SAV:*",
-            "COMMERCIAL:REPORTS:*"
+            "DASHBOARD:*:READ",
           ],
-          moduleAccess: [
-            { moduleId: "dashboard", enabled: true },
-            { moduleId: "commercial", enabled: true }
-          ],
-          status: "active" as UserStatus,
-          lastLogin: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-      }
+        moduleAccess: [
+          { moduleId: "dashboard", enabled: true },
+          { moduleId: "crm", enabled: isAdmin },
+          { moduleId: "orders", enabled: true },
+          { moduleId: "products", enabled: true },
+          { moduleId: "reports", enabled: true },
+          { moduleId: "commercial", enabled: true },
+        ],
+        status: "active" as UserStatus,
+        lastLogin: new Date().toISOString(),
+        createdAt: backendUser.created_at || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-      if (user) {
-        setUser(user);
-        saveUserToStorage(user);
+      setUser(user);
+      saveUserToStorage(user);
 
-        toast({
-          title: "Connexion réussie",
-          description: `Bienvenue, ${user.name}`
-        });
-      } else {
-        throw new Error("Email ou mot de passe incorrect");
-      }
+      toast({
+        title: "Connexion réussie",
+        description: `Bienvenue, ${user.name}`,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -246,7 +207,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   const isAdmin = (): boolean => {
     // Allow admin, super_admin, and all department roles to access admin area
     return user?.roles.some(role =>
-      ["admin", "super_admin", "comptabilite", "commercial"].includes(role)
+      ["admin", "super_admin", "comptabilite", "commercial"].includes(role.toLowerCase())
     ) || false;
   };
 

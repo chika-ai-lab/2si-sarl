@@ -1,90 +1,99 @@
 /**
  * Configuration API pour le module Commercial
- * Facilite la transition vers un vrai backend
  */
 
-// Pour le moment, on utilise des mocks
-// Quand le backend sera prêt, il suffira de changer USE_MOCK_API à false
-export const USE_MOCK_API = true;
+export const USE_MOCK_API = false;
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 export const API_ENDPOINTS = {
-  // Clients
   clients: {
-    list: '/commercial/clients',
-    getById: (id: string) => `/commercial/clients/${id}`,
-    create: '/commercial/clients',
-    update: (id: string) => `/commercial/clients/${id}`,
-    delete: (id: string) => `/commercial/clients/${id}`,
+    list: '/clients',
+    getById: (id: string) => `/clients/${id}`,
+    create: '/clients',
+    update: (id: string) => `/clients/${id}`,
+    delete: (id: string) => `/clients/${id}`,
+    stats: '/stats/clients',
   },
 
-  // Commandes
   commandes: {
-    list: '/commercial/commandes',
-    getById: (id: string) => `/commercial/commandes/${id}`,
-    create: '/commercial/commandes',
-    update: (id: string) => `/commercial/commandes/${id}`,
-    updateStatus: (id: string) => `/commercial/commandes/${id}/status`,
-    delete: (id: string) => `/commercial/commandes/${id}`,
+    list: '/commande-clients',
+    getById: (id: string) => `/commande-clients/${id}`,
+    create: '/commande-clients',
+    update: (id: string) => `/commande-clients/${id}`,
+    delete: (id: string) => `/commande-clients/${id}`,
+    valider: (id: string) => `/commande-clients/${id}/valider`,
+    livrer: (id: string) => `/commande-clients/${id}/livrer`,
+    brouillon: (id: string) => `/commande-clients/${id}/brouillon`,
+    lignes: '/commande-article-clients',
+    stats: '/stats/commandes',
+    bl: '/bordereau-livraisons',
   },
 
-  // Produits Catalogue
   produits: {
-    list: '/commercial/catalogue',
-    getById: (id: string) => `/commercial/catalogue/${id}`,
-    getByBanque: (banque: string) => `/commercial/catalogue/banque/${banque}`,
+    list: '/articles',
+    getById: (id: string) => `/articles/${id}`,
+    create: '/articles',
+    update: (id: string) => `/articles/${id}`,
+    delete: (id: string) => `/articles/${id}`,
+    getByBanque: (banque: string) => `/articles?banque=${banque}`,
+    categories: '/categories',
+    stats: '/stats/produits',
   },
 
-  // Bon de Livraison
   bonLivraison: {
-    list: '/commercial/bl',
-    getById: (id: string) => `/commercial/bl/${id}`,
-    upload: '/commercial/bl/upload',
-    associate: (id: string) => `/commercial/bl/${id}/associate`,
+    list: '/bordereau-livraisons',
+    getById: (id: string) => `/bordereau-livraisons/${id}`,
   },
 
-  // Accréditifs
   accreditifs: {
-    list: '/commercial/accreditifs',
-    getById: (id: string) => `/commercial/accreditifs/${id}`,
-    create: '/commercial/accreditifs',
-    update: (id: string) => `/commercial/accreditifs/${id}`,
-    uploadDocument: (id: string) => `/commercial/accreditifs/${id}/documents`,
+    list: '/accreditifs',
+    getById: (id: string) => `/accreditifs/${id}`,
+    create: '/accreditifs',
+    update: (id: string) => `/accreditifs/${id}`,
+    delete: (id: string) => `/accreditifs/${id}`,
+    uploadDocument: (id: string) => `/accreditifs/${id}/documents`,
+    alertes: '/accreditifs/alertes',
   },
 
-  // Simulations
   simulations: {
-    list: '/commercial/simulations',
-    getById: (id: string) => `/commercial/simulations/${id}`,
-    create: '/commercial/simulations',
-    update: (id: string) => `/commercial/simulations/${id}`,
-    convertToOrder: (id: string) => `/commercial/simulations/${id}/convert`,
-    generatePDF: (id: string) => `/commercial/simulations/${id}/pdf`,
+    list: '/simulations',
+    getById: (id: string) => `/simulations/${id}`,
+    create: '/simulations',
+    update: (id: string) => `/simulations/${id}`,
+    delete: (id: string) => `/simulations/${id}`,
+    send: (id: string) => `/simulations/${id}/send`,
+    convertToOrder: (id: string) => `/simulations/${id}/convert`,
   },
 
-  // SAV
   sav: {
-    list: '/commercial/sav',
-    getById: (id: string) => `/commercial/sav/${id}`,
-    create: '/commercial/sav',
-    update: (id: string) => `/commercial/sav/${id}`,
-    addIntervention: (id: string) => `/commercial/sav/${id}/interventions`,
-    uploadPhoto: (id: string) => `/commercial/sav/${id}/photos`,
-    close: (id: string) => `/commercial/sav/${id}/close`,
+    list: '/sav',
+    getById: (id: string) => `/sav/${id}`,
+    create: '/sav',
+    update: (id: string) => `/sav/${id}`,
+    delete: (id: string) => `/sav/${id}`,
+    addIntervention: (id: string) => `/sav/${id}/interventions`,
+    close: (id: string) => `/sav/${id}/close`,
   },
 
-  // Statistiques
   stats: {
-    dashboard: '/commercial/stats/dashboard',
-    clients: '/commercial/stats/clients',
-    commandes: '/commercial/stats/commandes',
-    revenue: '/commercial/stats/revenue',
+    clients: '/stats/clients',
+    commandes: '/stats/commandes',
+    produits: '/stats/produits',
+  },
+
+  rapports: {
+    evolutionCA: '/rapports/evolution-ca',
+    statistiques: '/rapports/statistiques',
+    topProduits: '/rapports/top-produits',
+    topClients: '/rapports/top-clients',
+    repartitionBanques: '/rapports/repartition-banques',
+    export: (type: string) => `/rapports/export/${type}`,
   },
 };
 
 /**
- * Simule un délai réseau pour les mocks
+ * Simule un délai réseau (conservé pour compatibilité)
  */
 export const simulateNetworkDelay = (ms: number = 500): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));

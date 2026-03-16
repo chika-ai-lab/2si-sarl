@@ -1,6 +1,5 @@
 /**
- * Service de gestion des clients
- * Architecture API-ready avec mocks
+ * Service de gestion des clients — connecté au backend GestEMC
  */
 
 import type {
@@ -11,349 +10,134 @@ import type {
   PaginatedResponse,
   ApiResponse,
 } from '../types';
-import { USE_MOCK_API, simulateNetworkDelay } from './api.config';
+import { API_ENDPOINTS } from './api.config';
+import { apiClient } from './apiClient';
 
 // ============================================
-// MOCK DATA
+// MAPPING
 // ============================================
 
-const MOCK_CLIENTS: Client[] = [
-  {
-    id: '1',
-    code: 'CLT-001',
-    nom: 'Diallo',
-    prenom: 'Mamadou',
-    type: 'particulier',
-    email: 'mamadou.diallo@email.com',
-    telephone: '+221 77 123 45 67',
-    adresse: {
-      rue: 'Avenue Cheikh Anta Diop',
-      ville: 'Dakar',
-      codePostal: '10200',
-      pays: 'Sénégal',
-    },
-    categorie: 'A',
-    credit: {
-      limite: 5000000,
-      utilise: 2300000,
-      disponible: 2700000,
-    },
-    banquePartenaire: 'CBAO',
-    numeroCompte: 'SN12345678901234567890',
-    statut: 'actif',
-    dateCreation: '2024-01-15',
-    dernierAchat: '2024-12-20',
-    totalAchats: 15600000,
-    nombreCommandes: 23,
-  },
-  {
-    id: '2',
-    code: 'CLT-002',
-    raisonSociale: 'Tech Solutions SARL',
-    type: 'entreprise',
-    email: 'contact@techsolutions.sn',
-    telephone: '+221 33 822 45 67',
-    adresse: {
-      rue: 'Plateau, Rue 12',
-      ville: 'Dakar',
-      codePostal: '10100',
-      pays: 'Sénégal',
-    },
-    categorie: 'A',
-    credit: {
-      limite: 20000000,
-      utilise: 8500000,
-      disponible: 11500000,
-    },
-    banquePartenaire: 'CMS',
-    statut: 'actif',
-    dateCreation: '2023-06-10',
-    dernierAchat: '2024-12-25',
-    totalAchats: 45800000,
-    nombreCommandes: 67,
-  },
-  {
-    id: '3',
-    code: 'CLT-003',
-    nom: 'Ndiaye',
-    prenom: 'Fatou',
-    type: 'particulier',
-    email: 'fatou.ndiaye@email.com',
-    telephone: '+221 76 987 65 43',
-    adresse: {
-      rue: 'Almadies, Villa 45',
-      ville: 'Dakar',
-      codePostal: '10300',
-      pays: 'Sénégal',
-    },
-    categorie: 'B',
-    credit: {
-      limite: 2000000,
-      utilise: 450000,
-      disponible: 1550000,
-    },
-    banquePartenaire: 'CBAO',
-    statut: 'actif',
-    dateCreation: '2024-03-22',
-    dernierAchat: '2024-11-10',
-    totalAchats: 3200000,
-    nombreCommandes: 8,
-  },
-];
+function mapBackendToClient(c: any): Client {
+  const creditLimite = Number(c.credit_limite) || 0;
+  const creditUtilise = Number(c.credit_utilise) || 0;
 
-// ============================================
-// API FUNCTIONS (Mock)
-// ============================================
-
-/**
- * Récupère la liste des clients avec filtres et pagination
- */
-export async function getClients(
-  filters: ClientFilters = {}
-): Promise<PaginatedResponse<Client>> {
-  if (USE_MOCK_API) {
-    await simulateNetworkDelay();
-
-    let filtered = [...MOCK_CLIENTS];
-
-    // Filtres
-    if (filters.search) {
-      const search = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (c) =>
-          c.nom?.toLowerCase().includes(search) ||
-          c.prenom?.toLowerCase().includes(search) ||
-          c.raisonSociale?.toLowerCase().includes(search) ||
-          c.code.toLowerCase().includes(search) ||
-          c.email.toLowerCase().includes(search)
-      );
+  let adresse = { rue: '', ville: 'Dakar', codePostal: '', pays: 'Sénégal' };
+  if (c.adresse) {
+    try {
+      adresse = typeof c.adresse === 'string' ? JSON.parse(c.adresse) : c.adresse;
+    } catch {
+      adresse.rue = c.adresse;
     }
-
-    if (filters.statut) {
-      filtered = filtered.filter((c) => c.statut === filters.statut);
-    }
-
-    if (filters.categorie) {
-      filtered = filtered.filter((c) => c.categorie === filters.categorie);
-    }
-
-    if (filters.banque) {
-      filtered = filtered.filter((c) => c.banquePartenaire === filters.banque);
-    }
-
-    // Tri
-    if (filters.sortBy) {
-      filtered.sort((a, b) => {
-        const aVal = a[filters.sortBy!];
-        const bVal = b[filters.sortBy!];
-        const order = filters.sortOrder === 'desc' ? -1 : 1;
-        return aVal > bVal ? order : -order;
-      });
-    }
-
-    // Pagination
-    const page = filters.page || 1;
-    const limit = filters.limit || 10;
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginatedData = filtered.slice(start, end);
-
-    return {
-      data: paginatedData,
-      pagination: {
-        page,
-        limit,
-        total: filtered.length,
-        totalPages: Math.ceil(filtered.length / limit),
-      },
-    };
   }
 
-  // TODO: Vraie implémentation API
-  const response = await fetch(`/api/commercial/clients?${new URLSearchParams(filters as any)}`);
-  return response.json();
+  return {
+    id: String(c.id),
+    code: c.num_compte || `CLT-${String(c.id).padStart(3, '0')}`,
+    nom: c.nom || (c.type === 'particulier' ? (c.nom_complet || '').split(' ')[0] : undefined),
+    prenom: c.prenom || (c.type === 'particulier' ? (c.nom_complet || '').split(' ').slice(1).join(' ') : undefined),
+    raisonSociale: c.raison_sociale || (c.type === 'entreprise' ? c.nom_complet : undefined),
+    type: c.type || 'particulier',
+    email: c.email || '',
+    telephone: c.telephone || '',
+    telephoneSecondaire: c.telephone_secondaire,
+    adresse,
+    categorie: c.categorie || 'B',
+    credit: { limite: creditLimite, utilise: creditUtilise, disponible: creditLimite - creditUtilise },
+    banquePartenaire: c.banque_partenaire || 'Autre',
+    numeroCompte: c.num_compte,
+    statut: c.statut || 'actif',
+    dateCreation: c.created_at?.split('T')[0] || c.created_at || '',
+    totalAchats: 0,
+    nombreCommandes: 0,
+    commercialAssigne: c.gestionnaire,
+    notes: c.notes,
+  };
 }
 
-/**
- * Récupère un client par son ID
- */
+function mapClientToBackend(data: CreateClientDTO | UpdateClientDTO): Record<string, unknown> {
+  const nomComplet = (data as any).type === 'entreprise'
+    ? (data as any).raisonSociale
+    : [(data as any).nom, (data as any).prenom].filter(Boolean).join(' ');
+
+  return {
+    nom_complet: nomComplet,
+    nom: (data as any).nom,
+    prenom: (data as any).prenom,
+    raison_sociale: (data as any).raisonSociale,
+    type: (data as any).type,
+    email: data.email,
+    telephone: data.telephone,
+    telephone_secondaire: (data as any).telephoneSecondaire,
+    adresse: JSON.stringify((data as any).adresse || {}),
+    categorie: (data as any).categorie,
+    statut: (data as any).statut,
+    banque_partenaire: (data as any).banquePartenaire,
+    credit_limite: (data as any).creditLimite,
+    num_compte: (data as any).numeroCompte,
+    gestionnaire: (data as any).commercialAssigne,
+    notes: (data as any).notes,
+  };
+}
+
+// ============================================
+// API FUNCTIONS
+// ============================================
+
+export async function getClients(filters: ClientFilters = {}): Promise<PaginatedResponse<Client>> {
+  const params: Record<string, string | number | undefined> = {
+    search: filters.search,
+    statut: filters.statut,
+    categorie: filters.categorie,
+    banque_partenaire: filters.banque,
+    page: filters.page,
+    per_page: filters.limit,
+  };
+
+  const res = await apiClient.get<any>(API_ENDPOINTS.clients.list, params);
+  const items: any[] = res.data || res;
+
+  return {
+    data: items.map(mapBackendToClient),
+    pagination: {
+      page: res.meta?.current_page || filters.page || 1,
+      limit: res.meta?.per_page || filters.limit || 10,
+      total: res.meta?.total || items.length,
+      totalPages: res.meta?.last_page || 1,
+    },
+  };
+}
+
 export async function getClientById(id: string): Promise<ApiResponse<Client>> {
-  if (USE_MOCK_API) {
-    await simulateNetworkDelay();
-
-    const client = MOCK_CLIENTS.find((c) => c.id === id);
-
-    if (!client) {
-      return {
-        success: false,
-        message: 'Client non trouvé',
-      };
-    }
-
-    return {
-      success: true,
-      data: client,
-    };
-  }
-
-  // TODO: Vraie implémentation API
-  const response = await fetch(`/api/commercial/clients/${id}`);
-  return response.json();
+  const res = await apiClient.get<any>(API_ENDPOINTS.clients.getById(id));
+  const c = res.data || res;
+  return { success: true, data: mapBackendToClient(c) };
 }
 
-/**
- * Crée un nouveau client
- */
-export async function createClient(
-  data: CreateClientDTO
-): Promise<ApiResponse<Client>> {
-  if (USE_MOCK_API) {
-    await simulateNetworkDelay();
-
-    // Validation basique
-    if (!data.nom && !data.raisonSociale) {
-      return {
-        success: false,
-        message: 'Le nom ou la raison sociale est requis',
-        errors: {
-          nom: ['Le nom est requis pour un particulier'],
-          raisonSociale: ['La raison sociale est requise pour une entreprise'],
-        },
-      };
-    }
-
-    const newClient: Client = {
-      id: `${MOCK_CLIENTS.length + 1}`,
-      code: `CLT-${String(MOCK_CLIENTS.length + 1).padStart(3, '0')}`,
-      nom: data.nom,
-      prenom: data.prenom,
-      raisonSociale: data.raisonSociale,
-      type: data.type,
-      email: data.email,
-      telephone: data.telephone,
-      telephoneSecondaire: data.telephoneSecondaire,
-      adresse: data.adresse,
-      categorie: data.categorie,
-      credit: {
-        limite: data.creditLimite,
-        utilise: 0,
-        disponible: data.creditLimite,
-      },
-      banquePartenaire: data.banquePartenaire,
-      numeroCompte: data.numeroCompte,
-      statut: 'actif',
-      dateCreation: new Date().toISOString(),
-      totalAchats: 0,
-      nombreCommandes: 0,
-      notes: data.notes,
-    };
-
-    MOCK_CLIENTS.push(newClient);
-
-    return {
-      success: true,
-      data: newClient,
-      message: 'Client créé avec succès',
-    };
-  }
-
-  // TODO: Vraie implémentation API
-  const response = await fetch('/api/commercial/clients', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return response.json();
+export async function createClient(data: CreateClientDTO): Promise<ApiResponse<Client>> {
+  const res = await apiClient.post<any>(API_ENDPOINTS.clients.create, mapClientToBackend(data));
+  const c = res.data || res;
+  return { success: true, data: mapBackendToClient(c), message: 'Client créé avec succès' };
 }
 
-/**
- * Met à jour un client
- */
-export async function updateClient(
-  id: string,
-  data: UpdateClientDTO
-): Promise<ApiResponse<Client>> {
-  if (USE_MOCK_API) {
-    await simulateNetworkDelay();
-
-    const index = MOCK_CLIENTS.findIndex((c) => c.id === id);
-
-    if (index === -1) {
-      return {
-        success: false,
-        message: 'Client non trouvé',
-      };
-    }
-
-    MOCK_CLIENTS[index] = {
-      ...MOCK_CLIENTS[index],
-      ...data,
-    };
-
-    return {
-      success: true,
-      data: MOCK_CLIENTS[index],
-      message: 'Client mis à jour avec succès',
-    };
-  }
-
-  // TODO: Vraie implémentation API
-  const response = await fetch(`/api/commercial/clients/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return response.json();
+export async function updateClient(id: string, data: UpdateClientDTO): Promise<ApiResponse<Client>> {
+  const res = await apiClient.put<any>(API_ENDPOINTS.clients.update(id), mapClientToBackend(data));
+  const c = res.data || res;
+  return { success: true, data: mapBackendToClient(c), message: 'Client mis à jour avec succès' };
 }
 
-/**
- * Supprime un client
- */
 export async function deleteClient(id: string): Promise<ApiResponse<void>> {
-  if (USE_MOCK_API) {
-    await simulateNetworkDelay();
-
-    const index = MOCK_CLIENTS.findIndex((c) => c.id === id);
-
-    if (index === -1) {
-      return {
-        success: false,
-        message: 'Client non trouvé',
-      };
-    }
-
-    MOCK_CLIENTS.splice(index, 1);
-
-    return {
-      success: true,
-      message: 'Client supprimé avec succès',
-    };
-  }
-
-  // TODO: Vraie implémentation API
-  const response = await fetch(`/api/commercial/clients/${id}`, {
-    method: 'DELETE',
-  });
-  return response.json();
+  await apiClient.delete(API_ENDPOINTS.clients.delete(id));
+  return { success: true, message: 'Client supprimé avec succès' };
 }
 
-/**
- * Récupère les statistiques clients
- */
 export async function getClientsStats() {
-  if (USE_MOCK_API) {
-    await simulateNetworkDelay();
-
-    return {
-      total: MOCK_CLIENTS.length,
-      actifs: MOCK_CLIENTS.filter((c) => c.statut === 'actif').length,
-      categorieA: MOCK_CLIENTS.filter((c) => c.categorie === 'A').length,
-      categorieB: MOCK_CLIENTS.filter((c) => c.categorie === 'B').length,
-      categorieC: MOCK_CLIENTS.filter((c) => c.categorie === 'C').length,
-    };
-  }
-
-  // TODO: Vraie implémentation API
-  const response = await fetch('/api/commercial/stats/clients');
-  return response.json();
+  const res = await apiClient.get<any>(API_ENDPOINTS.clients.stats);
+  return {
+    total: res.total || 0,
+    actifs: res.actifs || 0,
+    nouveauxMois: res.nouveaux_mois || 0,
+    categorieA: res.par_categorie?.A || 0,
+    categorieB: res.par_categorie?.B || 0,
+    categorieC: res.par_categorie?.C || 0,
+  };
 }

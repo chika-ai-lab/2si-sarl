@@ -1,9 +1,10 @@
 /**
- * Service pour les rapports commerciaux
- * Agrégation de données, statistiques et analyses
+ * Service pour les rapports commerciaux — connecté au backend GestEMC
  */
 
 import type { ApiResponse } from "@/types/api";
+import { API_ENDPOINTS } from './api.config';
+import { apiClient } from './apiClient';
 
 // ============================================
 // TYPES
@@ -50,7 +51,7 @@ export interface VenteParBanque {
 export interface StatistiquesGlobales {
   chiffreAffaireTotal: number;
   chiffreAffaireMois: number;
-  evolutionCA: number; // Pourcentage vs mois précédent
+  evolutionCA: number;
   nombreCommandesTotal: number;
   nombreCommandesMois: number;
   evolutionCommandes: number;
@@ -72,350 +73,175 @@ export interface RapportEvolutionCA {
 }
 
 // ============================================
-// MOCK DATA
+// MAPPING
 // ============================================
 
-const mockEvolutionMensuelle: ChiffreAffaire[] = [
-  {
-    periode: "2024-07",
-    montant: 1250000,
-    nombreCommandes: 45,
-    montantMoyen: 27778,
-  },
-  {
-    periode: "2024-08",
-    montant: 1450000,
-    nombreCommandes: 52,
-    montantMoyen: 27885,
-  },
-  {
-    periode: "2024-09",
-    montant: 1680000,
-    nombreCommandes: 58,
-    montantMoyen: 28966,
-  },
-  {
-    periode: "2024-10",
-    montant: 1520000,
-    nombreCommandes: 54,
-    montantMoyen: 28148,
-  },
-  {
-    periode: "2024-11",
-    montant: 1890000,
-    nombreCommandes: 65,
-    montantMoyen: 29077,
-  },
-  {
-    periode: "2024-12",
-    montant: 2150000,
-    nombreCommandes: 72,
-    montantMoyen: 29861,
-  },
-];
+function mapChiffreAffaire(item: any): ChiffreAffaire {
+  const montant = Number(item.montant) || 0;
+  const nombreCommandes = Number(item.nombre_commandes) || 0;
+  return {
+    periode: item.periode || '',
+    montant,
+    nombreCommandes,
+    montantMoyen: nombreCommandes > 0 ? Math.round(montant / nombreCommandes) : 0,
+  };
+}
 
-const mockEvolutionHebdomadaire: ChiffreAffaire[] = [
-  {
-    periode: "S48",
-    montant: 485000,
-    nombreCommandes: 16,
-    montantMoyen: 30313,
-  },
-  {
-    periode: "S49",
-    montant: 520000,
-    nombreCommandes: 18,
-    montantMoyen: 28889,
-  },
-  {
-    periode: "S50",
-    montant: 560000,
-    nombreCommandes: 19,
-    montantMoyen: 29474,
-  },
-  {
-    periode: "S51",
-    montant: 585000,
-    nombreCommandes: 19,
-    montantMoyen: 30789,
-  },
-];
+function mapVenteParProduit(item: any): VenteParProduit {
+  return {
+    produitId: String(item.article_id || item.produit_id || ''),
+    produitNom: item.libelle || item.nom || item.produit_nom || '',
+    quantiteVendue: Number(item.quantite_vendue) || 0,
+    chiffreAffaire: Number(item.chiffre_affaire || item.ca) || 0,
+    nombreCommandes: Number(item.nombre_commandes) || 0,
+  };
+}
 
-const mockTopProduits: VenteParProduit[] = [
-  {
-    produitId: "prod-001",
-    produitNom: "Ordinateur portable Dell XPS 15",
-    quantiteVendue: 145,
-    chiffreAffaire: 3625000,
-    nombreCommandes: 98,
-  },
-  {
-    produitId: "prod-002",
-    produitNom: "MacBook Pro 16 pouces",
-    quantiteVendue: 89,
-    chiffreAffaire: 3115000,
-    nombreCommandes: 76,
-  },
-  {
-    produitId: "prod-003",
-    produitNom: "iPhone 15 Pro Max",
-    quantiteVendue: 234,
-    chiffreAffaire: 2574000,
-    nombreCommandes: 134,
-  },
-  {
-    produitId: "prod-004",
-    produitNom: "Samsung Galaxy S24 Ultra",
-    quantiteVendue: 198,
-    chiffreAffaire: 2178000,
-    nombreCommandes: 112,
-  },
-  {
-    produitId: "prod-005",
-    produitNom: "iPad Pro 12.9 pouces",
-    quantiteVendue: 167,
-    chiffreAffaire: 1837000,
-    nombreCommandes: 95,
-  },
-];
+function mapVenteParClient(item: any): VenteParClient {
+  return {
+    clientId: String(item.client_id || ''),
+    clientNom: item.nom_complet || item.nom || item.client_nom || '',
+    chiffreAffaire: Number(item.chiffre_affaire || item.ca) || 0,
+    nombreCommandes: Number(item.nombre_commandes) || 0,
+    dernierAchat: item.dernier_achat || '',
+  };
+}
 
-const mockTopClients: VenteParClient[] = [
-  {
-    clientId: "client-001",
-    clientNom: "Orange Sénégal",
-    chiffreAffaire: 4250000,
-    nombreCommandes: 23,
-    dernierAchat: "2024-12-15",
-  },
-  {
-    clientId: "client-002",
-    clientNom: "Sonatel",
-    chiffreAffaire: 3890000,
-    nombreCommandes: 19,
-    dernierAchat: "2024-12-18",
-  },
-  {
-    clientId: "client-003",
-    clientNom: "CBAO Groupe Attijariwafa Bank",
-    chiffreAffaire: 3450000,
-    nombreCommandes: 17,
-    dernierAchat: "2024-12-10",
-  },
-  {
-    clientId: "client-004",
-    clientNom: "Ecobank Sénégal",
-    chiffreAffaire: 2980000,
-    nombreCommandes: 15,
-    dernierAchat: "2024-12-12",
-  },
-  {
-    clientId: "client-005",
-    clientNom: "Total Sénégal",
-    chiffreAffaire: 2670000,
-    nombreCommandes: 14,
-    dernierAchat: "2024-12-16",
-  },
-];
+function mapVenteParBanque(item: any): VenteParBanque {
+  return {
+    banque: item.banque || item.banque_partenaire || '',
+    chiffreAffaire: Number(item.chiffre_affaire || item.ca) || 0,
+    nombreCommandes: Number(item.nombre_commandes) || 0,
+    nombreClients: Number(item.nombre_clients) || 0,
+  };
+}
 
-const mockRepartitionBanques: VenteParBanque[] = [
-  {
-    banque: "CBAO",
-    chiffreAffaire: 8750000,
-    nombreCommandes: 156,
-    nombreClients: 45,
-  },
-  {
-    banque: "CMS",
-    chiffreAffaire: 6420000,
-    nombreCommandes: 128,
-    nombreClients: 38,
-  },
-  {
-    banque: "Autre",
-    chiffreAffaire: 4770000,
-    nombreCommandes: 89,
-    nombreClients: 27,
-  },
-];
-
-const mockStatistiques: StatistiquesGlobales = {
-  chiffreAffaireTotal: 19940000,
-  chiffreAffaireMois: 2150000,
-  evolutionCA: 13.76, // +13.76% vs mois précédent
-  nombreCommandesTotal: 373,
-  nombreCommandesMois: 72,
-  evolutionCommandes: 10.77,
-  panierMoyen: 29861,
-  evolutionPanierMoyen: 2.69,
-  nombreClientsActifs: 110,
-  tauxConversion: 65.45, // Taux de conversion devis → commande
-  nombreAccreditifsActifs: 8,
-  montantAccreditifsActifs: 12500000,
-};
+function mapStatistiquesGlobales(res: any): StatistiquesGlobales {
+  return {
+    chiffreAffaireTotal: Number(res.ca_total) || 0,
+    chiffreAffaireMois: Number(res.ca_mois) || 0,
+    evolutionCA: Number(res.evolution_ca) || 0,
+    nombreCommandesTotal: Number(res.commandes_total) || 0,
+    nombreCommandesMois: Number(res.commandes_mois) || 0,
+    evolutionCommandes: Number(res.evolution_commandes) || 0,
+    panierMoyen: Number(res.panier_moyen) || 0,
+    evolutionPanierMoyen: Number(res.evolution_panier_moyen) || 0,
+    nombreClientsActifs: Number(res.clients_actifs) || 0,
+    tauxConversion: Number(res.taux_conversion) || 0,
+    nombreAccreditifsActifs: Number(res.accreditifs_actifs) || 0,
+    montantAccreditifsActifs: Number(res.montant_accreditifs_actifs) || 0,
+  };
+}
 
 // ============================================
-// SERVICE FUNCTIONS
+// API FUNCTIONS
 // ============================================
 
-const USE_MOCK_API = true;
-
-/**
- * Récupère le rapport d'évolution du chiffre d'affaires
- */
 export async function getRapportEvolutionCA(
   filters: RapportFilters = {}
 ): Promise<ApiResponse<RapportEvolutionCA>> {
-  if (USE_MOCK_API) {
-    // Simuler un délai réseau
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  const params: Record<string, string | number | undefined> = {
+    date_debut: filters.dateDebut,
+    date_fin: filters.dateFin,
+    client_id: filters.clientId,
+    banque: filters.banque,
+  };
 
-    return {
-      success: true,
-      data: {
-        evolutionMensuelle: mockEvolutionMensuelle,
-        evolutionHebdomadaire: mockEvolutionHebdomadaire,
-        topProduits: mockTopProduits,
-        topClients: mockTopClients,
-        repartitionBanques: mockRepartitionBanques,
-        statistiques: mockStatistiques,
-      },
-      message: "Rapport récupéré avec succès",
-    };
-  }
+  const [evolutionRes, statsRes, topProduitsRes, topClientsRes, banquesRes] = await Promise.all([
+    apiClient.get<any>(API_ENDPOINTS.rapports.evolutionCA, params),
+    apiClient.get<any>(API_ENDPOINTS.rapports.statistiques),
+    apiClient.get<any>(API_ENDPOINTS.rapports.topProduits, { limit: 5 }),
+    apiClient.get<any>(API_ENDPOINTS.rapports.topClients, { limit: 5 }),
+    apiClient.get<any>(API_ENDPOINTS.rapports.repartitionBanques),
+  ]);
 
-  // TODO: Implémenter l'appel API réel
-  const queryParams = new URLSearchParams();
-  if (filters.dateDebut) queryParams.append("dateDebut", filters.dateDebut);
-  if (filters.dateFin) queryParams.append("dateFin", filters.dateFin);
-  if (filters.clientId) queryParams.append("clientId", filters.clientId);
-  if (filters.produitId) queryParams.append("produitId", filters.produitId);
-  if (filters.banque) queryParams.append("banque", filters.banque);
+  const evolutionItems: any[] = evolutionRes.data || evolutionRes || [];
+  const topProduitsItems: any[] = topProduitsRes.data || topProduitsRes || [];
+  const topClientsItems: any[] = topClientsRes.data || topClientsRes || [];
+  const banquesItems: any[] = banquesRes.data || banquesRes || [];
 
-  const response = await fetch(`/api/commercial/rapports/evolution-ca?${queryParams}`);
-  return response.json();
+  return {
+    success: true,
+    data: {
+      evolutionMensuelle: evolutionItems.map(mapChiffreAffaire),
+      evolutionHebdomadaire: [],
+      topProduits: topProduitsItems.map(mapVenteParProduit),
+      topClients: topClientsItems.map(mapVenteParClient),
+      repartitionBanques: banquesItems.map(mapVenteParBanque),
+      statistiques: mapStatistiquesGlobales(statsRes.data || statsRes || {}),
+    },
+    message: 'Rapport récupéré avec succès',
+  };
 }
 
-/**
- * Récupère les statistiques globales
- */
 export async function getStatistiquesGlobales(): Promise<ApiResponse<StatistiquesGlobales>> {
-  if (USE_MOCK_API) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    return {
-      success: true,
-      data: mockStatistiques,
-      message: "Statistiques récupérées avec succès",
-    };
-  }
-
-  const response = await fetch("/api/commercial/rapports/statistiques");
-  return response.json();
+  const res = await apiClient.get<any>(API_ENDPOINTS.rapports.statistiques);
+  return {
+    success: true,
+    data: mapStatistiquesGlobales(res.data || res || {}),
+    message: 'Statistiques récupérées avec succès',
+  };
 }
 
-/**
- * Récupère le top des produits
- */
 export async function getTopProduits(
   filters: RapportFilters = {},
   limit: number = 10
 ): Promise<ApiResponse<VenteParProduit[]>> {
-  if (USE_MOCK_API) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  const params: Record<string, string | number | undefined> = {
+    date_debut: filters.dateDebut,
+    date_fin: filters.dateFin,
+    limit,
+  };
 
-    return {
-      success: true,
-      data: mockTopProduits.slice(0, limit),
-      message: "Top produits récupérés avec succès",
-    };
-  }
-
-  const queryParams = new URLSearchParams();
-  if (filters.dateDebut) queryParams.append("dateDebut", filters.dateDebut);
-  if (filters.dateFin) queryParams.append("dateFin", filters.dateFin);
-  queryParams.append("limit", limit.toString());
-
-  const response = await fetch(`/api/commercial/rapports/top-produits?${queryParams}`);
-  return response.json();
+  const res = await apiClient.get<any>(API_ENDPOINTS.rapports.topProduits, params);
+  const items: any[] = res.data || res || [];
+  return { success: true, data: items.map(mapVenteParProduit), message: 'Top produits récupérés avec succès' };
 }
 
-/**
- * Récupère le top des clients
- */
 export async function getTopClients(
   filters: RapportFilters = {},
   limit: number = 10
 ): Promise<ApiResponse<VenteParClient[]>> {
-  if (USE_MOCK_API) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  const params: Record<string, string | number | undefined> = {
+    date_debut: filters.dateDebut,
+    date_fin: filters.dateFin,
+    limit,
+  };
 
-    return {
-      success: true,
-      data: mockTopClients.slice(0, limit),
-      message: "Top clients récupérés avec succès",
-    };
-  }
-
-  const queryParams = new URLSearchParams();
-  if (filters.dateDebut) queryParams.append("dateDebut", filters.dateDebut);
-  if (filters.dateFin) queryParams.append("dateFin", filters.dateFin);
-  queryParams.append("limit", limit.toString());
-
-  const response = await fetch(`/api/commercial/rapports/top-clients?${queryParams}`);
-  return response.json();
+  const res = await apiClient.get<any>(API_ENDPOINTS.rapports.topClients, params);
+  const items: any[] = res.data || res || [];
+  return { success: true, data: items.map(mapVenteParClient), message: 'Top clients récupérés avec succès' };
 }
 
-/**
- * Récupère la répartition par banque
- */
 export async function getRepartitionBanques(
   filters: RapportFilters = {}
 ): Promise<ApiResponse<VenteParBanque[]>> {
-  if (USE_MOCK_API) {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  const params: Record<string, string | number | undefined> = {
+    date_debut: filters.dateDebut,
+    date_fin: filters.dateFin,
+  };
 
-    return {
-      success: true,
-      data: mockRepartitionBanques,
-      message: "Répartition par banque récupérée avec succès",
-    };
-  }
-
-  const queryParams = new URLSearchParams();
-  if (filters.dateDebut) queryParams.append("dateDebut", filters.dateDebut);
-  if (filters.dateFin) queryParams.append("dateFin", filters.dateFin);
-
-  const response = await fetch(`/api/commercial/rapports/repartition-banques?${queryParams}`);
-  return response.json();
+  const res = await apiClient.get<any>(API_ENDPOINTS.rapports.repartitionBanques, params);
+  const items: any[] = res.data || res || [];
+  return { success: true, data: items.map(mapVenteParBanque), message: 'Répartition par banque récupérée avec succès' };
 }
 
-/**
- * Exporte les données de rapport en CSV
- */
 export async function exporterRapportCSV(
-  type: "ca" | "produits" | "clients" | "banques",
+  type: 'ca' | 'produits' | 'clients' | 'banques',
   filters: RapportFilters = {}
 ): Promise<Blob> {
-  if (USE_MOCK_API) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  const params = new URLSearchParams();
+  if (filters.dateDebut) params.append('date_debut', filters.dateDebut);
+  if (filters.dateFin) params.append('date_fin', filters.dateFin);
 
-    // Générer un CSV de démonstration
-    let csvContent = "";
+  const token = localStorage.getItem('auth-token');
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  const url = `${API_BASE}${API_ENDPOINTS.rapports.export(type)}?${params}`;
 
-    if (type === "ca") {
-      csvContent = "Période,Montant,Nombre de commandes,Montant moyen\n";
-      mockEvolutionMensuelle.forEach((item) => {
-        csvContent += `${item.periode},${item.montant},${item.nombreCommandes},${item.montantMoyen}\n`;
-      });
-    }
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
 
-    return new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  }
-
-  const queryParams = new URLSearchParams();
-  if (filters.dateDebut) queryParams.append("dateDebut", filters.dateDebut);
-  if (filters.dateFin) queryParams.append("dateFin", filters.dateFin);
-
-  const response = await fetch(`/api/commercial/rapports/export/${type}?${queryParams}`);
+  if (!response.ok) throw new Error(`Erreur export ${response.status}`);
   return response.blob();
 }
