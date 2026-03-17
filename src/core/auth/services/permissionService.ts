@@ -7,8 +7,9 @@ export function hasPermission(
   user: User,
   permission: PermissionString
 ): boolean {
-  // Super admin a toutes les permissions
-  if (user.roles.includes("super_admin")) {
+  // Admin et super_admin ont toutes les permissions (comparaison insensible à la casse)
+  const rolesLower = user.roles.map((r) => r.toLowerCase());
+  if (rolesLower.includes("admin") || rolesLower.includes("super_admin")) {
     return true;
   }
 
@@ -64,8 +65,9 @@ export function hasAnyPermission(
  * Vérifie si l'utilisateur a accès à un module
  */
 export function hasModuleAccess(user: User, moduleId: string): boolean {
-  // Super admin a accès à tout
-  if (user.roles.includes("super_admin")) {
+  // Admin et super_admin ont accès à tous les modules (comparaison insensible à la casse)
+  const rolesLower = user.roles.map((r) => r.toLowerCase());
+  if (rolesLower.includes("admin") || rolesLower.includes("super_admin")) {
     return true;
   }
 

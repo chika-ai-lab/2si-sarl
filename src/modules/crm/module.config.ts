@@ -48,14 +48,6 @@ export const crmModuleConfig: ModuleConfig = {
   // Navigation
   navigation: [
     {
-      label: "Clients",
-      path: "/admin/crm/customers",
-      icon: "Users",
-      section: "crm",
-      requiresPermission: ["CRM:CUSTOMER:READ"],
-      order: 3
-    },
-    {
       label: "Contacts",
       path: "/admin/crm/contacts",
       icon: "UserCircle",

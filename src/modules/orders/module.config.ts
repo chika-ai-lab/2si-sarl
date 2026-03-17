@@ -36,14 +36,6 @@ export const ordersModuleConfig: ModuleConfig = {
 
   navigation: [
     {
-      label: "Commandes",
-      path: "/admin/orders",
-      icon: "ShoppingCart",
-      section: "sales",
-      requiresPermission: ["ORDERS:ORDER:READ"],
-      order: 6
-    },
-    {
       label: "Devis",
       path: "/admin/orders/quotes",
       icon: "FileText",

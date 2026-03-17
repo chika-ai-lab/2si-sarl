@@ -36,14 +36,6 @@ export const productsModuleConfig: ModuleConfig = {
 
   navigation: [
     {
-      label: "Produits",
-      path: "/admin/products",
-      icon: "Package",
-      section: "sales",
-      requiresPermission: ["PRODUCTS:PRODUCT:READ"],
-      order: 9
-    },
-    {
       label: "Catégories",
       path: "/admin/products/categories",
       icon: "FolderOpen",

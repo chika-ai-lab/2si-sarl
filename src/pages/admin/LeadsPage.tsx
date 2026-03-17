@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import {
   UserPlus, Search, Plus, TrendingUp, Clock, CheckCircle, XCircle,
-  Mail, Phone, Building2, Edit, Trash2, ArrowRight,
+  Mail, Phone, Building2, Edit, Trash2, ArrowRight, Loader2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
@@ -100,12 +101,48 @@ const EMPTY_FORM = {
 const PIPELINE_ORDER: LeadStatut[] = ["nouveau", "contacte", "qualifie", "proposition", "gagne", "perdu"];
 
 export function LeadsPage() {
-  const [leads, setLeads]     = useState<Lead[]>(INITIAL_LEADS);
+  const [leads, setLeads]     = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState("");
   const [statutFilter, setStatutFilter] = useState<LeadStatut | "all">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editId, setEditId]   = useState<string | null>(null);
   const [form, setForm]       = useState(EMPTY_FORM);
+
+  const fetchLeads = async () => {
+    try {
+      const res = await apiClient.get<any>('/clients');
+      const items: any[] = res.data ?? res ?? [];
+      const mapped: Lead[] = items.map((item: any) => {
+        const statut: LeadStatut =
+          item.statut === "actif"    ? "gagne"    :
+          item.statut === "inactif"  ? "nouveau"  :
+          item.statut === "suspendu" ? "perdu"    :
+          "contacte";
+        return {
+          id: String(item.id),
+          nom: item.nom_complet ?? `${item.prenom ?? ""} ${item.nom ?? ""}`.trim(),
+          entreprise: item.raison_sociale ?? "",
+          email: item.email ?? "",
+          telephone: item.telephone ?? "",
+          statut,
+          source: "autre" as LeadSource,
+          valeurEstimee: item.credit_limite ? Number(item.credit_limite) : undefined,
+          notes: item.notes ?? "",
+          dateCreation: item.created_at?.slice(0, 10) ?? "",
+          dateProchain: undefined,
+          commercialAssigne: undefined,
+        };
+      });
+      setLeads(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchLeads(); }, []);
 
   const filtered = leads.filter((l) => {
     const q = search.toLowerCase();
@@ -130,31 +167,53 @@ export function LeadsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.nom || !form.email) {
       toast({ title: "Champs requis", description: "Nom et email sont obligatoires.", variant: "destructive" });
       return;
     }
-    const data: Partial<Lead> = {
+    const payload = {
+      nom: form.nom,
+      email: form.email,
+      telephone: form.telephone,
+      raison_sociale: form.entreprise,
+      notes: form.notes,
+      type: 'professionnel',
+      statut: 'inactif',
+    };
+    const localData: Partial<Lead> = {
       nom: form.nom, entreprise: form.entreprise || undefined, email: form.email,
       telephone: form.telephone || undefined, statut: form.statut, source: form.source,
       valeurEstimee: form.valeurEstimee ? Number(form.valeurEstimee) : undefined,
       notes: form.notes || undefined, dateProchain: form.dateProchain || undefined,
       commercialAssigne: form.commercialAssigne || undefined,
     };
-    if (editId) {
-      setLeads((prev) => prev.map((l) => l.id === editId ? { ...l, ...data } : l));
-      toast({ title: "Prospect modifié" });
-    } else {
-      setLeads((prev) => [{ ...data, id: `ld-${Date.now()}`, dateCreation: new Date().toISOString().split("T")[0] } as Lead, ...prev]);
-      toast({ title: "Prospect créé" });
+    try {
+      if (editId) {
+        await apiClient.put(`/clients/${editId}`, payload);
+        setLeads((prev) => prev.map((l) => l.id === editId ? { ...l, ...localData } : l));
+        toast({ title: "Prospect modifié" });
+      } else {
+        await apiClient.post('/clients', payload);
+        await fetchLeads();
+        toast({ title: "Prospect créé" });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
     }
     setIsDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setLeads((prev) => prev.filter((l) => l.id !== id));
-    toast({ title: "Prospect supprimé" });
+  const handleDelete = async (id: string) => {
+    try {
+      await apiClient.delete(`/clients/${id}`);
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+      toast({ title: "Prospect supprimé" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la suppression", variant: "destructive" });
+    }
   };
 
   const pipelineStats = PIPELINE_ORDER.reduce((acc, s) => {
@@ -165,6 +224,14 @@ export function LeadsPage() {
   const totalValeur = leads
     .filter((l) => l.statut !== "perdu")
     .reduce((sum, l) => sum + (l.valeurEstimee ?? 0), 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>

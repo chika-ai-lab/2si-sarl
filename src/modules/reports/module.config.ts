@@ -24,16 +24,7 @@ export const reportsModuleConfig: ModuleConfig = {
     }
   ],
 
-  navigation: [
-    {
-      label: "Rapports",
-      path: "/admin/reports",
-      icon: "BarChart3",
-      section: "reporting",
-      requiresPermission: ["REPORTS:REPORT:READ"],
-      order: 12
-    }
-  ],
+  navigation: [],
 
   settings: {}
 };

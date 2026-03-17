@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  UserCircle, Search, Plus, Mail, Phone, Building2, Edit, Trash2,
+  UserCircle, Search, Plus, Mail, Phone, Building2, Edit, Trash2, Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -72,12 +73,39 @@ const INITIAL_CONTACTS: Contact[] = [
 const EMPTY_FORM = { nom: "", prenom: "", entreprise: "", poste: "", email: "", telephone: "", type: "client" as ContactType, notes: "" };
 
 export function ContactsPage() {
-  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading]   = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<ContactType | "all">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const fetchContacts = async () => {
+    try {
+      const res = await apiClient.get<any>('/clients');
+      const items: any[] = res.data ?? res ?? [];
+      const mapped: Contact[] = items.map((item: any) => ({
+        id: String(item.id),
+        nom: item.nom ?? (item.nom_complet?.split(" ")[1] ?? ""),
+        prenom: item.prenom ?? (item.nom_complet?.split(" ")[0] ?? ""),
+        entreprise: item.raison_sociale ?? "",
+        poste: "",
+        email: item.email ?? "",
+        telephone: item.telephone ?? "",
+        type: "client" as ContactType,
+        notes: item.notes ?? "",
+        dateCreation: item.created_at?.slice(0, 10) ?? "",
+      }));
+      setContacts(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchContacts(); }, []);
 
   const filtered = contacts.filter((c) => {
     const q = search.toLowerCase();
@@ -106,31 +134,47 @@ export function ContactsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.nom || !form.email) {
       toast({ title: "Champs requis", description: "Nom et email sont obligatoires.", variant: "destructive" });
       return;
     }
-    if (editId) {
-      setContacts((prev) =>
-        prev.map((c) => c.id === editId ? { ...c, ...form } : c)
-      );
-      toast({ title: "Contact modifié" });
-    } else {
-      const newContact: Contact = {
-        ...form,
-        id: `ct-${Date.now()}`,
-        dateCreation: new Date().toISOString().split("T")[0],
-      };
-      setContacts((prev) => [newContact, ...prev]);
-      toast({ title: "Contact créé" });
+    const payload = {
+      nom: form.nom,
+      prenom: form.prenom,
+      raison_sociale: form.entreprise,
+      email: form.email,
+      telephone: form.telephone,
+      notes: form.notes,
+      type: 'professionnel',
+      statut: 'actif',
+    };
+    try {
+      if (editId) {
+        await apiClient.put(`/clients/${editId}`, payload);
+        setContacts((prev) => prev.map((c) => c.id === editId ? { ...c, ...form } : c));
+        toast({ title: "Contact modifié" });
+      } else {
+        await apiClient.post('/clients', payload);
+        await fetchContacts();
+        toast({ title: "Contact créé" });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
     }
     setIsDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setContacts((prev) => prev.filter((c) => c.id !== id));
-    toast({ title: "Contact supprimé" });
+  const handleDelete = async (id: string) => {
+    try {
+      await apiClient.delete(`/clients/${id}`);
+      setContacts((prev) => prev.filter((c) => c.id !== id));
+      toast({ title: "Contact supprimé" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la suppression", variant: "destructive" });
+    }
   };
 
   const stats = {
@@ -139,6 +183,14 @@ export function ContactsPage() {
     fournisseurs: contacts.filter((c) => c.type === "fournisseur").length,
     partenaires: contacts.filter((c) => c.type === "partenaire").length,
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>

@@ -39,6 +39,7 @@ export function AdminLayoutV2() {
       sales: { label: "Ventes", items: [], order: 3 },
       reporting: { label: "Rapports", items: [], order: 4 },
       system: { label: "Système", items: [], order: 5 },
+      admin: { label: "Administration", items: [], order: 6 },
     };
 
     navigation.forEach((item) => {
@@ -72,8 +73,9 @@ export function AdminLayoutV2() {
   // Afficher les rôles de l'utilisateur
   const userRoleDisplay = useMemo(() => {
     if (!user) return "";
-    if (user.roles.includes("super_admin")) return "Administrateur";
-    if (user.roles.includes("admin")) return "Admin";
+    const rolesLower = user.roles.map((r) => r.toLowerCase());
+    if (rolesLower.includes("super_admin")) return "Administrateur";
+    if (rolesLower.includes("admin")) return "Admin";
     if (user.roles.includes("comptabilite")) return "Comptabilité";
     if (user.roles.includes("commercial")) return "Commercial";
     return "Utilisateur";
@@ -191,9 +193,9 @@ export function AdminLayoutV2() {
                           }
                         }}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all relative group/item",
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:!text-white transition-all relative group/item",
                           isActive
-                            ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30"
+                            ? "bg-gradient-to-r from-primary to-accent text-primary-foreground  shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30"
                             : "text-secondary-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-foreground hover:shadow-sm"
                         )}
                         title={!sidebarOpen ? item.label : undefined}

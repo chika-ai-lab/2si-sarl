@@ -11,7 +11,6 @@ export const adminModuleConfig: ModuleConfig = {
     enabled: true,
     isCore: false,
 
-    // Requiert le rôle admin ou une permission spécifique
     requiredPermissions: ["ADMIN:USERS:READ"],
 
     dependencies: [],
@@ -26,6 +25,10 @@ export const adminModuleConfig: ModuleConfig = {
         {
             path: "users",
             component: lazy(() => import("./pages/UsersPage"))
+        },
+        {
+            path: "roles",
+            component: lazy(() => import("./pages/RolesPage"))
         }
     ],
 
@@ -35,7 +38,14 @@ export const adminModuleConfig: ModuleConfig = {
             path: "/admin/settings/users",
             icon: "Users",
             section: "admin",
-            order: 1
+            order: 20
+        },
+        {
+            label: "Rôles",
+            path: "/admin/settings/roles",
+            icon: "Shield",
+            section: "admin",
+            order: 21
         }
     ],
 

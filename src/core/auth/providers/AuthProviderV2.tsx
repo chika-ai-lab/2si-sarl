@@ -44,7 +44,8 @@ function adaptUserV1ToV2(oldUser: UserV1): User {
         { moduleId: "orders", enabled: true },
         { moduleId: "products", enabled: true },
         { moduleId: "reports", enabled: true },
-        { moduleId: "commercial", enabled: true }
+        { moduleId: "commercial", enabled: true },
+        { moduleId: "admin", enabled: true },
       ]
       : [],
     status: "active" as UserStatus,
@@ -69,21 +70,25 @@ function loadUserFromStorage(): User | null {
 
       // Vérifier si l'utilisateur V2 a tous les modules (migration incomplète)
       const user = parsed as User;
+      const isAdmin = user.roles?.includes("super_admin") || user.roles?.includes("admin");
+
       if (!user.moduleAccess || user.moduleAccess.length === 0) {
-        // Si admin ou super_admin, donner accès à tous les modules
-        if (user.roles?.includes("super_admin") || user.roles?.includes("admin")) {
+        if (isAdmin) {
           user.moduleAccess = [
             { moduleId: "dashboard", enabled: true },
             { moduleId: "crm", enabled: true },
             { moduleId: "orders", enabled: true },
             { moduleId: "products", enabled: true },
             { moduleId: "reports", enabled: true },
-            { moduleId: "commercial", enabled: true }
+            { moduleId: "commercial", enabled: true },
+            { moduleId: "admin", enabled: true },
           ];
-
-          // Sauvegarder la mise à jour
           localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
         }
+      } else if (isAdmin && !user.moduleAccess.find((m) => m.moduleId === "admin")) {
+        // Migration : ajouter le module admin manquant pour les sessions existantes
+        user.moduleAccess = [...user.moduleAccess, { moduleId: "admin", enabled: true }];
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
       }
 
       return user;
@@ -148,7 +153,8 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
 
       const backendUser = data.user;
       const roleTitle: string = backendUser.roles?.[0]?.title || 'commercial';
-      const isAdmin = roleTitle.toLowerCase() === 'admin' || roleTitle.toLowerCase() === 'super_admin';
+      const roleLower = roleTitle.toLowerCase();
+      const isAdmin = roleLower === 'admin' || roleLower === 'super_admin';
 
       const user: User = {
         id: String(backendUser.id),

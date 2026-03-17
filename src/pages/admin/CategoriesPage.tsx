@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  FolderOpen, FolderPlus, Search, Plus, Edit, Trash2, ChevronRight, Package,
+  FolderOpen, FolderPlus, Search, Plus, Edit, Trash2, ChevronRight, Package, Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -44,12 +45,36 @@ const INITIAL_CATEGORIES: Categorie[] = [
 const EMPTY_FORM = { nom: "", description: "", couleur: COULEURS[0], icone: "📁" };
 
 export function CategoriesPage() {
-  const [categories, setCategories]   = useState<Categorie[]>(INITIAL_CATEGORIES);
+  const [categories, setCategories]   = useState<Categorie[]>([]);
+  const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editId, setEditId]           = useState<string | null>(null);
   const [form, setForm]               = useState(EMPTY_FORM);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await apiClient.get<any>('/categories');
+      const items: any[] = res.data ?? res ?? [];
+      const mapped: Categorie[] = items.map((item: any, index: number) => ({
+        id: String(item.id),
+        nom: item.categorie,
+        description: "",
+        couleur: COULEURS[index % COULEURS.length],
+        icone: "📁",
+        nombreProduits: 0,
+        ordre: index + 1,
+      }));
+      setCategories(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchCategories(); }, []);
 
   const filtered = categories.filter((c) =>
     !search || c.nom.toLowerCase().includes(search.toLowerCase())
@@ -65,30 +90,48 @@ export function CategoriesPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.nom.trim()) {
       toast({ title: "Nom requis", variant: "destructive" });
       return;
     }
-    if (editId) {
-      setCategories((prev) => prev.map((c) => c.id === editId ? { ...c, ...form } : c));
-      toast({ title: "Catégorie modifiée" });
-    } else {
-      setCategories((prev) => [
-        ...prev,
-        { ...form, id: `cat-${Date.now()}`, nombreProduits: 0, ordre: prev.length + 1 },
-      ]);
-      toast({ title: "Catégorie créée" });
+    try {
+      if (editId) {
+        await apiClient.put(`/categories/${editId}`, { categorie: form.nom });
+        setCategories((prev) => prev.map((c) => c.id === editId ? { ...c, ...form } : c));
+        toast({ title: "Catégorie modifiée" });
+      } else {
+        await apiClient.post('/categories', { categorie: form.nom });
+        await fetchCategories();
+        toast({ title: "Catégorie créée" });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
     }
     setIsDialogOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setCategories((prev) => prev.filter((c) => c.id !== deleteTarget));
-    toast({ title: "Catégorie supprimée" });
+    try {
+      await apiClient.delete(`/categories/${deleteTarget}`);
+      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget));
+      toast({ title: "Catégorie supprimée" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la suppression", variant: "destructive" });
+    }
     setDeleteTarget(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>

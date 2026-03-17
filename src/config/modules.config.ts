@@ -65,7 +65,7 @@ export function getActiveModules(user: User | null): ModuleConfig[] {
       // 2. Les modules core sont toujours accessibles
       if (module.isCore) return true;
 
-      // 3. Vérifier si l'utilisateur a accès au module
+      // 3. Vérifier si l'utilisateur a accès au module (admin bypass dans hasModuleAccess)
       if (!hasModuleAccess(user, module.id)) return false;
 
       // 4. Vérifier si l'utilisateur a les permissions requises

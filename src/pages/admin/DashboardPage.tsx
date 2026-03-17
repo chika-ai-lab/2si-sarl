@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,65 +15,92 @@ import {
   Calculator,
   Wrench,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { isCommercialFeatureEnabled } from "@/config/env.config";
+import { apiClient } from "@/modules/commercial/services/apiClient";
+import { API_ENDPOINTS } from "@/modules/commercial/services/api.config";
+
+interface DashboardStats {
+  totalOrders: number;
+  pendingOrders: number;
+  revenue: number;
+  customers: number;
+}
+
+interface RecentOrder {
+  id: string;
+  customer: string;
+  amount: number;
+  status: "pending" | "approved" | "in_progress" | "completed" | "rejected";
+  date: string;
+}
+
+const ETAT_TO_STATUS: Record<string, RecentOrder["status"]> = {
+  en_attente: "pending",
+  brouillon: "pending",
+  "validé": "approved",
+  valide: "approved",
+  en_cours: "in_progress",
+  "livré": "completed",
+  livre: "completed",
+  "annulé": "rejected",
+  annule: "rejected",
+};
 
 export function DashboardPage() {
   const { t } = useTranslation();
 
-  // Mock data - À remplacer par de vraies données
-  const stats = {
-    totalOrders: 156,
-    ordersChange: "+12%",
-    pendingOrders: 23,
-    pendingChange: "-5%",
-    revenue: 245680000,
-    revenueChange: "+18%",
-    customers: 89,
-    customersChange: "+7%",
-  };
+  const [stats, setStats] = useState<DashboardStats>({
+    totalOrders: 0,
+    pendingOrders: 0,
+    revenue: 0,
+    customers: 0,
+  });
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recentOrders = [
-    {
-      id: "ORD-001",
-      customer: "Entreprise ABC",
-      amount: 4599000,
-      status: "pending" as const,
-      date: "2025-01-15",
-    },
-    {
-      id: "ORD-002",
-      customer: "SARL Martin",
-      amount: 1299000,
-      status: "approved" as const,
-      date: "2025-01-14",
-    },
-    {
-      id: "ORD-003",
-      customer: "SCI Diallo",
-      amount: 8750000,
-      status: "in_progress" as const,
-      date: "2025-01-14",
-    },
-    {
-      id: "ORD-004",
-      customer: "Tech Solutions",
-      amount: 3200000,
-      status: "completed" as const,
-      date: "2025-01-13",
-    },
-    {
-      id: "ORD-005",
-      customer: "Import Export Co",
-      amount: 950000,
-      status: "rejected" as const,
-      date: "2025-01-13",
-    },
-  ];
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const [commandesStats, clientsStats, recentRes] = await Promise.all([
+          apiClient.get<any>(API_ENDPOINTS.stats.commandes),
+          apiClient.get<any>(API_ENDPOINTS.stats.clients),
+          apiClient.get<any>(API_ENDPOINTS.commandes.list, { per_page: 5 }),
+        ]);
+
+        setStats({
+          totalOrders: commandesStats.total ?? 0,
+          pendingOrders:
+            (commandesStats.par_etat?.en_attente ?? 0) +
+            (commandesStats.par_etat?.brouillon ?? 0),
+          revenue: commandesStats.ca_total ?? 0,
+          customers: clientsStats.total ?? 0,
+        });
+
+        const items: any[] = recentRes.data ?? recentRes ?? [];
+        setRecentOrders(
+          items.slice(0, 5).map((c: any) => ({
+            id: c.reference ?? `#${c.id}`,
+            customer: c.client?.nom_complet ?? c.client?.raison_sociale ?? "—",
+            amount: Number(c.montant) || 0,
+            status: ETAT_TO_STATUS[c.etat] ?? "pending",
+            date: (c.created_at ?? "").slice(0, 10),
+          }))
+        );
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
 
   const statusConfig = {
     pending: {
@@ -126,14 +154,8 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {stats.totalOrders}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.totalOrders}
             </div>
-            <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                {stats.ordersChange}
-              </span>
-              <span className="text-muted-foreground">ce mois</span>
-            </p>
           </CardContent>
         </Card>
 
@@ -149,14 +171,8 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {stats.pendingOrders}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingOrders}
             </div>
-            <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">
-                {stats.pendingChange}
-              </span>
-              <span className="text-muted-foreground">ce mois</span>
-            </p>
           </CardContent>
         </Card>
 
@@ -172,14 +188,8 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {formatCurrency(stats.revenue)}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(stats.revenue)}
             </div>
-            <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                {stats.revenueChange}
-              </span>
-              <span className="text-muted-foreground">ce mois</span>
-            </p>
           </CardContent>
         </Card>
 
@@ -195,26 +205,19 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {stats.customers}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.customers}
             </div>
-            <p className="text-xs flex items-center gap-1 mt-1">
-              <span className="font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                {stats.customersChange}
-              </span>
-              <span className="text-muted-foreground">ce mois</span>
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Orders & Quick Actions */}
       {/* Recent Orders */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Commandes récentes</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Dernières commandes en attente de traitement
+              Dernières commandes enregistrées
             </p>
           </div>
           <Link to="/admin/orders">
@@ -224,46 +227,56 @@ export function DashboardPage() {
           </Link>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentOrders.map((order) => {
-              const StatusIcon = statusConfig[order.status].icon;
-              return (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                      <Package className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{order.id}</p>
-                        <Badge
-                          variant="outline"
-                          className={statusConfig[order.status].color}
-                        >
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {statusConfig[order.status].label}
-                        </Badge>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : recentOrders.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              Aucune commande pour l'instant
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {recentOrders.map((order) => {
+                const StatusIcon = statusConfig[order.status].icon;
+                return (
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                        <Package className="h-5 w-5 text-primary" />
                       </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{order.id}</p>
+                          <Badge
+                            variant="outline"
+                            className={statusConfig[order.status].color}
+                          >
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {statusConfig[order.status].label}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {order.customer}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        {formatCurrency(order.amount)}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {order.customer}
+                        {order.date}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      {formatCurrency(order.amount)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {order.date}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -271,7 +284,6 @@ export function DashboardPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Accès rapide</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Clients */}
           {isCommercialFeatureEnabled("clients") && (
             <Link to="/admin/commercial/clients">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
@@ -292,7 +304,6 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* Commandes */}
           {isCommercialFeatureEnabled("commandes") && (
             <Link to="/admin/commercial/commandes">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
@@ -313,7 +324,6 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* Catalogue */}
           {isCommercialFeatureEnabled("catalogue") && (
             <Link to="/admin/commercial/catalogue">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
@@ -334,7 +344,6 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* Accréditif */}
           {isCommercialFeatureEnabled("accreditif") && (
             <Link to="/admin/commercial/accreditif">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
@@ -344,9 +353,7 @@ export function DashboardPage() {
                       <FileText className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">
-                        Accréditif
-                      </p>
+                      <p className="font-semibold text-foreground">Accréditif</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Documents accréditifs
                       </p>
@@ -357,7 +364,6 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* Simulation */}
           {isCommercialFeatureEnabled("simulation") && (
             <Link to="/admin/commercial/simulation">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
@@ -367,9 +373,7 @@ export function DashboardPage() {
                       <Calculator className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">
-                        Simulation
-                      </p>
+                      <p className="font-semibold text-foreground">Simulation</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Tableau de simulation
                       </p>
@@ -380,7 +384,6 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* SAV */}
           {isCommercialFeatureEnabled("sav") && (
             <Link to="/admin/commercial/sav">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">
@@ -401,7 +404,6 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* Rapports */}
           {isCommercialFeatureEnabled("rapports") && (
             <Link to="/admin/commercial/rapports">
               <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer group h-full">

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -96,11 +97,48 @@ const INITIAL_FACTURES: Facture[] = [
 ];
 
 export function InvoicesPage() {
-  const [factures, setFactures] = useState<Facture[]>(INITIAL_FACTURES);
+  const [factures, setFactures] = useState<Facture[]>([]);
+  const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState("");
   const [statutFilter, setStatutFilter] = useState<FactureStatut | "all">("all");
   const [selected, setSelected] = useState<Facture | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFactures = async () => {
+      try {
+        const res = await apiClient.get<any>('/facture-clients');
+        const items: any[] = res.data ?? res ?? [];
+        const mapped: Facture[] = items.map((item: any) => {
+          const statut: FactureStatut =
+            item.etat === "payee"     ? "payee"     :
+            item.etat === "brouillon" ? "brouillon" :
+            item.etat === "en_retard" ? "en_retard" :
+            "envoyee";
+          const montantTTC = Number(item.montant) || 0;
+          return {
+            id: String(item.id),
+            numero: item.commande_client?.reference ?? `#${item.id}`,
+            client: item.commande_client?.client?.nom_complet ?? item.commande_client?.client?.raison_sociale ?? "",
+            dateEmission: item.date ?? "",
+            dateEcheance: item.date ?? "",
+            montantTTC,
+            montantHT: montantTTC * 0.85,
+            tva: montantTTC * 0.15,
+            montantPaye: Number(item.recu) || 0,
+            statut,
+            lignes: [],
+          };
+        });
+        setFactures(mapped);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFactures();
+  }, []);
 
   const filtered = factures.filter((f) => {
     const q = search.toLowerCase();
@@ -138,6 +176,14 @@ export function InvoicesPage() {
       setDownloading(null);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>

@@ -13,6 +13,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     ...(options.headers as Record<string, string> || {}),
   };
 

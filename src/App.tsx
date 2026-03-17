@@ -83,7 +83,7 @@ function MainApp() {
             const moduleBase = module.basePath.replace("/admin", "").replace(/^\//, "");
             const routePath = route.path === "/"
               ? moduleBase
-              : `${moduleBase}${route.path}`;
+              : [moduleBase, route.path.replace(/^\//, "")].filter(Boolean).join("/");
 
             return (
               <Route
