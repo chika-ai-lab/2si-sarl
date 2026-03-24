@@ -77,6 +77,7 @@ interface BackendArticle {
   banque?: string;
   categorie_id?: number;
   categorie?: { id: number; categorie: string };
+  categories?: number[];  // multi-category ids
   images?: string[];
 }
 
@@ -96,7 +97,7 @@ const EMPTY_FORM = {
   seuil_alerte: "",
   statut: "actif" as "actif" | "inactif" | "rupture",
   banque: "" as BanquePartenaire | "",
-  categorie_id: "" as number | "",
+  categories_ids: [] as number[],
   images: [] as string[],
   imageInput: "",
 };
@@ -179,7 +180,7 @@ export function CataloguePage() {
       seuil_alerte: String(a.seuil_alerte ?? ""),
       statut: a.statut ?? "actif",
       banque: (a.banque as BanquePartenaire) ?? "",
-      categorie_id: a.categorie_id ?? "",
+      categories_ids: Array.isArray(a.categories) ? a.categories : (a.categorie_id ? [a.categorie_id] : []),
       images: Array.isArray(a.images) ? a.images : [],
       imageInput: "",
     });
@@ -203,7 +204,8 @@ export function CataloguePage() {
       seuil_alerte: Number(form.seuil_alerte) || null,
       statut: form.statut,
       banque: form.banque || null,
-      categorie_id: form.categorie_id || null,
+      categorie_id: form.categories_ids[0] || null,
+      categories_ids: form.categories_ids,
       images: form.images.length > 0 ? form.images : null,
     };
     try {
@@ -292,6 +294,21 @@ export function CataloguePage() {
                 <Label>Prix d'achat (FCFA)</Label>
                 <Input className="mt-1" type="number" min="0" value={form.prix_achat} onChange={(e) => setField("prix_achat", e.target.value)} placeholder="0" />
               </div>
+              {(Number(form.prix) > 0 || Number(form.prix_achat) > 0) && (
+                <div className="col-span-2 p-3 bg-muted rounded-lg">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Marge brute estimée</span>
+                    <span className={`font-semibold ${Number(form.prix) - Number(form.prix_achat) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(Number(form.prix) - Number(form.prix_achat))}
+                      {Number(form.prix) > 0 && (
+                        <span className="text-muted-foreground ml-1">
+                          ({Math.round(((Number(form.prix) - Number(form.prix_achat)) / Number(form.prix)) * 100)}%)
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
               <div>
                 <Label>Quantité en stock</Label>
                 <Input className="mt-1" type="number" min="0" value={form.quantite} onChange={(e) => setField("quantite", e.target.value)} placeholder="0" />
@@ -300,17 +317,28 @@ export function CataloguePage() {
                 <Label>Seuil d'alerte</Label>
                 <Input className="mt-1" type="number" min="0" value={form.seuil_alerte} onChange={(e) => setField("seuil_alerte", e.target.value)} placeholder="5" />
               </div>
-              <div>
-                <Label>Catégorie</Label>
-                <Select value={form.categorie_id ? String(form.categorie_id) : "none"} onValueChange={(v) => setField("categorie_id", v === "none" ? "" : Number(v))}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Choisir..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Aucune —</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>{c.categorie}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="col-span-2">
+                <Label>Catégories</Label>
+                <div className="mt-2 grid grid-cols-2 gap-2 border rounded-md p-3">
+                  {categories.map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                      <input
+                        type="checkbox"
+                        checked={form.categories_ids.includes(c.id)}
+                        onChange={(e) => {
+                          setForm((prev) => ({
+                            ...prev,
+                            categories_ids: e.target.checked
+                              ? [...prev.categories_ids, c.id]
+                              : prev.categories_ids.filter((id) => id !== c.id),
+                          }));
+                        }}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      {c.categorie}
+                    </label>
+                  ))}
+                </div>
               </div>
               <div>
                 <Label>Banque partenaire</Label>
@@ -365,7 +393,11 @@ export function CataloguePage() {
               <div className="grid grid-cols-2 gap-3">
                 <div><p className="text-muted-foreground">Référence</p><p className="font-mono font-semibold">{selectedProduit.reference || "—"}</p></div>
                 <div><p className="text-muted-foreground">Marque</p><p className="font-semibold">{selectedProduit.marque || "—"}</p></div>
-                <div><p className="text-muted-foreground">Catégorie</p><Badge variant="outline">{selectedProduit.categorie?.categorie || "—"}</Badge></div>
+                <div><p className="text-muted-foreground">Catégories</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedProduit.categorie && <Badge variant="outline">{selectedProduit.categorie.categorie}</Badge>}
+                </div>
+                </div>
                 <div><p className="text-muted-foreground">Banque</p><Badge variant="outline">{selectedProduit.banque || "—"}</Badge></div>
               </div>
               {selectedProduit.description && (
@@ -513,6 +545,7 @@ function ProductsTable({
               <TableHead>Référence</TableHead>
               <TableHead>Catégorie</TableHead>
               <TableHead>Prix vente</TableHead>
+              <TableHead>Marge</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -540,6 +573,9 @@ function ProductsTable({
                     <Badge variant="outline" className="text-xs">{a.categorie?.categorie ?? "—"}</Badge>
                   </TableCell>
                   <TableCell className="font-semibold">{formatCurrency(a.prix)}</TableCell>
+                  <TableCell className={`font-semibold text-sm ${a.prix - (a.prix_achat ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(a.prix - (a.prix_achat ?? 0))}
+                  </TableCell>
                   <TableCell className="text-sm">{a.quantite}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={cfg.color}>{cfg.label}</Badge>

@@ -96,6 +96,7 @@ export interface ProduitCatalogue {
 
   // Classification
   categorie: string;
+  categoriesIds: number[];   // multi-catégories
   sousCategorie?: string;
   marque?: string;
   banque: BanquePartenaire;
@@ -137,12 +138,23 @@ export type ModePaiement = 'especes' | 'virement' | 'cheque' | 'credit' | 'accre
 
 export type StatutPaiement = 'en_attente' | 'partiel' | 'complet';
 
+export type TypeLivraison = 'agence' | 'destination';
+
 export interface LigneCommande {
   id: string;
   produitId: string;
   produit?: ProduitCatalogue;
   quantite: number;
-  prixUnitaire: number;
+  prixUnitaire: number;       // prix de vente
+  prixAchat: number;
+  fraisLivraisonFournisseur: number;
+  fraisLivraisonClient: number;
+  typeLivraison: 'agence' | 'destination';
+  tauxCommission: number;     // ex: 0.05
+  commission: number;
+  cTotal: number;
+  marge: number;
+  statut: 'livré' | 'attente';
   remise: number;
   sousTotal: number;
 }
@@ -197,9 +209,13 @@ export interface CreateCommandeDTO {
     produitId: string;
     quantite: number;
     prixUnitaire: number;
+    prixAchat: number;
+    fraisLivraisonFournisseur: number;
+    fraisLivraisonClient: number;
+    typeLivraison: 'agence' | 'destination';
+    tauxCommission: number;
     remise: number;
   }[];
-  adresseLivraison: Adresse;
   modeLivraison: ModeLivraison;
   modePaiement: ModePaiement;
   fraisLivraison: number;

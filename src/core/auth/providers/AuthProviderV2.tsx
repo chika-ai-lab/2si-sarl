@@ -154,28 +154,52 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
       const backendUser = data.user;
       const roleTitle: string = backendUser.roles?.[0]?.title || 'commercial';
       const roleLower = roleTitle.toLowerCase();
-      const isAdmin = roleLower === 'admin' || roleLower === 'super_admin';
+      const isAdmin      = roleLower === 'admin' || roleLower === 'super_admin';
+      const isComptable  = roleLower === 'comptable' || roleLower === 'comptabilite';
+      const isCommercial = roleLower === 'commercial';
+
+      const customPermissions: string[] = isAdmin
+        ? ["*:*:*"]
+        : isComptable
+        ? [
+            "DASHBOARD:*:READ",
+            "ORDERS:ORDER:READ",
+            "REPORTS:REPORT:READ",
+            "REPORTS:*:*",
+            "ACHATS:*:*",
+            "PRODUCTS:PRODUCT:READ",
+          ]
+        : isCommercial
+        ? [
+            "DASHBOARD:*:READ",
+            "COMMERCIAL:*:*",
+            "CRM:CUSTOMER:READ",
+            "CRM:*:*",
+            "ORDERS:ORDER:READ",
+            "PRODUCTS:PRODUCT:READ",
+          ]
+        : [
+            "DASHBOARD:*:READ",
+          ];
+
+      const moduleAccess = [
+        { moduleId: "dashboard",  enabled: true },
+        { moduleId: "crm",        enabled: isAdmin || isCommercial },
+        { moduleId: "orders",     enabled: isAdmin || isCommercial || isComptable },
+        { moduleId: "products",   enabled: isAdmin || isCommercial || isComptable },
+        { moduleId: "reports",    enabled: isAdmin || isComptable },
+        { moduleId: "commercial", enabled: isAdmin || isCommercial },
+        { moduleId: "achats",     enabled: isAdmin || isComptable },
+        { moduleId: "admin",      enabled: isAdmin },
+      ];
 
       const user: User = {
         id: String(backendUser.id),
         email: backendUser.email,
         name: backendUser.name,
         roles: [roleTitle],
-        customPermissions: isAdmin
-          ? ["*:*:*"]
-          : [
-            "COMMERCIAL:*:*",
-            "DASHBOARD:*:READ",
-          ] as any,
-        moduleAccess: [
-          { moduleId: "dashboard", enabled: true },
-          { moduleId: "crm", enabled: isAdmin },
-          { moduleId: "orders", enabled: true },
-          { moduleId: "products", enabled: true },
-          { moduleId: "reports", enabled: true },
-          { moduleId: "commercial", enabled: true },
-          { moduleId: "admin", enabled: isAdmin },
-        ],
+        customPermissions: customPermissions as any,
+        moduleAccess,
         status: "active" as UserStatus,
         lastLogin: new Date().toISOString(),
         createdAt: backendUser.created_at || new Date().toISOString(),
@@ -228,9 +252,9 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   };
 
   const isAdmin = (): boolean => {
-    // Allow admin, super_admin, and all department roles to access admin area
+    // Tous les rôles métier (admin, commercial, comptable) accèdent à l'espace /admin
     return user?.roles.some(role =>
-      ["admin", "super_admin", "comptabilite", "commercial"].includes(role.toLowerCase())
+      ["admin", "super_admin", "comptable", "comptabilite", "commercial"].includes(role.toLowerCase())
     ) || false;
   };
 

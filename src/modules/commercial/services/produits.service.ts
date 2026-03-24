@@ -25,6 +25,7 @@ function mapBackendToProduct(a: any): ProduitCatalogue {
     nom: a.libelle || '',
     description: a.description || '',
     categorie: a.categorie?.categorie || String(a.categorie_id || ''),
+    categoriesIds: Array.isArray(a.categories) ? a.categories.map(Number) : [],
     marque: a.marque,
     banque: a.banque || 'Autre',
     prixAchat,
@@ -87,6 +88,12 @@ export async function getCategories(): Promise<ApiResponse<string[]>> {
   return { success: true, data: items.map((c: any) => c.categorie || c) };
 }
 
+export async function getCategoriesWithId(): Promise<{id: number; categorie: string}[]> {
+  const res = await apiClient.get<any>(API_ENDPOINTS.produits.categories);
+  const items: any[] = res.data || res;
+  return items.map((c: any) => ({ id: Number(c.id), categorie: c.categorie || c }));
+}
+
 export async function getProduitsStats() {
   const res = await apiClient.get<any>(API_ENDPOINTS.produits.stats);
   return {
@@ -111,6 +118,7 @@ export async function createProduit(data: Partial<ProduitCatalogue>): Promise<Pr
     seuil_alerte: data.stock?.seuilAlerte,
     statut: data.statut || 'actif',
     categorie_id: data.categorie,
+    categories_ids: (data as any).categoriesIds || [],
     banque: data.banque,
     marque: data.marque,
   };
@@ -129,6 +137,7 @@ export async function updateProduit(id: string, data: Partial<ProduitCatalogue>)
     seuil_alerte: data.stock?.seuilAlerte,
     statut: data.statut,
     categorie_id: data.categorie,
+    categories_ids: (data as any).categoriesIds || [],
     banque: data.banque,
     marque: data.marque,
   };
