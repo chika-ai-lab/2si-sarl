@@ -18,24 +18,30 @@ import { apiClient } from './apiClient';
 // MAPPING etat backend → statut frontend
 // ============================================
 
+// Le backend utilise désormais des valeurs sans accents (validee, livree, annulee)
 const ETAT_TO_STATUT: Record<string, CommandeStatut> = {
-  brouillon: 'brouillon',
-  'validé':  'validee',
-  valide:    'validee',
-  'livré':   'livree',
-  livre:     'livree',
-  annulé:    'annulee',
-  annule:    'annulee',
-  en_attente:'en_attente',
+  brouillon:  'brouillon',
+  validee:    'validee',
+  en_attente: 'en_attente',
+  en_cours:   'en_cours',
+  livree:     'livree',
+  annulee:    'annulee',
+  // Rétrocompat au cas où d'anciennes lignes existeraient en base
+  'validé':   'validee',
+  valide:     'validee',
+  'livré':    'livree',
+  livre:      'livree',
+  'annulé':   'annulee',
+  annule:     'annulee',
 };
 
 const STATUT_TO_ETAT: Record<string, string> = {
   brouillon:  'brouillon',
-  validee:    'validé',
-  livree:     'livré',
-  annulee:    'annulé',
+  validee:    'validee',
   en_attente: 'en_attente',
-  en_cours:   'validé',
+  en_cours:   'validee',
+  livree:     'livree',
+  annulee:    'annulee',
 };
 
 function mapBackendToCommande(c: any): CommandeCommerciale {
@@ -60,15 +66,24 @@ function mapBackendToCommande(c: any): CommandeCommerciale {
 
   return {
     id: String(c.id),
-    numero: c.reference || `CMD-${c.id}`,
-    reference: c.reference || `CMD-${c.id}`,
+    numero: c.reference || `CMD-${String(c.id).padStart(5, '0')}`,
+    reference: c.reference || `CMD-${String(c.id).padStart(5, '0')}`,
     clientId: String(c.client_id),
+    client: c.client ? {
+      id: String(c.client.id),
+      nom: c.client.nom || c.client.nom_complet || '',
+      prenom: c.client.prenom,
+      raisonSociale: c.client.raison_sociale,
+      type: c.client.type || 'particulier',
+      telephone: c.client.telephone || '',
+      email: c.client.email || '',
+    } as any : undefined,
     lignes,
     sousTotal: Number(c.montant) || 0,
     taxe: Number(c.taxe) || 0,
     remise: Number(c.remise) || 0,
     fraisLivraison: Number(c.frais_livraison) || 0,
-    total: Number(c.montant) || 0,
+    total: (Number(c.montant) || 0) + (Number(c.taxe) || 0) + (Number(c.frais_livraison) || 0) - (Number(c.remise) || 0),
     adresseLivraison: { rue: '', ville: 'Dakar', codePostal: '', pays: 'Sénégal' },
     modeLivraison: c.mode_livraison || 'retrait',
     modePaiement: c.mode_paiement || 'virement',
@@ -122,11 +137,11 @@ export async function getCommandeById(id: string): Promise<ApiResponse<CommandeC
 }
 
 export async function createCommande(data: CreateCommandeDTO): Promise<ApiResponse<CommandeCommerciale>> {
+  const sousTotal = data.lignes.reduce((acc, l) => acc + l.prixUnitaire * l.quantite * (1 - (l.remise || 0) / 100), 0);
   const payload = {
     client_id: data.clientId,
     date: new Date().toISOString().split('T')[0],
-    montant: data.lignes.reduce((acc, l) => acc + l.prixUnitaire * l.quantite * (1 - l.remise / 100), 0),
-    etat: 'brouillon',
+    montant: sousTotal,
     mode_paiement: data.modePaiement,
     mode_livraison: data.modeLivraison,
     note: data.notes,

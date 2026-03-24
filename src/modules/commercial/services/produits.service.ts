@@ -36,7 +36,7 @@ function mapBackendToProduct(a: any): ProduitCatalogue {
       seuilAlerte: Number(a.seuil_alerte) || 5,
       unite: 'piece',
     },
-    images: Array.isArray(a.images) ? a.images : (a.images ? JSON.parse(a.images) : []),
+    images: Array.isArray(a.images) ? a.images : (() => { try { return a.images ? JSON.parse(a.images) : []; } catch { return []; } })(),
     statut: a.statut || 'actif',
     dateAjout: a.created_at?.split('T')[0] || '',
     derniereModification: a.updated_at?.split('T')[0] || '',
