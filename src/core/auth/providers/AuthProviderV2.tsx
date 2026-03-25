@@ -70,10 +70,11 @@ function loadUserFromStorage(): User | null {
 
       // Vérifier si l'utilisateur V2 a tous les modules (migration incomplète)
       const user = parsed as User;
-      const isAdmin = user.roles?.includes("super_admin") || user.roles?.includes("admin");
+      const rolesLower = user.roles?.map(r => r.toLowerCase().trim()) || [];
+      const isStaff = rolesLower.some(r => ["admin", "super_admin", "commercial", "vendeur", "vendeuse", "sales", "salesman", "comptable", "comptabilite"].includes(r));
 
       if (!user.moduleAccess || user.moduleAccess.length === 0) {
-        if (isAdmin) {
+        if (isStaff) {
           user.moduleAccess = [
             { moduleId: "dashboard", enabled: true },
             { moduleId: "crm", enabled: true },
@@ -85,7 +86,7 @@ function loadUserFromStorage(): User | null {
           ];
           localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
         }
-      } else if (isAdmin && !user.moduleAccess.find((m) => m.moduleId === "admin")) {
+      } else if (isStaff && !user.moduleAccess.find((m) => m.moduleId === "admin")) {
         // Migration : ajouter le module admin manquant pour les sessions existantes
         user.moduleAccess = [...user.moduleAccess, { moduleId: "admin", enabled: true }];
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
@@ -152,11 +153,21 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
       localStorage.setItem('auth-token', data.access_token);
 
       const backendUser = data.user;
-      const roleTitle: string = backendUser.roles?.[0]?.title || 'commercial';
-      const roleLower = roleTitle.toLowerCase();
-      const isAdmin      = roleLower === 'admin' || roleLower === 'super_admin';
-      const isComptable  = roleLower === 'comptable' || roleLower === 'comptabilite';
-      const isCommercial = roleLower === 'commercial';
+      
+      // Extraire tous les titres/noms de rôles de manière plus robuste
+      const roleTitles: string[] = backendUser.roles && backendUser.roles.length > 0
+        ? backendUser.roles.map((r: any) => {
+            if (typeof r === 'string') return r;
+            return r.title || r.name || r.slug || r.displayName;
+          }).filter(Boolean)
+        : ['commercial'];
+
+      // Normaliser les rôles pour la détection
+      const rolesLower = roleTitles.map(r => r.toLowerCase().trim());
+      
+      const isAdmin      = rolesLower.some(r => r === 'admin' || r === 'super_admin');
+      const isComptable  = rolesLower.some(r => r === 'comptable' || r === 'comptabilite');
+      const isCommercial = rolesLower.some(r => r === 'commercial' || r === 'vendeur' || r === 'vendeuse' || r === 'sales' || r === 'salesman');
 
       const customPermissions: string[] = isAdmin
         ? ["*:*:*"]
@@ -197,7 +208,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
         id: String(backendUser.id),
         email: backendUser.email,
         name: backendUser.name,
-        roles: [roleTitle],
+        roles: roleTitles,
         customPermissions: customPermissions as any,
         moduleAccess,
         status: "active" as UserStatus,
@@ -252,9 +263,9 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   };
 
   const isAdmin = (): boolean => {
-    // Tous les rôles métier (admin, commercial, comptable) accèdent à l'espace /admin
+    // Tous les rôles métier (admin, commercial, comptable, vendeur) accèdent à l'espace /admin
     return user?.roles.some(role =>
-      ["admin", "super_admin", "comptable", "comptabilite", "commercial"].includes(role.toLowerCase())
+      ["admin", "super_admin", "comptable", "comptabilite", "commercial", "vendeur", "vendeuse", "sales", "salesman"].includes(role.toLowerCase().trim())
     ) || false;
   };
 

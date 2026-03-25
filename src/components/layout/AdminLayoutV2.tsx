@@ -75,10 +75,9 @@ export function AdminLayoutV2() {
   const userRoleDisplay = useMemo(() => {
     if (!user) return "";
     const rolesLower = user.roles.map((r) => r.toLowerCase());
-    if (rolesLower.includes("super_admin")) return "Administrateur";
-    if (rolesLower.includes("admin")) return "Admin";
-    if (user.roles.includes("comptabilite")) return "Comptabilité";
-    if (user.roles.includes("commercial")) return "Commercial";
+    if (rolesLower.includes("super_admin") || rolesLower.includes("admin")) return "Admin";
+    if (rolesLower.some(r => r === "comptabilite" || r === "comptable")) return "Comptabilité";
+    if (rolesLower.some(r => r === "commercial" || r === "vendeur" || r === "vendeuse" || r === "sales")) return "Commercial";
     return "Utilisateur";
   }, [user]);
 
