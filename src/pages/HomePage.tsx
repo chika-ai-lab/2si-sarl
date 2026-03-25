@@ -32,7 +32,7 @@ import {
 export default function HomePage() {
   const company = useCompany();
   const { t } = useTranslation();
-  const { products: apiProducts } = useMarketplaceProducts();
+  const { products: apiProducts, categories: apiCategories } = useMarketplaceProducts();
   const featuredProducts = apiProducts.slice(0, 3);
   const newProducts = apiProducts.slice(3, 6);
   const saleProducts = apiProducts.slice(6, 9);
@@ -94,9 +94,7 @@ export default function HomePage() {
             viewport={viewportOptions}
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch"
           >
-            {categories
-              .filter((c) => c.id !== "all")
-              .map((category) => (
+            {apiCategories.map((category) => (
                 <motion.div
                   key={category.id}
                   variants={staggerItemVariant}
@@ -104,10 +102,9 @@ export default function HomePage() {
                 >
                   <CategoryCard
                     id={category.id}
-                    name={t(category.labelKey)}
+                    name={category.label}
                     productCount={
-                      allProducts.filter((p) => p.category === category.id)
-                        .length
+                      apiProducts.filter((p) => p.category === category.label).length
                     }
                     className="w-full"
                   />
