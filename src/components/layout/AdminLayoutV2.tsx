@@ -4,8 +4,9 @@ import { useAuth } from "@/core/auth/providers/AuthProviderV2";
 import { companyConfig } from "@/config/company.config";
 import { getModuleNavigation } from "@/config/modules.config";
 import * as Icons from "lucide-react";
-import { Home, LogOut, Menu, X, User, ChevronDown, ChevronRight } from "lucide-react";
+import { Home, LogOut, Menu, X, User, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
 import { useState, useMemo } from "react";
+import { WelcomeOnboarding, reopenOnboarding } from "@/components/onboarding/WelcomeOnboarding";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -313,6 +314,10 @@ export function AdminLayoutV2() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={reopenOnboarding} className="cursor-pointer">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Guide d'utilisation
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/" className="cursor-pointer">
                       <Home className="mr-2 h-4 w-4" />
@@ -338,6 +343,9 @@ export function AdminLayoutV2() {
           <Outlet />
         </main>
       </div>
+
+      {/* Onboarding — s'affiche automatiquement à la première connexion */}
+      <WelcomeOnboarding />
     </div>
   );
 }
