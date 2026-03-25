@@ -36,6 +36,9 @@ export default function HomePage() {
   const featuredProducts = apiProducts.slice(0, 3);
   const newProducts = apiProducts.slice(3, 6);
   const saleProducts = apiProducts.slice(6, 9);
+  const nonEmptyCategories = apiCategories.filter(
+    (cat) => apiProducts.some((p) => p.category === cat.label)
+  );
 
   return (
     <MainLayout>
@@ -94,7 +97,7 @@ export default function HomePage() {
             viewport={viewportOptions}
             className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch"
           >
-            {apiCategories.map((category) => (
+            {nonEmptyCategories.map((category) => (
                 <motion.div
                   key={category.id}
                   variants={staggerItemVariant}

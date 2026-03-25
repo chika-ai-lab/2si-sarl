@@ -1,8 +1,9 @@
-import { Settings } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CategoryCardProps } from "@/types";
-import { categoryIcons } from "@/constants";
+import { getCategoryMeta } from "@/constants";
+import { motion } from "framer-motion";
 
 export function CategoryCard({
   id,
@@ -10,36 +11,50 @@ export function CategoryCard({
   productCount,
   className,
 }: CategoryCardProps) {
-  const Icon = categoryIcons[id] || Settings;
+  const { icon: Icon, gradient, iconBg } = getCategoryMeta(name);
 
   return (
     <Link
-      to={`/catalog?category=${id}`}
-      className={cn(
-        "group card-elevated-hover rounded-lg p-6 transition-all h-full overflow-hidden min-h-[170px] flex items-center justify-center",
-        "hover:border-primary/20",
-        className
-      )}
+      to={`/catalog?category=${encodeURIComponent(name)}`}
+      className={cn("group block h-full", className)}
     >
-      <div className="flex flex-col items-center text-center gap-4 w-full">
-        {/* Icon container */}
-        <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-          <Icon className="w-8 h-8 text-primary" />
+      <motion.div
+        whileHover={{ y: -4, scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className={cn(
+          "relative overflow-hidden rounded-2xl h-full min-h-[160px]",
+          "bg-gradient-to-br", gradient,
+          "shadow-md group-hover:shadow-xl transition-shadow"
+        )}
+      >
+        {/* Large faded icon in background */}
+        <div className="absolute -right-5 -bottom-5 opacity-15 pointer-events-none">
+          <Icon className="w-28 h-28 text-white" />
         </div>
 
-        {/* Category name */}
-        <div>
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-            {name}
-          </h3>
+        {/* Content */}
+        <div className="relative z-10 p-5 flex flex-col justify-between h-full">
+          {/* Icon chip */}
+          <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center", iconBg)}>
+            <Icon className="w-5 h-5 text-white" />
+          </div>
 
-          {productCount !== undefined && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {productCount} produit{productCount > 1 ? "s" : ""}
-            </p>
-          )}
+          {/* Name + count */}
+          <div className="mt-4">
+            <h3 className="font-bold text-white text-sm leading-tight line-clamp-2">
+              {name}
+            </h3>
+            <div className="flex items-center justify-between mt-2">
+              {productCount !== undefined && (
+                <span className="text-xs text-white/70 font-medium">
+                  {productCount} produit{productCount !== 1 ? "s" : ""}
+                </span>
+              )}
+              <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all ml-auto" />
+            </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 }
