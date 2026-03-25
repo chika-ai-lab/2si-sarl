@@ -91,7 +91,6 @@ const EMPTY_FORM = {
   reference: "",
   description: "",
   marque: "",
-  prix: "",
   prix_achat: "",
   quantite: "",
   seuil_alerte: "",
@@ -174,7 +173,6 @@ export function CataloguePage() {
       reference: a.reference ?? "",
       description: a.description ?? "",
       marque: a.marque ?? "",
-      prix: String(a.prix),
       prix_achat: String(a.prix_achat ?? ""),
       quantite: String(a.quantite),
       seuil_alerte: String(a.seuil_alerte ?? ""),
@@ -198,7 +196,6 @@ export function CataloguePage() {
       reference: form.reference || null,
       description: form.description || null,
       marque: form.marque || null,
-      prix: Number(form.prix) || 0,
       prix_achat: Number(form.prix_achat) || null,
       quantite: Number(form.quantite) || 0,
       seuil_alerte: Number(form.seuil_alerte) || null,
@@ -287,28 +284,9 @@ export function CataloguePage() {
                 <Textarea className="mt-1" value={form.description} onChange={(e) => setField("description", e.target.value)} placeholder="Description du produit..." rows={2} />
               </div>
               <div>
-                <Label>Prix de vente (FCFA)</Label>
-                <Input className="mt-1" type="number" min="0" value={form.prix} onChange={(e) => setField("prix", e.target.value)} placeholder="0" />
-              </div>
-              <div>
                 <Label>Prix d'achat (FCFA)</Label>
                 <Input className="mt-1" type="number" min="0" value={form.prix_achat} onChange={(e) => setField("prix_achat", e.target.value)} placeholder="0" />
               </div>
-              {(Number(form.prix) > 0 || Number(form.prix_achat) > 0) && (
-                <div className="col-span-2 p-3 bg-muted rounded-lg">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Marge brute estimée</span>
-                    <span className={`font-semibold ${Number(form.prix) - Number(form.prix_achat) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(Number(form.prix) - Number(form.prix_achat))}
-                      {Number(form.prix) > 0 && (
-                        <span className="text-muted-foreground ml-1">
-                          ({Math.round(((Number(form.prix) - Number(form.prix_achat)) / Number(form.prix)) * 100)}%)
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              )}
               <div>
                 <Label>Quantité en stock</Label>
                 <Input className="mt-1" type="number" min="0" value={form.quantite} onChange={(e) => setField("quantite", e.target.value)} placeholder="0" />

@@ -75,7 +75,6 @@ const EMPTY_FORM = {
   reference: "",
   marque: "",
   description: "",
-  prix: "",
   prix_achat: "",
   quantite: "",
   seuil_alerte: "",
@@ -180,7 +179,6 @@ export function InventoryPage() {
       reference: item.reference,
       marque: item.marque,
       description: item.description,
-      prix: String(item.prixVente),
       prix_achat: String(item.prixAchat),
       quantite: String(item.quantite),
       seuil_alerte: String(item.seuilAlerte),
@@ -207,7 +205,6 @@ export function InventoryPage() {
       reference: form.reference || null,
       marque: form.marque || null,
       description: form.description || null,
-      prix: Number(form.prix) || 0,
       prix_achat: Number(form.prix_achat) || null,
       quantite: Number(form.quantite) || 0,
       seuil_alerte: Number(form.seuil_alerte) || null,
@@ -334,11 +331,6 @@ export function InventoryPage() {
               <div className="col-span-2">
                 <Label>Description</Label>
                 <Textarea className="mt-1" value={form.description} onChange={(e) => setField("description", e.target.value)} placeholder="Description du produit..." rows={2} />
-              </div>
-              {/* Prix vente */}
-              <div>
-                <Label>Prix de vente (FCFA)</Label>
-                <Input className="mt-1" type="number" min="0" value={form.prix} onChange={(e) => setField("prix", e.target.value)} placeholder="0" />
               </div>
               {/* Prix achat */}
               <div>
