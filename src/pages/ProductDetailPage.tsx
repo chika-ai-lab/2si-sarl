@@ -12,6 +12,7 @@ import {
   Truck,
   Shield,
   ArrowLeft,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -270,17 +271,12 @@ export default function ProductDetailPage() {
               </p>
             </div>
 
-            {/* Price */}
-            <div>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-primary">
-                  {formatCurrency(product.price)}
-                </span>
-                {product.compareAtPrice && (
-                  <span className="text-xl text-muted-foreground line-through">
-                    {formatCurrency(product.compareAtPrice)}
-                  </span>
-                )}
+            {/* Price — financement */}
+            <div className="flex items-center gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5">
+              <CreditCard className="h-6 w-6 text-primary shrink-0" />
+              <div>
+                <p className="font-bold text-primary text-lg">Financement disponible</p>
+                <p className="text-sm text-muted-foreground">Payable en plusieurs tranches selon votre dossier</p>
               </div>
             </div>
 

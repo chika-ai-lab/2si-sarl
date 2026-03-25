@@ -1,11 +1,10 @@
-import { ShoppingCart, Check, Heart } from "lucide-react";
+import { ShoppingCart, Check, Heart, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/providers/CartProvider";
 import { useWishlist } from "@/providers/WishlistProvider";
 import { useTranslation } from "@/providers/I18nProvider";
-import { formatCurrency, getMinimumMonthlyPayment } from "@/lib/currency";
 import { type Product } from "@/data/products";
 import { ProductRating } from "./ProductRating";
 import { Link } from "react-router-dom";
@@ -28,8 +27,6 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
 
   const isInCart = items.some((item) => item.id === product.id);
   const inWishlist = isInWishlist(product.id);
-  const monthlyPayment = getMinimumMonthlyPayment(product.price);
-
   // Get primary image
   const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
 
@@ -169,19 +166,11 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
             {/* Price and Actions */}
             <div className="mt-4 flex items-end justify-between gap-4">
               <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-foreground">
-                    {formatCurrency(product.price)}
-                  </span>
-                  {product.compareAtPrice && (
-                    <span className="text-sm text-muted-foreground line-through">
-                      {formatCurrency(product.compareAtPrice)}
-                    </span>
-                  )}
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-primary">Financement disponible</span>
                 </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {t("productDetails.from")} {formatCurrency(monthlyPayment)}{t("productDetails.perMonth")}
-                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Payable en plusieurs tranches</p>
               </div>
 
               <Button
@@ -327,18 +316,10 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           {/* Price */}
           <div className="mt-auto pt-3 border-t border-border">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl font-bold text-foreground">
-                {formatCurrency(product.price)}
-              </span>
-              {product.compareAtPrice && (
-                <span className="text-sm text-muted-foreground line-through font-normal">
-                  {formatCurrency(product.compareAtPrice)}
-                </span>
-              )}
+              <CreditCard className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">Financement disponible</span>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {t("productDetails.from")} {formatCurrency(monthlyPayment)}{t("productDetails.perMonth")}
-            </div>
+            <p className="text-xs text-muted-foreground">Payable en plusieurs tranches</p>
           </div>
         </CardContent>
 

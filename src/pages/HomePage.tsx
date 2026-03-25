@@ -18,13 +18,7 @@ import { PromoSection } from "@/components/promo/PromoSection";
 import { SEO } from "@/components/SEO";
 import { useCompany } from "@/providers/ConfigProvider";
 import { useTranslation } from "@/providers/I18nProvider";
-import {
-  getFeaturedProducts,
-  getNewProducts,
-  getOnSaleProducts,
-  categories,
-  products as allProducts,
-} from "@/data/products";
+import { useMarketplaceProducts } from "@/hooks/useMarketplaceProducts";
 import { heroSlides } from "@/constants";
 import { motion } from "framer-motion";
 import {
@@ -38,9 +32,10 @@ import {
 export default function HomePage() {
   const company = useCompany();
   const { t } = useTranslation();
-  const featuredProducts = getFeaturedProducts().slice(0, 3);
-  const newProducts = getNewProducts().slice(0, 3);
-  const saleProducts = getOnSaleProducts().slice(0, 3);
+  const { products: apiProducts } = useMarketplaceProducts();
+  const featuredProducts = apiProducts.slice(0, 3);
+  const newProducts = apiProducts.slice(3, 6);
+  const saleProducts = apiProducts.slice(6, 9);
 
   return (
     <MainLayout>

@@ -17,12 +17,14 @@ import { PromoPageBanner } from "@/components/promo/PromoPageBanner";
 import { SEO } from "@/components/SEO";
 import { useTranslation } from "@/providers/I18nProvider";
 import { useProductFilters } from "@/hooks/useProductFilters";
-import { getMaxPrice, getMinPrice } from "@/data/products";
+import { useMarketplaceProducts } from "@/hooks/useMarketplaceProducts";
 import { Link } from "react-router-dom";
 
 export default function CatalogPage() {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const { products: apiProducts, loading: apiLoading } = useMarketplaceProducts();
 
   const {
     filters,
@@ -31,10 +33,10 @@ export default function CatalogPage() {
     filteredProducts,
     activeFilterCount,
     totalProducts,
-  } = useProductFilters();
+  } = useProductFilters(apiProducts);
 
-  const minPrice = getMinPrice();
-  const maxPrice = getMaxPrice();
+  const minPrice = 0;
+  const maxPrice = 20000000;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateFilters({ searchQuery: e.target.value });
@@ -176,7 +178,13 @@ export default function CatalogPage() {
               </div>
 
               {/* Products Grid/List */}
-              {filteredProducts.length > 0 ? (
+              {apiLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="rounded-xl border bg-muted/30 animate-pulse h-72" />
+                  ))}
+                </div>
+              ) : filteredProducts.length > 0 ? (
                 <div
                   className={
                     viewMode === "grid"

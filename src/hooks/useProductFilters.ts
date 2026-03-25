@@ -23,7 +23,7 @@ const DEFAULT_FILTERS: FilterState = {
   promoOnly: false,
 };
 
-export function useProductFilters() {
+export function useProductFilters(externalProducts?: Product[]) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
@@ -130,9 +130,11 @@ export function useProductFilters() {
     setSearchParams(new URLSearchParams());
   };
 
+  const sourceProducts = externalProducts ?? products;
+
   // Apply filters to products
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...sourceProducts];
 
     // Filter by categories
     if (filters.categories.length > 0) {
@@ -201,7 +203,7 @@ export function useProductFilters() {
     }
 
     return result;
-  }, [filters]);
+  }, [filters, sourceProducts]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -228,7 +230,7 @@ export function useProductFilters() {
     clearFilters,
     filteredProducts,
     activeFilterCount,
-    totalProducts: products.length,
+    totalProducts: sourceProducts.length,
   };
 }
 
