@@ -73,7 +73,12 @@ export function useMarketplaceProducts() {
         setProducts(mapped);
 
         const cats = (catRes.data ?? catRes ?? []) as { id: number; categorie: string }[];
-        setCategories(cats.map((c) => ({ id: String(c.id), label: c.categorie })));
+        const activeCatNames = new Set(mapped.map((p) => p.category));
+        setCategories(
+          cats
+            .filter((c) => activeCatNames.has(c.categorie))
+            .map((c) => ({ id: String(c.id), label: c.categorie }))
+        );
       } catch (e) {
         if (!cancelled) setError("Impossible de charger le catalogue.");
       } finally {

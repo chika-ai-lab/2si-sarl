@@ -77,12 +77,14 @@ export const API_ENDPOINTS = {
   },
 
   stats: {
+    dashboard: '/stats/dashboard',
     clients: '/stats/clients',
     commandes: '/stats/commandes',
     produits: '/stats/produits',
   },
 
   rapports: {
+    rapport: '/rapports/rapport',
     evolutionCA: '/rapports/evolution-ca',
     statistiques: '/rapports/statistiques',
     topProduits: '/rapports/top-produits',

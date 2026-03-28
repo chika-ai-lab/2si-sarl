@@ -9,7 +9,7 @@ import { useCart } from "@/providers/CartProvider";
 import { useWishlist } from "@/providers/WishlistProvider";
 import { useCompany, useFeatures } from "@/providers/ConfigProvider";
 import { useI18n } from "@/providers/I18nProvider";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,16 +28,26 @@ export function Header() {
   const features = useFeatures();
   const { t, locale, setLocale, supportedLocales, localeNames } = useI18n();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const itemCount = getItemCount();
 
-  const categories = [
-    { id: "electronics", labelKey: "catalog.categories.electronics" },
-    { id: "furniture", labelKey: "catalog.categories.furniture" },
-    { id: "equipment", labelKey: "catalog.categories.equipment" },
-    { id: "vehicles", labelKey: "catalog.categories.vehicles" },
-    { id: "tools", labelKey: "catalog.categories.tools" },
+  // Real API category names (must match product.category from backend)
+  const navCategories = [
+    { name: "Informatique & Bureautique",  label: "Informatique" },
+    { name: "Mobilier de Bureau",          label: "Mobilier" },
+    { name: "Équipement Professionnel",    label: "Équipement" },
+    { name: "Outillage Industriel",        label: "Outillage" },
+    { name: "Véhicules & Engins",          label: "Véhicules" },
+    { name: "Énergie & Solaire",           label: "Énergie" },
+    { name: "Sécurité & Surveillance",     label: "Sécurité" },
+    { name: "Électronique Grand Public",   label: "Électronique" },
   ];
+
+  const activeCategoryParam = searchParams.get("categories");
+  const activeNavLabel = activeCategoryParam
+    ? (navCategories.find((c) => c.name === activeCategoryParam)?.label ?? activeCategoryParam)
+    : t("common.all");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,19 +195,23 @@ export function Header() {
                       type="button"
                       className="flex items-center gap-2 px-4 bg-background hover:bg-muted border-r border-border transition-colors whitespace-nowrap"
                     >
-                      <span className="text-sm font-medium">{t("common.all")}</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-sm font-medium max-w-[110px] truncate">{activeNavLabel}</span>
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuItem onClick={() => navigate("/catalog")}>
                       <span className="font-medium">{t("nav.allCategories")}</span>
                     </DropdownMenuItem>
-                    {categories.map((cat) => (
-                      <DropdownMenuItem key={cat.id} onClick={() => navigate(`/catalog?categories=${cat.id}`)}>
-                        {t(cat.labelKey)}
+                    {navCategories.map((cat) => (
+                      <DropdownMenuItem
+                        key={cat.name}
+                        onClick={() => navigate(`/catalog?categories=${encodeURIComponent(cat.name)}`)}
+                        className={cn(activeCategoryParam === cat.name && "bg-accent")}
+                      >
+                        {cat.label}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -262,40 +276,29 @@ export function Header() {
           <nav className="hidden lg:flex items-center justify-center gap-1 h-11">
             <Link
               to="/catalog"
-              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+              className={cn(
+                "px-4 h-full flex items-center text-sm font-medium transition-colors",
+                !activeCategoryParam
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-foreground hover:text-primary hover:bg-primary/5"
+              )}
             >
               {t("nav.deals")}
             </Link>
-            <Link
-              to="/catalog?categories=electronics"
-              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-            >
-              {t("catalog.categories.electronics")}
-            </Link>
-            <Link
-              to="/catalog?categories=furniture"
-              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-            >
-              {t("catalog.categories.furniture")}
-            </Link>
-            <Link
-              to="/catalog?categories=equipment"
-              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-            >
-              {t("catalog.categories.equipment")}
-            </Link>
-            <Link
-              to="/catalog?categories=tools"
-              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-            >
-              {t("catalog.categories.tools")}
-            </Link>
-            <Link
-              to="/catalog?categories=vehicles"
-              className="px-5 h-full flex items-center text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-            >
-              {t("catalog.categories.vehicles")}
-            </Link>
+            {navCategories.map((cat) => (
+              <Link
+                key={cat.name}
+                to={`/catalog?categories=${encodeURIComponent(cat.name)}`}
+                className={cn(
+                  "px-4 h-full flex items-center text-sm font-medium transition-colors whitespace-nowrap",
+                  activeCategoryParam === cat.name
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-foreground hover:text-primary hover:bg-primary/5"
+                )}
+              >
+                {cat.label}
+              </Link>
+            ))}
           </nav>
         </div>
       </div>
@@ -339,14 +342,19 @@ export function Header() {
                   {t("nav.allCategories")}
                 </Link>
                 <div className="border-t border-border my-2" />
-                {categories.map((category) => (
+                {navCategories.map((cat) => (
                   <Link
-                    key={category.id}
-                    to={`/catalog?categories=${category.id}`}
-                    className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                    key={cat.name}
+                    to={`/catalog?categories=${encodeURIComponent(cat.name)}`}
+                    className={cn(
+                      "px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                      activeCategoryParam === cat.name
+                        ? "text-primary bg-primary/10"
+                        : "text-foreground hover:text-primary hover:bg-primary/5"
+                    )}
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    {t(category.labelKey)}
+                    {cat.label}
                   </Link>
                 ))}
                 <div className="border-t border-border my-2" />

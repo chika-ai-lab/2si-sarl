@@ -43,10 +43,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
-import {
-  useRapportEvolutionCA,
-  useStatistiquesGlobales,
-} from "../hooks/useRapports";
+import { useRapportEvolutionCA } from "../hooks/useRapports";
 import type { RapportFilters } from "../services/rapports.service";
 import {
   LineChart,
@@ -97,7 +94,7 @@ export default function RapportsPage() {
   const [exportProgress, setExportProgress] = useState(0);
 
   const { data: rapportData, isLoading } = useRapportEvolutionCA(filters);
-  const { data: stats } = useStatistiquesGlobales();
+  const stats = rapportData?.statistiques;
 
   const handleExportComplet = () => {
     if (!rapportData) {

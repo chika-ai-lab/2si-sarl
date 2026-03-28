@@ -92,6 +92,7 @@ export const commercialFeatures = {
   sav: getEnvBoolean('VITE_COMMERCIAL_SAV_ENABLED', false),
   rapports: getEnvBoolean('VITE_COMMERCIAL_RAPPORTS_ENABLED', false),
   promotions: getEnvBoolean('VITE_COMMERCIAL_PROMOTIONS_ENABLED', true),
+  leads: getEnvBoolean('VITE_COMMERCIAL_LEADS_ENABLED', true),
 };
 
 /**

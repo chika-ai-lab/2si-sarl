@@ -77,10 +77,10 @@ export interface RapportEvolutionCA {
 // ============================================
 
 function mapChiffreAffaire(item: any): ChiffreAffaire {
-  const montant = Number(item.montant) || 0;
-  const nombreCommandes = Number(item.nombre_commandes) || 0;
+  const montant = Number(item.montant || item.ca) || 0;
+  const nombreCommandes = Number(item.nombre_commandes || item.nb_commandes) || 0;
   return {
-    periode: item.periode || '',
+    periode: item.periode || item.mois || '',
     montant,
     nombreCommandes,
     montantMoyen: nombreCommandes > 0 ? Math.round(montant / nombreCommandes) : 0,
@@ -90,19 +90,19 @@ function mapChiffreAffaire(item: any): ChiffreAffaire {
 function mapVenteParProduit(item: any): VenteParProduit {
   return {
     produitId: String(item.article_id || item.produit_id || ''),
-    produitNom: item.libelle || item.nom || item.produit_nom || '',
+    produitNom: item.article_nom || item.libelle || item.nom || item.produit_nom || '',
     quantiteVendue: Number(item.quantite_vendue) || 0,
     chiffreAffaire: Number(item.chiffre_affaire || item.ca) || 0,
-    nombreCommandes: Number(item.nombre_commandes) || 0,
+    nombreCommandes: Number(item.nb_commandes || item.nombre_commandes) || 0,
   };
 }
 
 function mapVenteParClient(item: any): VenteParClient {
   return {
     clientId: String(item.client_id || ''),
-    clientNom: item.nom_complet || item.nom || item.client_nom || '',
+    clientNom: item.client_nom || item.nom_complet || item.nom || '',
     chiffreAffaire: Number(item.chiffre_affaire || item.ca) || 0,
-    nombreCommandes: Number(item.nombre_commandes) || 0,
+    nombreCommandes: Number(item.nb_commandes || item.nombre_commandes) || 0,
     dernierAchat: item.dernier_achat || '',
   };
 }
@@ -118,15 +118,15 @@ function mapVenteParBanque(item: any): VenteParBanque {
 
 function mapStatistiquesGlobales(res: any): StatistiquesGlobales {
   return {
-    chiffreAffaireTotal: Number(res.ca_total) || 0,
-    chiffreAffaireMois: Number(res.ca_mois) || 0,
+    chiffreAffaireTotal: Number(res.chiffre_affaire_total ?? res.ca_total) || 0,
+    chiffreAffaireMois: Number(res.chiffre_affaire_mois ?? res.ca_mois) || 0,
     evolutionCA: Number(res.evolution_ca) || 0,
-    nombreCommandesTotal: Number(res.commandes_total) || 0,
-    nombreCommandesMois: Number(res.commandes_mois) || 0,
+    nombreCommandesTotal: Number(res.nombre_commandes_total ?? res.commandes_total) || 0,
+    nombreCommandesMois: Number(res.nombre_commandes_mois ?? res.commandes_mois) || 0,
     evolutionCommandes: Number(res.evolution_commandes) || 0,
     panierMoyen: Number(res.panier_moyen) || 0,
     evolutionPanierMoyen: Number(res.evolution_panier_moyen) || 0,
-    nombreClientsActifs: Number(res.clients_actifs) || 0,
+    nombreClientsActifs: Number(res.nombre_clients_actifs ?? res.clients_actifs) || 0,
     tauxConversion: Number(res.taux_conversion) || 0,
     nombreAccreditifsActifs: Number(res.accreditifs_actifs) || 0,
     montantAccreditifsActifs: Number(res.montant_accreditifs_actifs) || 0,
@@ -145,20 +145,16 @@ export async function getRapportEvolutionCA(
     date_fin: filters.dateFin,
     client_id: filters.clientId,
     banque: filters.banque,
+    limit: 10,
   };
 
-  const [evolutionRes, statsRes, topProduitsRes, topClientsRes, banquesRes] = await Promise.all([
-    apiClient.get<any>(API_ENDPOINTS.rapports.evolutionCA, params),
-    apiClient.get<any>(API_ENDPOINTS.rapports.statistiques),
-    apiClient.get<any>(API_ENDPOINTS.rapports.topProduits, { limit: 5 }),
-    apiClient.get<any>(API_ENDPOINTS.rapports.topClients, { limit: 5 }),
-    apiClient.get<any>(API_ENDPOINTS.rapports.repartitionBanques),
-  ]);
+  const res = await apiClient.get<any>(API_ENDPOINTS.rapports.rapport, params);
 
-  const evolutionItems: any[] = evolutionRes.data || evolutionRes || [];
-  const topProduitsItems: any[] = topProduitsRes.data || topProduitsRes || [];
-  const topClientsItems: any[] = topClientsRes.data || topClientsRes || [];
-  const banquesItems: any[] = banquesRes.data || banquesRes || [];
+  const evolutionItems: any[] = res.evolution || [];
+  const topProduitsItems: any[] = res.top_produits || [];
+  const topClientsItems: any[] = res.top_clients || [];
+  const banquesItems: any[] = res.banques || [];
+  const statsRaw: any = res.statistiques || {};
 
   return {
     success: true,
@@ -168,7 +164,7 @@ export async function getRapportEvolutionCA(
       topProduits: topProduitsItems.map(mapVenteParProduit),
       topClients: topClientsItems.map(mapVenteParClient),
       repartitionBanques: banquesItems.map(mapVenteParBanque),
-      statistiques: mapStatistiquesGlobales(statsRes.data || statsRes || {}),
+      statistiques: mapStatistiquesGlobales(statsRaw),
     },
     message: 'Rapport récupéré avec succès',
   };

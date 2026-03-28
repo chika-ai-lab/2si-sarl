@@ -24,7 +24,7 @@ export default function CatalogPage() {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const { products: apiProducts, loading: apiLoading } = useMarketplaceProducts();
+  const { products: apiProducts, categories: apiCategories, loading: apiLoading } = useMarketplaceProducts();
 
   const {
     filters,
@@ -34,9 +34,6 @@ export default function CatalogPage() {
     activeFilterCount,
     totalProducts,
   } = useProductFilters(apiProducts);
-
-  const minPrice = 0;
-  const maxPrice = 20000000;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateFilters({ searchQuery: e.target.value });
@@ -86,8 +83,7 @@ export default function CatalogPage() {
                   updateFilters={updateFilters}
                   clearFilters={clearFilters}
                   activeFilterCount={activeFilterCount}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
+                  apiCategories={apiCategories}
                 />
               </div>
             </aside>
@@ -108,10 +104,11 @@ export default function CatalogPage() {
                       updateFilters={updateFilters}
                       clearFilters={clearFilters}
                       activeFilterCount={activeFilterCount}
-                      minPrice={minPrice}
-                      maxPrice={maxPrice}
+                      minPrice={0}
+                      maxPrice={0}
                       filteredCount={filteredProducts.length}
                       totalCount={totalProducts}
+                      apiCategories={apiCategories}
                     />
                   </div>
 

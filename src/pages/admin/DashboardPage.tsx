@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ShoppingCart,
   Users,
@@ -15,7 +16,6 @@ import {
   Calculator,
   Wrench,
   BarChart3,
-  Loader2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { Badge } from "@/components/ui/badge";
@@ -67,29 +67,22 @@ export function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const [commandesStats, clientsStats, recentRes] = await Promise.all([
-          apiClient.get<any>(API_ENDPOINTS.stats.commandes),
-          apiClient.get<any>(API_ENDPOINTS.stats.clients),
-          apiClient.get<any>(API_ENDPOINTS.commandes.list, { per_page: 5 }),
-        ]);
+        const data = await apiClient.get<any>(API_ENDPOINTS.stats.dashboard);
 
         setStats({
-          totalOrders: commandesStats.total ?? 0,
-          pendingOrders:
-            (commandesStats.par_etat?.en_attente ?? 0) +
-            (commandesStats.par_etat?.brouillon ?? 0),
-          revenue: commandesStats.ca_total ?? 0,
-          customers: clientsStats.total ?? 0,
+          totalOrders: data.commandes?.total ?? 0,
+          pendingOrders: data.commandes?.en_attente ?? 0,
+          revenue: data.commandes?.ca_total ?? 0,
+          customers: data.clients?.total ?? 0,
         });
 
-        const items: any[] = recentRes.data ?? recentRes ?? [];
         setRecentOrders(
-          items.slice(0, 5).map((c: any) => ({
-            id: c.reference ?? `#${c.id}`,
-            customer: c.client?.nom_complet ?? c.client?.raison_sociale ?? "—",
-            amount: Number(c.montant) || 0,
+          (data.recentes ?? []).map((c: any) => ({
+            id: c.id,
+            customer: c.customer ?? "—",
+            amount: Number(c.amount) || 0,
             status: ETAT_TO_STATUS[c.etat] ?? "pending",
-            date: (c.created_at ?? "").slice(0, 10),
+            date: c.created_at ?? "",
           }))
         );
       } catch (err) {
@@ -153,9 +146,9 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.totalOrders}
-            </div>
+            {loading ? <Skeleton className="h-8 w-16" /> : (
+              <div className="text-2xl font-bold text-foreground">{stats.totalOrders}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -170,9 +163,9 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingOrders}
-            </div>
+            {loading ? <Skeleton className="h-8 w-12" /> : (
+              <div className="text-2xl font-bold text-foreground">{stats.pendingOrders}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -187,9 +180,9 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(stats.revenue)}
-            </div>
+            {loading ? <Skeleton className="h-8 w-32" /> : (
+              <div className="text-2xl font-bold text-foreground">{formatCurrency(stats.revenue)}</div>
+            )}
           </CardContent>
         </Card>
 
@@ -204,9 +197,9 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.customers}
-            </div>
+            {loading ? <Skeleton className="h-8 w-12" /> : (
+              <div className="text-2xl font-bold text-foreground">{stats.customers}</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -228,8 +221,22 @@ export function DashboardPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <Skeleton className="h-4 w-24 ml-auto" />
+                    <Skeleton className="h-3 w-16 ml-auto" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : recentOrders.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">

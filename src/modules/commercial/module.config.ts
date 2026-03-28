@@ -79,6 +79,13 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:CATALOG:READ"] as any,
       enabled: isCommercialFeatureEnabled("promotions"),
     },
+    // Leads / File d'attente
+    {
+      path: "/leads",
+      component: lazy(() => import("./pages/LeadsPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: isCommercialFeatureEnabled("leads"),
+    },
   ];
 
   // Filtrer uniquement les routes activées
@@ -90,6 +97,15 @@ function filterRoutesByFeatureFlags() {
 // Fonction helper pour filtrer la navigation selon les feature flags
 function filterNavigationByFeatureFlags() {
   const allNavigation = [
+    {
+      label: "File d'attente",
+      path: "/admin/commercial/leads",
+      icon: "Inbox",
+      section: "sales",
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      order: 7,
+      enabled: isCommercialFeatureEnabled("leads"),
+    },
     {
       label: "Clients",
       path: "/admin/commercial/clients",

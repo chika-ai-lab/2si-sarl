@@ -11,10 +11,9 @@ interface MobileFiltersProps {
   updateFilters: (filters: Partial<FilterState>) => void;
   clearFilters: () => void;
   activeFilterCount: number;
-  minPrice: number;
-  maxPrice: number;
   filteredCount: number;
   totalCount: number;
+  apiCategories?: { id: string; label: string }[];
 }
 
 export function MobileFilters({
@@ -22,10 +21,9 @@ export function MobileFilters({
   updateFilters,
   clearFilters,
   activeFilterCount,
-  minPrice,
-  maxPrice,
   filteredCount,
   totalCount,
+  apiCategories = [],
 }: MobileFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -60,8 +58,7 @@ export function MobileFilters({
             updateFilters={updateFilters}
             clearFilters={clearFilters}
             activeFilterCount={activeFilterCount}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
+            apiCategories={apiCategories}
           />
         </div>
 

@@ -1,23 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { X, Star } from "lucide-react";
-import { formatCurrency } from "@/lib/currency";
 import { useTranslation } from "@/providers/I18nProvider";
 import { type FilterState } from "@/hooks/useProductFilters";
 import { cn } from "@/lib/utils";
-import { categories as allCategories } from "@/data/products";
 
 interface ProductFiltersProps {
   filters: FilterState;
   updateFilters: (filters: Partial<FilterState>) => void;
   clearFilters: () => void;
   activeFilterCount: number;
-  minPrice: number;
-  maxPrice: number;
+  apiCategories?: { id: string; label: string }[];
   className?: string;
 }
 
@@ -34,21 +30,16 @@ export function ProductFilters({
   updateFilters,
   clearFilters,
   activeFilterCount,
-  minPrice,
-  maxPrice,
+  apiCategories = [],
   className,
 }: ProductFiltersProps) {
   const { t } = useTranslation();
 
-  const handleCategoryToggle = (category: string) => {
-    const newCategories = filters.categories.includes(category)
-      ? filters.categories.filter((c) => c !== category)
-      : [...filters.categories, category];
+  const handleCategoryToggle = (categoryName: string) => {
+    const newCategories = filters.categories.includes(categoryName)
+      ? filters.categories.filter((c) => c !== categoryName)
+      : [...filters.categories, categoryName];
     updateFilters({ categories: newCategories });
-  };
-
-  const handlePriceRangeChange = (values: number[]) => {
-    updateFilters({ priceRange: [values[0], values[1]] });
   };
 
   const handleRatingChange = (rating: number) => {
@@ -99,55 +90,24 @@ export function ProductFilters({
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-3 pt-2">
-              {allCategories.filter(cat => cat.id !== "all").map((category) => {
-                const isChecked = filters.categories.includes(category.id);
+              {apiCategories.map((category) => {
+                const isChecked = filters.categories.includes(category.label);
                 return (
                   <div key={category.id} className="flex items-center space-x-3">
                     <Checkbox
                       id={`category-${category.id}`}
                       checked={isChecked}
-                      onCheckedChange={() => handleCategoryToggle(category.id)}
+                      onCheckedChange={() => handleCategoryToggle(category.label)}
                     />
                     <Label
                       htmlFor={`category-${category.id}`}
-                      className="flex items-center gap-2 cursor-pointer flex-1 text-sm capitalize"
+                      className="flex items-center gap-2 cursor-pointer flex-1 text-sm"
                     >
-                      {t(category.labelKey)}
+                      {category.label}
                     </Label>
                   </div>
                 );
               })}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Price Range */}
-        <AccordionItem value="price">
-          <AccordionTrigger className="hover:no-underline">
-            <div className="flex items-center justify-between w-full pr-3">
-              <span className="font-medium">Prix</span>
-              {(filters.priceRange[0] !== minPrice || filters.priceRange[1] !== maxPrice) && (
-                <Badge variant="secondary" className="ml-2">
-                  ✓
-                </Badge>
-              )}
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4 pt-2">
-              <Slider
-                min={minPrice}
-                max={maxPrice}
-                step={100}
-                value={filters.priceRange}
-                onValueChange={handlePriceRangeChange}
-                className="w-full"
-              />
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{formatCurrency(filters.priceRange[0])}</span>
-                <span className="text-muted-foreground">-</span>
-                <span className="font-medium">{formatCurrency(filters.priceRange[1])}</span>
-              </div>
             </div>
           </AccordionContent>
         </AccordionItem>

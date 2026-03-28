@@ -20,19 +20,23 @@ import { apiClient } from './apiClient';
 
 // Le backend utilise désormais des valeurs sans accents (validee, livree, annulee)
 const ETAT_TO_STATUT: Record<string, CommandeStatut> = {
-  brouillon:  'brouillon',
-  validee:    'validee',
-  en_attente: 'en_attente',
-  en_cours:   'en_cours',
-  livree:     'livree',
-  annulee:    'annulee',
-  // Rétrocompat au cas où d'anciennes lignes existeraient en base
-  'validé':   'validee',
-  valide:     'validee',
-  'livré':    'livree',
-  livre:      'livree',
-  'annulé':   'annulee',
-  annule:     'annulee',
+  brouillon:         'brouillon',
+  validee:           'validee',
+  en_attente:        'en_attente',
+  en_cours:          'en_cours',
+  livree:            'livree',
+  annulee:           'annulee',
+  // États du cycle leads/devis
+  en_attente_devis:  'en_attente',
+  devis_envoye:      'en_cours',
+  confirmee:         'validee',
+  // Rétrocompat
+  'validé':          'validee',
+  valide:            'validee',
+  'livré':           'livree',
+  livre:             'livree',
+  'annulé':          'annulee',
+  annule:            'annulee',
 };
 
 const STATUT_TO_ETAT: Record<string, string> = {

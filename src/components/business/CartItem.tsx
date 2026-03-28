@@ -1,7 +1,6 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart, type CartItem as CartItemType } from "@/providers/CartProvider";
-import { formatCurrency } from "@/lib/currency";
 
 interface CartItemProps {
   item: CartItemType;
@@ -24,10 +23,8 @@ export function CartItem({ item }: CartItemProps) {
       {/* Details */}
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
-        <p className="text-sm text-muted-foreground line-clamp-1">{item.description}</p>
-        <div className="mt-2 text-lg font-bold text-foreground">
-          {formatCurrency(item.price)}
-        </div>
+        <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+        <p className="mt-1 text-xs text-primary font-medium">Prix sur devis</p>
       </div>
 
       {/* Quantity Controls */}

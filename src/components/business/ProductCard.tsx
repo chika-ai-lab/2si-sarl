@@ -131,7 +131,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
             <div className="flex-1 space-y-3">
               {/* Category */}
               <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                {t(`catalog.categories.${product.category}`)}
+                {product.category}
               </div>
 
               {/* Title */}
@@ -272,54 +272,44 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
       </Link>
 
       <div className="flex flex-col flex-1">
-        <CardContent className="p-5 flex flex-col flex-1">
+        <CardContent className="p-5 flex flex-col gap-2">
           {/* Category */}
-          <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
-            {t(`catalog.categories.${product.category}`)}
+          <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+            {product.category}
           </div>
 
           {/* Title */}
-          <Link to={`/product/${product.id}`} className="mb-3 block">
-            <h3 className="font-semibold text-base text-foreground line-clamp-2 hover:text-primary transition-colors min-h-[3rem] leading-6">
+          <Link to={`/product/${product.id}`} className="block">
+            <h3 className="font-semibold text-base text-foreground line-clamp-2 hover:text-primary transition-colors leading-6">
               {product.name}
             </h3>
           </Link>
 
           {/* Rating */}
-          {product.rating ? (
-            <div className="mb-3">
-              <ProductRating
-                rating={product.rating}
-                reviewCount={product.reviewCount}
-                size="sm"
-              />
-            </div>
-          ) : (
-            <div className="mb-3 h-5" />
+          {product.rating && (
+            <ProductRating
+              rating={product.rating}
+              reviewCount={product.reviewCount}
+              size="sm"
+            />
           )}
 
           {/* Description */}
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem] leading-5">
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-5">
             {product.description}
           </p>
 
           {/* Stock indicator */}
           {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
-            <p className="text-xs text-warning font-semibold mb-3">
+            <p className="text-xs text-warning font-semibold">
               {t("productDetails.onlyLeft", { count: product.stockQuantity })}
             </p>
           )}
 
-          {/* Spacer to push price to bottom */}
-          <div className="flex-1" />
-
-          {/* Price */}
-          <div className="mt-auto pt-3 border-t border-border">
-            <div className="flex items-center gap-2 mb-1">
-              <CreditCard className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">Financement disponible</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Payable en plusieurs tranches</p>
+          {/* Financement */}
+          <div className="flex items-center gap-2 pt-2 border-t border-border">
+            <CreditCard className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-sm font-semibold text-primary">Financement disponible</span>
           </div>
         </CardContent>
 

@@ -15,7 +15,7 @@ export function CategoryCard({
 
   return (
     <Link
-      to={`/catalog?category=${encodeURIComponent(name)}`}
+      to={`/catalog?categories=${encodeURIComponent(name)}`}
       className={cn("group block h-full", className)}
     >
       <motion.div
