@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +54,8 @@ export function CategoriesPage() {
   const [editId, setEditId]           = useState<string | null>(null);
   const [form, setForm]               = useState(EMPTY_FORM);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await apiClient.get<any>('/categories');
       const items: any[] = res.data ?? res ?? [];
@@ -102,7 +104,7 @@ export function CategoriesPage() {
         toast({ title: "Catégorie modifiée" });
       } else {
         await apiClient.post('/categories', { categorie: form.nom });
-        await fetchCategories();
+        await fetchCategories(true);
         toast({ title: "Catégorie créée" });
       }
     } catch (err) {
@@ -127,8 +129,29 @@ export function CategoriesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2"><Skeleton className="h-8 w-40" /><Skeleton className="h-4 w-64" /></div>
+          <Skeleton className="h-9 w-40" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}><CardContent className="pt-6 flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded" />
+              <div className="space-y-1"><Skeleton className="h-3 w-20" /><Skeleton className="h-7 w-10" /></div>
+            </CardContent></Card>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i}><CardContent className="p-5 space-y-3">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-6 w-20" />
+            </CardContent></Card>
+          ))}
+        </div>
       </div>
     );
   }

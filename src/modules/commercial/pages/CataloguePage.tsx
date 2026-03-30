@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -382,9 +383,9 @@ export function CataloguePage() {
                 <div><p className="text-muted-foreground">Description</p><p>{selectedProduit.description}</p></div>
               )}
               <div className="grid grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
-                <div><p className="text-muted-foreground">Prix achat</p><p className="font-semibold">{formatCurrency(selectedProduit.prix_achat ?? 0)}</p></div>
-                <div><p className="text-muted-foreground">Prix vente</p><p className="font-semibold text-base">{formatCurrency(selectedProduit.prix)}</p></div>
-                <div><p className="text-muted-foreground">Marge</p><p className="font-semibold text-green-600">{formatCurrency(selectedProduit.prix - (selectedProduit.prix_achat ?? 0))}</p></div>
+                <div><p className="text-muted-foreground">Prix achat</p><p className="font-semibold">{formatCurrency(Number(selectedProduit.prix_achat) || 0)}</p></div>
+                <div><p className="text-muted-foreground">Prix vente</p><p className="font-semibold text-base">{formatCurrency(Number(selectedProduit.prix) || 0)}</p></div>
+                <div><p className="text-muted-foreground">Marge</p><p className="font-semibold text-green-600">{formatCurrency((Number(selectedProduit.prix) || 0) - (Number(selectedProduit.prix_achat) || 0))}</p></div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div><p className="text-muted-foreground">Stock</p><p className="font-bold text-lg">{selectedProduit.quantite}</p></div>
@@ -502,9 +503,20 @@ function ProductsTable({
 }) {
   if (isLoading) {
     return (
-      <Card><CardContent className="py-10 flex justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </CardContent></Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {[...Array(8)].map((_, i) => (
+          <Card key={i}><CardContent className="p-4 space-y-3">
+            <Skeleton className="h-40 w-full rounded" />
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-1/2" />
+            <div className="flex justify-between items-center pt-1">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </CardContent></Card>
+        ))}
+      </div>
     );
   }
   if (produits.length === 0) {
@@ -520,10 +532,10 @@ function ProductsTable({
           <TableHeader>
             <TableRow>
               <TableHead>Produit</TableHead>
-              <TableHead>Référence</TableHead>
+              <TableHead className="whitespace-nowrap">Référence</TableHead>
               <TableHead>Catégorie</TableHead>
-              <TableHead>Prix vente</TableHead>
-              <TableHead>Marge</TableHead>
+              <TableHead className="whitespace-nowrap">Prix vente</TableHead>
+              <TableHead className="whitespace-nowrap">Marge</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -546,15 +558,15 @@ function ProductsTable({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{a.reference ?? "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">{a.categorie?.categorie ?? "—"}</Badge>
+                  <TableCell className="font-mono text-sm whitespace-nowrap">{a.reference ?? "—"}</TableCell>
+                  <TableCell className="max-w-[140px]">
+                    <Badge variant="outline" className="text-xs truncate max-w-full block text-center">{a.categorie?.categorie ?? "—"}</Badge>
                   </TableCell>
-                  <TableCell className="font-semibold">{formatCurrency(a.prix)}</TableCell>
-                  <TableCell className={`font-semibold text-sm ${a.prix - (a.prix_achat ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(a.prix - (a.prix_achat ?? 0))}
+                  <TableCell className="font-semibold whitespace-nowrap">{formatCurrency(Number(a.prix) || 0)}</TableCell>
+                  <TableCell className={`font-semibold text-sm whitespace-nowrap ${(Number(a.prix) || 0) - (Number(a.prix_achat) || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency((Number(a.prix) || 0) - (Number(a.prix_achat) || 0))}
                   </TableCell>
-                  <TableCell className="text-sm">{a.quantite}</TableCell>
+                  <TableCell className="text-sm whitespace-nowrap">{a.quantite}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={cfg.color}>{cfg.label}</Badge>
                   </TableCell>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -459,84 +460,109 @@ export function CommandesPage() {
 
       {/* Details dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Commande {selectedCommande?.reference}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           {selectedCommande && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><p className="text-muted-foreground">Client</p><p className="font-semibold">{getClientName(selectedCommande.clientId)}</p></div>
-                <div><p className="text-muted-foreground">Date</p><p className="font-semibold">{selectedCommande.dateCommande}</p></div>
-                <div><p className="text-muted-foreground">Statut</p>
-                  <Badge variant="outline" className={STATUT_CONFIG[selectedCommande.statut]?.color}>
+            <>
+              {/* ── En-tête colorée ── */}
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-6 py-5 border-b rounded-t-lg">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Commande</p>
+                    <h2 className="text-2xl font-bold tracking-tight">{selectedCommande.reference}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedCommande.dateCommande}</p>
+                  </div>
+                  <Badge className={`text-sm px-3 py-1 ${STATUT_CONFIG[selectedCommande.statut]?.color}`}>
                     {STATUT_CONFIG[selectedCommande.statut]?.label}
                   </Badge>
                 </div>
-                <div><p className="text-muted-foreground">Mode paiement</p><Badge variant="outline">{selectedCommande.modePaiement}</Badge></div>
               </div>
 
-              {/* Lignes */}
-              <div>
-                <h3 className="font-semibold mb-2">Articles</h3>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Article</TableHead>
-                        <TableHead className="text-right">Qté</TableHead>
-                        <TableHead className="text-right">Prix vente</TableHead>
-                        <TableHead className="text-right">Prix achat</TableHead>
-                        <TableHead className="text-right">Frais fourn.</TableHead>
-                        <TableHead className="text-right">Frais client</TableHead>
-                        <TableHead className="text-right">Commission</TableHead>
-                        <TableHead className="text-right">Marge</TableHead>
-                        <TableHead>Statut</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedCommande.lignes.map((ligne) => (
-                        <TableRow key={ligne.id}>
-                          <TableCell className="font-medium">{ligne.produit?.nom || ligne.produitId}</TableCell>
-                          <TableCell className="text-right">{ligne.quantite}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(ligne.prixUnitaire)}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(ligne.prixAchat)}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(ligne.fraisLivraisonFournisseur)}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(ligne.fraisLivraisonClient)}</TableCell>
-                          <TableCell className="text-right text-blue-600">{formatCurrency(ligne.commission)}</TableCell>
-                          <TableCell className={`text-right font-semibold ${ligne.marge >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(ligne.marge)}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={ligne.statut === "livré" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                              {ligne.statut === "livré" ? "Livré" : "En attente"}
-                            </Badge>
-                          </TableCell>
+              <div className="px-6 py-5 space-y-6">
+                {/* ── Infos client + paiement ── */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Client</p>
+                    <p className="font-semibold">{getClientName(selectedCommande.clientId)}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Mode de paiement</p>
+                    <p className="font-semibold capitalize">{selectedCommande.modePaiement}</p>
+                  </div>
+                </div>
+
+                {/* ── Articles ── */}
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Articles</p>
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>Article</TableHead>
+                          <TableHead className="text-center w-14">Qté</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Prix vente</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Prix achat</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Commission</TableHead>
+                          <TableHead className="text-right whitespace-nowrap">Marge</TableHead>
+                          <TableHead className="text-center">Statut</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedCommande.lignes.map((ligne) => (
+                          <TableRow key={ligne.id}>
+                            <TableCell className="font-medium">{ligne.produit?.nom || ligne.produitId}</TableCell>
+                            <TableCell className="text-center">{ligne.quantite}</TableCell>
+                            <TableCell className="text-right whitespace-nowrap">{formatCurrency(ligne.prixUnitaire)}</TableCell>
+                            <TableCell className="text-right whitespace-nowrap">{formatCurrency(ligne.prixAchat)}</TableCell>
+                            <TableCell className="text-right whitespace-nowrap text-blue-600">{formatCurrency(ligne.commission)}</TableCell>
+                            <TableCell className={`text-right whitespace-nowrap font-semibold ${ligne.marge >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(ligne.marge)}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className={ligne.statut === "livré" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                                {ligne.statut === "livré" ? "Livré" : "En attente"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
+
+                {/* ── Récap financier ── */}
+                <div className="flex justify-end">
+                  <div className="rounded-lg border bg-muted/30 p-4 min-w-[280px] space-y-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Sous-total</span>
+                      <span>{formatCurrency(selectedCommande.total)}</span>
+                    </div>
+                    {selectedCommande.remise > 0 && (
+                      <div className="flex justify-between text-orange-600">
+                        <span>Remise</span><span>-{formatCurrency(selectedCommande.remise)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-base border-t pt-2">
+                      <span>Total TTC</span><span>{formatCurrency(selectedCommande.total)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Notes ── */}
+                {selectedCommande.notes && (
+                  <div className="rounded-lg border bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Notes</p>
+                    <p className="text-sm">{selectedCommande.notes}</p>
+                  </div>
+                )}
               </div>
 
-              {/* Récap financier */}
-              <div className="border-t pt-4">
-                <div className="space-y-2 max-w-sm ml-auto text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">CA total</span><span className="font-semibold">{formatCurrency(selectedCommande.total)}</span></div>
-                  {selectedCommande.remise > 0 && <div className="flex justify-between text-orange-600"><span>Remise</span><span>-{formatCurrency(selectedCommande.remise)}</span></div>}
-                  <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total TTC</span><span>{formatCurrency(selectedCommande.total)}</span></div>
-                </div>
+              {/* ── Footer ── */}
+              <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/20 rounded-b-lg">
+                <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>Fermer</Button>
+                <Button variant="outline">
+                  <FileText className="mr-2 h-4 w-4" />Générer facture
+                </Button>
               </div>
-
-              {selectedCommande.notes && (
-                <div><h3 className="font-semibold mb-1">Notes</h3><p className="text-muted-foreground text-sm">{selectedCommande.notes}</p></div>
-              )}
-            </div>
+            </>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>Fermer</Button>
-            <Button variant="outline">
-              <FileText className="mr-2 h-4 w-4" />Générer facture
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -597,7 +623,17 @@ export function CommandesPage() {
 
         {/* Table */}
         {isLoading ? (
-          <Card><CardContent className="py-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></CardContent></Card>
+          <Card><CardContent className="p-0 divide-y">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-4">
+                <div className="flex-1 space-y-1"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-24" /></div>
+                <Skeleton className="h-6 w-20 hidden md:block" />
+                <Skeleton className="h-4 w-24 hidden md:block" />
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            ))}
+          </CardContent></Card>
         ) : error ? (
           <Card><CardContent className="py-8 text-center text-destructive">Erreur lors du chargement</CardContent></Card>
         ) : commandes.length === 0 ? (

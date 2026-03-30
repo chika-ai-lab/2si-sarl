@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,8 @@ export function ContactsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const fetchContacts = async () => {
+  const fetchContacts = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await apiClient.get<any>('/clients');
       const items: any[] = res.data ?? res ?? [];
@@ -156,7 +158,7 @@ export function ContactsPage() {
         toast({ title: "Contact modifié" });
       } else {
         await apiClient.post('/clients', payload);
-        await fetchContacts();
+        await fetchContacts(true);
         toast({ title: "Contact créé" });
       }
     } catch (err) {
@@ -186,8 +188,34 @@ export function ContactsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2"><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-48" /></div>
+          <Skeleton className="h-9 w-36" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}><CardContent className="pt-6 flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded" />
+              <div className="space-y-1"><Skeleton className="h-3 w-16" /><Skeleton className="h-7 w-10" /></div>
+            </CardContent></Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-4">
+                  <Skeleton className="h-9 w-9 rounded-full" />
+                  <div className="flex-1 space-y-1"><Skeleton className="h-4 w-36" /><Skeleton className="h-3 w-28" /></div>
+                  <Skeleton className="h-4 w-40 hidden md:block" />
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

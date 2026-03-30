@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,8 +132,8 @@ export function InventoryPage() {
   const [form, setForm]             = useState({ ...EMPTY_FORM });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [artRes, catRes] = await Promise.all([
         apiClient.get<any>("/articles"),
@@ -222,7 +223,7 @@ export function InventoryPage() {
         toast({ title: "Produit créé avec succès" });
       }
       setIsFormOpen(false);
-      loadData();
+      loadData(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur";
       toast({ title: "Erreur", description: msg, variant: "destructive" });
@@ -277,8 +278,33 @@ export function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-56" /></div>
+          <Skeleton className="h-9 w-36" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}><CardHeader className="pb-2"><Skeleton className="h-4 w-24" /></CardHeader>
+              <CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            <div className="p-4 border-b"><Skeleton className="h-9 w-64" /></div>
+            <div className="divide-y">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-4">
+                  <Skeleton className="h-10 w-10 rounded" />
+                  <div className="flex-1 space-y-1"><Skeleton className="h-4 w-40" /><Skeleton className="h-3 w-24" /></div>
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-12" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

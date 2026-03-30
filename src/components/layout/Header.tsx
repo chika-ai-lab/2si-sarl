@@ -144,22 +144,22 @@ export function Header() {
 
               <div className="h-4 w-px bg-primary-foreground/30" />
 
-              {/* Auth Links */}
-              <Link
-                to="/login"
-                className="flex items-center gap-1.5 text-xs hover:text-primary-foreground/80 transition-colors"
+              {/* Auth Links - Disabled */}
+              <span
+                className="flex items-center gap-1.5 text-xs text-primary-foreground/40 cursor-not-allowed select-none"
+                title="Fonctionnalité bientôt disponible"
               >
                 <LogIn className="h-3.5 w-3.5" />
                 <span>{t("header.signIn")}</span>
-              </Link>
-              <span className="text-xs text-primary-foreground/50">{t("header.or")}</span>
-              <Link
-                to="/register"
-                className="flex items-center gap-1.5 text-xs hover:text-primary-foreground/80 transition-colors"
+              </span>
+              <span className="text-xs text-primary-foreground/30">{t("header.or")}</span>
+              <span
+                className="flex items-center gap-1.5 text-xs text-primary-foreground/40 cursor-not-allowed select-none"
+                title="Fonctionnalité bientôt disponible"
               >
                 <UserPlus className="h-3.5 w-3.5" />
                 <span>{t("header.register")}</span>
-              </Link>
+              </span>
             </div>
           </div>
         </div>
