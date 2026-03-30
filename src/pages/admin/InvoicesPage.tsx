@@ -69,6 +69,7 @@ export function InvoicesPage() {
             item.etat === "payee"     ? "payee"     :
             item.etat === "brouillon" ? "brouillon" :
             item.etat === "en_retard" ? "en_retard" :
+            item.etat === "partielle" ? "envoyee"   :
             "envoyee";
           const montantTTC = Number(item.montant) || 0;
           // commande_client peut être encapsulé dans .data par JsonResource
@@ -139,11 +140,20 @@ export function InvoicesPage() {
     }
   };
 
-  const handleMarquerPayee = (id: string) => {
-    setFactures((prev) => prev.map((f) =>
-      f.id === id ? { ...f, statut: "payee", montantPaye: f.montantTTC } : f
-    ));
-    toast({ title: "Facture marquée comme payée" });
+  const handleMarquerPayee = async (f: Facture) => {
+    if (!f.commandeClientId) return;
+    try {
+      await apiClient.patch(`/leads/${f.commandeClientId}/paiement`, {
+        statut_paiement: "paye",
+        recu: f.montantTTC,
+      });
+      setFactures((prev) => prev.map((x) =>
+        x.id === f.id ? { ...x, statut: "payee", montantPaye: x.montantTTC } : x
+      ));
+      toast({ title: "Facture marquée comme payée" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    }
   };
 
   const handleDownload = async (f: Facture) => {
@@ -383,7 +393,7 @@ export function InvoicesPage() {
                         PDF
                       </Button>
                       {(f.statut === "envoyee" || f.statut === "en_retard") && (
-                        <Button size="sm" className="flex-1" onClick={() => handleMarquerPayee(f.id)}>
+                        <Button size="sm" className="flex-1" onClick={() => handleMarquerPayee(f)}>
                           <CheckCircle className="mr-1 h-3 w-3" />Payée
                         </Button>
                       )}
@@ -447,7 +457,7 @@ export function InvoicesPage() {
                                 : <Download className="h-4 w-4" />}
                             </Button>
                             {(f.statut === "envoyee" || f.statut === "en_retard") && (
-                              <Button variant="outline" size="sm" onClick={() => handleMarquerPayee(f.id)}>
+                              <Button variant="outline" size="sm" onClick={() => handleMarquerPayee(f)}>
                                 <CheckCircle className="mr-1 h-3 w-3" />Payée
                               </Button>
                             )}
