@@ -27,7 +27,17 @@ import { getActiveModules } from "@/config/modules.config";
 import { ProtectedModuleRoute } from "@/core/router/ProtectedModuleRoute";
 import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime:            Infinity,       // cache permanent — invalidation explicite sur mutation
+      gcTime:               Infinity,       // ne jamais vider le cache pendant la session
+      retry:                1,              // 1 seul retry sur erreur réseau
+      refetchOnWindowFocus: false,
+      refetchOnMount:       false,          // pas de refetch si le cache existe déjà
+    },
+  },
+});
 
 function MainApp() {
   const [isInMaintenance, setIsInMaintenance] = useState(false);

@@ -36,7 +36,8 @@ import {
   autoAssignerLead, enregistrerDevis, confirmerLead,
   type Lead, type Modalite,
 } from "../hooks/useLeads";
-import { useCommandes } from "../hooks/useCommandes";
+import { useCommandes, commandesKeys } from "../hooks/useCommandes";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClients } from "../hooks/useClients";
 import { apiClient } from "../services/apiClient";
 import { createCommande, deleteCommande, changeCommandeStatut } from "../services/commandes.service";
@@ -333,28 +334,36 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
 
 // ── LeadRow ────────────────────────────────────────────────────────────────
 
-function LeadRow({ lead, onAction }: { lead: Lead; onAction: () => void }) {
+function LeadRow({ lead, onAction, onOptimisticRemove, onRollback }: {
+  lead: Lead; onAction: () => void;
+  onOptimisticRemove?: (id: number) => void;
+  onRollback?: (lead: Lead) => void;
+}) {
   const [expanded, setExpanded]   = useState(false);
   const [busy, setBusy]           = useState(false);
   const [devisOpen, setDevisOpen] = useState(false);
 
   const handleAutoAssign = async () => {
+    onOptimisticRemove?.(lead.id);
     setBusy(true);
     try {
       await autoAssignerLead(lead.id);
       toast({ title: "Ticket pris en charge !" });
       onAction();
     } catch (e: unknown) {
+      onRollback?.(lead);
       toast({ title: "Erreur", description: e instanceof Error ? e.message : "Erreur", variant: "destructive" });
     } finally { setBusy(false); }
   };
   const handleConfirmer = async () => {
+    onOptimisticRemove?.(lead.id);
     setBusy(true);
     try {
       await confirmerLead(lead.id);
       toast({ title: "Commande confirmée !" });
       onAction();
     } catch (e: unknown) {
+      onRollback?.(lead);
       toast({ title: "Erreur", description: e instanceof Error ? e.message : "Erreur", variant: "destructive" });
     } finally { setBusy(false); }
   };
@@ -455,8 +464,10 @@ function LeadRow({ lead, onAction }: { lead: Lead; onAction: () => void }) {
 
 // ── LeadsTable ─────────────────────────────────────────────────────────────
 
-function LeadsTable({ leads, loading, emptyIcon: EmptyIcon, emptyText, onAction }: {
+function LeadsTable({ leads, loading, emptyIcon: EmptyIcon, emptyText, onAction, onOptimisticRemove, onRollback }: {
   leads: Lead[]; loading: boolean; emptyIcon: React.ElementType; emptyText: string; onAction: () => void;
+  onOptimisticRemove?: (id: number) => void;
+  onRollback?: (lead: Lead) => void;
 }) {
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
@@ -514,7 +525,7 @@ function LeadsTable({ leads, loading, emptyIcon: EmptyIcon, emptyText, onAction 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((lead) => <LeadRow key={lead.id} lead={lead} onAction={onAction} />)}
+              {filtered.map((lead) => <LeadRow key={lead.id} lead={lead} onAction={onAction} onOptimisticRemove={onOptimisticRemove} onRollback={onRollback} />)}
             </TableBody>
           </Table>
         </div>
@@ -537,9 +548,10 @@ const PAIEMENT_STATUTS = [
   { value: "paye",              label: "Payé",                color: "bg-green-100 text-green-800" },
 ];
 
-function CommandeDetailDialog({ commande, clients, onClose, onFacture, onPaiementSaved }: {
+function CommandeDetailDialog({ commande, clients, onClose, onFacture, onSavePaiement }: {
   commande: CommandeCommerciale | null; clients: any[]; onClose: () => void;
-  onFacture?: () => void; onPaiementSaved?: () => void;
+  onFacture?: () => void;
+  onSavePaiement?: (statut: string, recu: number) => Promise<void>;
 }) {
   const [statutPaiement, setStatutPaiement] = useState(commande?.statutPaiement ?? "en_attente");
   const [montantRecu, setMontantRecu]       = useState(String(commande?.montantPaye ?? 0));
@@ -554,14 +566,9 @@ function CommandeDetailDialog({ commande, clients, onClose, onFacture, onPaiemen
     if (!commande) return;
     setSavingPaiement(true);
     try {
-      await apiClient.patch(`/leads/${commande.id}/paiement`, {
-        statut_paiement: statutPaiement,
-        recu: Number(montantRecu) || 0,
-      });
-      toast({ title: "Paiement mis à jour" });
-      onPaiementSaved?.();
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      await onSavePaiement?.(statutPaiement, Number(montantRecu) || 0);
+    } catch {
+      // parent handles toast + rollback
     } finally {
       setSavingPaiement(false);
     }
@@ -703,15 +710,22 @@ function CommandeDetailDialog({ commande, clients, onClose, onFacture, onPaiemen
 
 export default function VentesPage() {
   // ── Leads ──
-  const { leads: ouverts,  loading: l1, reload: r1 } = useTicketsOuverts();
-  const { leads: mesLeads, loading: l2, reload: r2 } = useMesTickets();
+  const { leads: ouverts,  setLeads: setOuverts,  loading: l1, reload: r1 } = useTicketsOuverts();
+  const { leads: mesLeads, setLeads: setMesLeads, loading: l2, reload: r2 } = useMesTickets();
   const reloadLeads = () => { r1(); r2(); };
+
+  const removeFromOuverts  = (id: number) => setOuverts(prev => prev.filter(l => l.id !== id));
+  const rollbackToOuverts  = (lead: Lead) => setOuverts(prev => [lead, ...prev]);
+  const removeFromMesLeads = (id: number) => setMesLeads(prev => prev.filter(l => l.id !== id));
+  const rollbackToMesLeads = (lead: Lead) => setMesLeads(prev => [lead, ...prev]);
 
   // ── Commandes ──
   const [searchQuery, setSearchQuery]   = useState("");
   const [statutFilter, setStatutFilter] = useState<CommandeStatut | "all">("all");
   const [page, setPage]                 = useState(1);
   const limit = 10;
+
+  const queryClient = useQueryClient();
 
   const [selectedCommande, setSelectedCommande]     = useState<CommandeCommerciale | null>(null);
   const [isCreateOpen, setIsCreateOpen]             = useState(false);
@@ -735,12 +749,14 @@ export default function VentesPage() {
     setFormModePaiement("virement"); setFormNotes(""); setLignes([{ ...EMPTY_LIGNE }]);
   };
 
-  const { data, isLoading, error, refetch } = useCommandes({
+  const commandesFilters = {
     page, limit,
     search: searchQuery || undefined,
-    statut: statutFilter !== "all" ? statutFilter : undefined,
-    sortBy: "dateCommande", sortOrder: "desc",
-  });
+    statut: statutFilter !== "all" ? statutFilter as CommandeStatut : undefined,
+    sortBy: "dateCommande", sortOrder: "desc" as const,
+  };
+  const commandesQueryKey = commandesKeys.list(commandesFilters);
+  const { data, isLoading, error, refetch } = useCommandes(commandesFilters);
   const { data: clientsData } = useClients({ limit: 1000 });
   const clients   = clientsData?.data || [];
   const commandes = data?.data || [];
@@ -786,21 +802,50 @@ export default function VentesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    setDeleteId(null);
+    const snapshot = queryClient.getQueryData(commandesQueryKey);
+    queryClient.setQueryData(commandesQueryKey, (old: any) => old ? {
+      ...old, data: (old.data ?? []).filter((c: any) => c.id !== id),
+    } : old);
     try {
       await deleteCommande(id);
       toast({ title: "Commande supprimée" });
-      setDeleteId(null); refetch();
     } catch (e: any) {
+      queryClient.setQueryData(commandesQueryKey, snapshot);
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     }
   };
 
   const handleStatut = async (id: string, statut: CommandeStatut) => {
+    const snapshot = queryClient.getQueryData(commandesQueryKey);
+    queryClient.setQueryData(commandesQueryKey, (old: any) => old ? {
+      ...old, data: (old.data ?? []).map((c: any) => c.id === id ? { ...c, statut } : c),
+    } : old);
     try {
       await changeCommandeStatut(id, statut);
-      toast({ title: "Statut mis à jour" }); refetch();
+      toast({ title: "Statut mis à jour" });
     } catch (e: any) {
+      queryClient.setQueryData(commandesQueryKey, snapshot);
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handleSavePaiement = async (statut: string, recu: number) => {
+    if (!selectedCommande) return;
+    const id = String(selectedCommande.id);
+    const snapshot = queryClient.getQueryData(commandesQueryKey);
+    queryClient.setQueryData(commandesQueryKey, (old: any) => old ? {
+      ...old, data: (old.data ?? []).map((c: any) =>
+        c.id === id ? { ...c, statutPaiement: statut, montantPaye: recu } : c
+      ),
+    } : old);
+    try {
+      await apiClient.patch(`/leads/${id}/paiement`, { statut_paiement: statut, recu });
+      toast({ title: "Paiement mis à jour" });
+    } catch (e: any) {
+      queryClient.setQueryData(commandesQueryKey, snapshot);
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      throw e;
     }
   };
 
@@ -816,7 +861,7 @@ export default function VentesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId && handleDelete(deleteId)}>Supprimer</AlertDialogAction>
+              onClick={() => { if (deleteId) handleDelete(deleteId); }}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -982,7 +1027,7 @@ export default function VentesPage() {
         clients={clients}
         onClose={() => setSelectedCommande(null)}
         onFacture={() => { setFactureCommande(selectedCommande); setSelectedCommande(null); }}
-        onPaiementSaved={() => refetch()}
+        onSavePaiement={handleSavePaiement}
       />
 
       {factureCommande && (
@@ -1035,13 +1080,15 @@ export default function VentesPage() {
           {/* ── File d'attente ── */}
           <TabsContent value="ouverts" className="mt-4">
             <LeadsTable leads={ouverts} loading={l1} emptyIcon={ClipboardList}
-              emptyText="Aucun ticket ouvert dans votre zone." onAction={reloadLeads} />
+              emptyText="Aucun ticket ouvert dans votre zone." onAction={reloadLeads}
+              onOptimisticRemove={removeFromOuverts} onRollback={rollbackToOuverts} />
           </TabsContent>
 
           {/* ── Mes tickets ── */}
           <TabsContent value="mes-tickets" className="mt-4">
             <LeadsTable leads={mesLeads} loading={l2} emptyIcon={CheckCircle}
-              emptyText="Aucun ticket assigné pour le moment." onAction={reloadLeads} />
+              emptyText="Aucun ticket assigné pour le moment." onAction={reloadLeads}
+              onOptimisticRemove={removeFromMesLeads} onRollback={rollbackToMesLeads} />
           </TabsContent>
 
           {/* ── Commandes ── */}

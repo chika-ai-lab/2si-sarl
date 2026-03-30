@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,8 +17,19 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Receipt, Search, Download, Eye, CheckCircle, Clock, XCircle, AlertCircle, Loader2,
+  Receipt, Search, Download, Eye, CheckCircle, Clock, XCircle, AlertCircle, Loader2, RefreshCw,
 } from "lucide-react";
+
+const PER_PAGE = 15;
+
+// Mapping statut frontend → etat backend
+const STATUT_TO_BACKEND: Record<string, string> = {
+  envoyee:   "emise",
+  payee:     "payee",
+  brouillon: "brouillon",
+  en_retard: "en_retard",
+  annulee:   "annulee",
+};
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 import { pdf, PDFViewer } from "@react-pdf/renderer";
@@ -48,77 +61,96 @@ const STATUT_CONFIG: Record<FactureStatut, { label: string; color: string; icon:
 };
 
 
+function mapFactureItem(item: any): Facture {
+  const statut: FactureStatut =
+    item.etat === "payee"     ? "payee"     :
+    item.etat === "brouillon" ? "brouillon" :
+    item.etat === "en_retard" ? "en_retard" :
+    item.etat === "partielle" ? "envoyee"   :
+    "envoyee";
+  const montantTTC = Number(item.montant) || 0;
+  const cmd = item.commande_client?.data ?? item.commande_client;
+  const clientObj = cmd?.client?.data ?? cmd?.client;
+  const clientNom = clientObj?.nom_complet
+    ?? [clientObj?.nom, clientObj?.prenom].filter(Boolean).join(" ")
+    ?? clientObj?.raison_sociale
+    ?? "";
+  return {
+    id: String(item.id),
+    numero: 'FAC-' + String(item.id).padStart(5, '0'),
+    client: clientNom,
+    dateEmission: item.date ?? "",
+    dateEcheance: item.date ?? "",
+    montantTTC,
+    montantHT: montantTTC,
+    tva: 0,
+    montantPaye: Number(item.recu) || 0,
+    statut,
+    lignes: [],
+    commandeClientId: item.commande_client_id ?? cmd?.id,
+  };
+}
+
 export function InvoicesPage() {
-  const [factures, setFactures] = useState<Facture[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
-  const [search, setSearch]     = useState("");
+  const qc = useQueryClient();
+
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch]           = useState("");
   const [statutFilter, setStatutFilter] = useState<FactureStatut | "all">("all");
+  const [page, setPage]               = useState(1);
   const [selected, setSelected]           = useState<Facture | null>(null);
   const [selectedData, setSelectedData]   = useState<FactureData | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [downloading, setDownloading]     = useState<string | null>(null);
 
+  // Debounce : met à jour `search` 300ms après la frappe
   useEffect(() => {
-    const fetchFactures = async () => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const queryKey = ['invoices', { page, search, statut: statutFilter }] as const;
+
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const params: Record<string, any> = { page, per_page: PER_PAGE };
+      if (statutFilter !== "all") params.etat   = STATUT_TO_BACKEND[statutFilter] ?? statutFilter;
+      if (search.trim())          params.search = search.trim();
       try {
-        const res = await apiClient.get<any>('/facture-clients');
+        const res = await apiClient.get<any>('/facture-clients', params);
         const items: any[] = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
-        const mapped: Facture[] = items.map((item: any) => {
-          const statut: FactureStatut =
-            item.etat === "payee"     ? "payee"     :
-            item.etat === "brouillon" ? "brouillon" :
-            item.etat === "en_retard" ? "en_retard" :
-            item.etat === "partielle" ? "envoyee"   :
-            "envoyee";
-          const montantTTC = Number(item.montant) || 0;
-          // commande_client peut être encapsulé dans .data par JsonResource
-          const cmd = item.commande_client?.data ?? item.commande_client;
-          const clientObj = cmd?.client?.data ?? cmd?.client;
-          const clientNom = clientObj?.nom_complet
-            ?? [clientObj?.nom, clientObj?.prenom].filter(Boolean).join(" ")
-            ?? clientObj?.raison_sociale
-            ?? "";
-          const facRef = 'FAC-' + String(item.id).padStart(5, '0');
-          return {
-            id: String(item.id),
-            numero: facRef,
-            client: clientNom,
-            dateEmission: item.date ?? "",
-            dateEcheance: item.date ?? "",
-            montantTTC,
-            montantHT: montantTTC,
-            tva: 0,
-            montantPaye: Number(item.recu) || 0,
-            statut,
-            lignes: [],
-            commandeClientId: item.commande_client_id ?? cmd?.id,
-          };
-        });
-        setFactures(mapped);
+        return {
+          factures:    items.map(mapFactureItem),
+          totalPages:  res.meta?.last_page ?? 1,
+          serverTotal: res.meta?.total     ?? items.length,
+        };
       } catch (err: any) {
         const msg = err?.message ?? "";
         if (msg.includes("403") || msg.toLowerCase().includes("forbidden")) {
-          setError("Accès refusé (403) — votre compte n'a pas la permission d'accéder aux factures. Contactez l'administrateur.");
-        } else {
-          setError("Impossible de charger les factures. Vérifiez votre connexion et réessayez.");
+          throw new Error("Accès refusé (403) — votre compte n'a pas la permission d'accéder aux factures. Contactez l'administrateur.");
         }
-      } finally {
-        setLoading(false);
+        throw new Error("Impossible de charger les factures. Vérifiez votre connexion et réessayez.");
       }
-    };
-    fetchFactures();
-  }, []);
-
-  const filtered = factures.filter((f) => {
-    const q = search.toLowerCase();
-    const matchSearch = !q || f.numero.toLowerCase().includes(q) || f.client.toLowerCase().includes(q);
-    const matchStatut = statutFilter === "all" || f.statut === statutFilter;
-    return matchSearch && matchStatut;
+    },
+    placeholderData: (prev) => prev, // garde les données affichées pendant le chargement d'une nouvelle page
   });
 
+  const factures    = data?.factures    ?? [];
+  const totalPages  = data?.totalPages  ?? 1;
+  const serverTotal = data?.serverTotal ?? 0;
+  const error       = queryError instanceof Error ? queryError.message : null;
+  // Skeleton uniquement sur le PREMIER chargement (jamais de données en cache)
+  // placeholderData conserve les données précédentes → data est défini dès le 2e rendu
+
+  const handleStatutFilter = (v: string) => {
+    setStatutFilter(v as FactureStatut | "all");
+    setPage(1);
+  };
+
+  // Stats calculées sur la page chargée
   const stats = {
-    total:    factures.length,
+    total:    serverTotal,
     totalTTC: factures.filter((f) => f.statut !== "annulee").reduce((s, f) => s + f.montantTTC, 0),
     paye:     factures.filter((f) => f.statut === "payee").reduce((s, f) => s + f.montantTTC, 0),
     impaye:   factures.filter((f) => ["envoyee", "en_retard"].includes(f.statut)).reduce((s, f) => s + (f.montantTTC - f.montantPaye), 0),
@@ -142,16 +174,21 @@ export function InvoicesPage() {
 
   const handleMarquerPayee = async (f: Facture) => {
     if (!f.commandeClientId) return;
+    const snapshot = qc.getQueryData(queryKey);
+    qc.setQueryData(queryKey, (old: typeof data) => old ? ({
+      ...old,
+      factures: old.factures.map((x) =>
+        x.id === f.id ? { ...x, statut: "payee" as FactureStatut, montantPaye: x.montantTTC } : x
+      ),
+    }) : old);
     try {
       await apiClient.patch(`/leads/${f.commandeClientId}/paiement`, {
         statut_paiement: "paye",
         recu: f.montantTTC,
       });
-      setFactures((prev) => prev.map((x) =>
-        x.id === f.id ? { ...x, statut: "payee", montantPaye: x.montantTTC } : x
-      ));
       toast({ title: "Facture marquée comme payée" });
     } catch (e: any) {
+      qc.setQueryData(queryKey, snapshot);
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     }
   };
@@ -193,7 +230,7 @@ export function InvoicesPage() {
     );
   }
 
-  if (loading) {
+  if (data === undefined && !error) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -275,6 +312,9 @@ export function InvoicesPage() {
             </h2>
             <p className="text-muted-foreground text-sm">Gestion et suivi des factures clients</p>
           </div>
+          <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ['invoices'] })}>
+            <RefreshCw className="h-4 w-4 mr-2" />Actualiser
+          </Button>
         </div>
 
         {/* Stats */}
@@ -319,11 +359,11 @@ export function InvoicesPage() {
                 <Input
                   placeholder="Numéro ou client..."
                   className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                 />
               </div>
-              <Select value={statutFilter} onValueChange={(v) => setStatutFilter(v as FactureStatut | "all")}>
+              <Select value={statutFilter} onValueChange={handleStatutFilter}>
                 <SelectTrigger className="w-40 sm:w-44"><SelectValue placeholder="Tous" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
@@ -341,10 +381,10 @@ export function InvoicesPage() {
         {/* List */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base sm:text-lg">{filtered.length} facture(s)</CardTitle>
+            <CardTitle className="text-base sm:text-lg">{serverTotal} facture(s)</CardTitle>
           </CardHeader>
           <CardContent>
-            {filtered.length === 0 && (
+            {factures.length === 0 && !loading && (
               <div className="py-16 text-center text-muted-foreground">
                 <Receipt className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">Aucune facture</p>
@@ -354,7 +394,7 @@ export function InvoicesPage() {
 
             {/* ── Mobile card list (< md) ── */}
             <div className="md:hidden space-y-3">
-              {filtered.map((f) => {
+              {factures.map((f) => {
                 const cfg = STATUT_CONFIG[f.statut];
                 const Icon = cfg.icon;
                 return (
@@ -419,7 +459,7 @@ export function InvoicesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((f) => {
+                  {factures.map((f) => {
                     const cfg = STATUT_CONFIG[f.statut];
                     const Icon = cfg.icon;
                     return (
@@ -469,6 +509,31 @@ export function InvoicesPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Page {page} sur {totalPages} · {serverTotal} facture(s)
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline" size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1 || loading}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />Précédent
+                  </Button>
+                  <Button
+                    variant="outline" size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages || loading}
+                  >
+                    Suivant<ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

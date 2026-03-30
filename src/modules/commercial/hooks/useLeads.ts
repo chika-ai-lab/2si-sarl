@@ -1,8 +1,8 @@
 /**
  * Hook d'abstraction pour les appels API leads/devis.
- * OCP : pour changer le transport (REST → GraphQL), modifier uniquement ce fichier.
+ * Migré vers React Query pour bénéficier du cache + déduplication des requêtes.
  */
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 
@@ -49,45 +49,78 @@ function authHeaders() {
   return { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json", Accept: "application/json" };
 }
 
+async function fetchLeadsOuverts(): Promise<Lead[]> {
+  const res  = await fetch(`${API_BASE}/leads/ouverts`, { headers: authHeaders() });
+  const json = await res.json();
+  const data = json.data ?? json;
+  return Array.isArray(data) ? data : [];
+}
+
+async function fetchMesTickets(): Promise<Lead[]> {
+  const res  = await fetch(`${API_BASE}/leads/mes-tickets`, { headers: authHeaders() });
+  const json = await res.json();
+  const data = json.data ?? json;
+  return Array.isArray(data) ? data : [];
+}
+
+// ── Query keys ────────────────────────────────────────────────
+export const leadsKeys = {
+  all:        ['leads'] as const,
+  ouverts:    () => [...leadsKeys.all, 'ouverts']     as const,
+  mesTickets: () => [...leadsKeys.all, 'mes-tickets'] as const,
+};
+
+// ── Hooks ────────────────────────────────────────────────────
+
 export function useTicketsOuverts() {
-  const [leads, setLeads]     = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+  const q  = useQuery({
+    queryKey: leadsKeys.ouverts(),
+    queryFn:  fetchLeadsOuverts,
+    staleTime: 30 * 1000,   // 30s — tickets changent fréquemment
+  });
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res  = await fetch(`${API_BASE}/leads/ouverts`, { headers: authHeaders() });
-      const json = await res.json();
-      const data = json.data ?? json;
-      setLeads(Array.isArray(data) ? data : []);
-    } finally {
-      setLoading(false);
+  const setLeads = (updater: Lead[] | ((prev: Lead[]) => Lead[])) => {
+    if (typeof updater === "function") {
+      qc.setQueryData<Lead[]>(leadsKeys.ouverts(), (old) => updater(old ?? []));
+    } else {
+      qc.setQueryData<Lead[]>(leadsKeys.ouverts(), updater);
     }
-  }, []);
+  };
 
-  useEffect(() => { reload(); }, [reload]);
-  return { leads, loading, reload };
+  return {
+    leads:   q.data ?? [],
+    loading: q.isLoading,
+    reload:  () => qc.invalidateQueries({ queryKey: leadsKeys.ouverts() }),
+    setLeads,
+  };
 }
 
 export function useMesTickets() {
-  const [leads, setLeads]     = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+  const q  = useQuery({
+    queryKey: leadsKeys.mesTickets(),
+    queryFn:  fetchMesTickets,
+    staleTime: 30 * 1000,
+  });
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res  = await fetch(`${API_BASE}/leads/mes-tickets`, { headers: authHeaders() });
-      const json = await res.json();
-      const data = json.data ?? json;
-      setLeads(Array.isArray(data) ? data : []);
-    } finally {
-      setLoading(false);
+  const setLeads = (updater: Lead[] | ((prev: Lead[]) => Lead[])) => {
+    if (typeof updater === "function") {
+      qc.setQueryData<Lead[]>(leadsKeys.mesTickets(), (old) => updater(old ?? []));
+    } else {
+      qc.setQueryData<Lead[]>(leadsKeys.mesTickets(), updater);
     }
-  }, []);
+  };
 
-  useEffect(() => { reload(); }, [reload]);
-  return { leads, loading, reload };
+  return {
+    leads:   q.data ?? [],
+    loading: q.isLoading,
+    reload:  () => qc.invalidateQueries({ queryKey: leadsKeys.mesTickets() }),
+    setLeads,
+  };
 }
+
+// ── Fonctions API pures (non-hooks) ──────────────────────────
 
 export async function autoAssignerLead(id: number): Promise<Lead> {
   const res = await fetch(`${API_BASE}/leads/${id}/auto-assigner`, {

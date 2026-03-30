@@ -40,6 +40,7 @@ export function useRapportEvolutionCA(filters: RapportFilters = {}) {
     queryKey: rapportsKeys.evolutionCA(filters),
     queryFn: () => getRapportEvolutionCA(filters),
     select: (response) => response.data,
+    staleTime: Infinity,
   });
 }
 
@@ -51,8 +52,7 @@ export function useStatistiquesGlobales() {
     queryKey: rapportsKeys.statistiques(),
     queryFn: () => getStatistiquesGlobales(),
     select: (response) => response.data,
-    // Rafraîchir toutes les 5 minutes
-    refetchInterval: 5 * 60 * 1000,
+    staleTime: Infinity,
   });
 }
 
@@ -64,6 +64,7 @@ export function useTopProduits(filters: RapportFilters = {}, limit: number = 10)
     queryKey: rapportsKeys.topProduits(filters, limit),
     queryFn: () => getTopProduits(filters, limit),
     select: (response) => response.data,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
 
@@ -75,6 +76,7 @@ export function useTopClients(filters: RapportFilters = {}, limit: number = 10) 
     queryKey: rapportsKeys.topClients(filters, limit),
     queryFn: () => getTopClients(filters, limit),
     select: (response) => response.data,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
 
@@ -86,5 +88,6 @@ export function useRepartitionBanques(filters: RapportFilters = {}) {
     queryKey: rapportsKeys.repartitionBanques(filters),
     queryFn: () => getRepartitionBanques(filters),
     select: (response) => response.data,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }

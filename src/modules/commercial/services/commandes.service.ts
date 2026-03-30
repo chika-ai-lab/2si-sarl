@@ -117,6 +117,9 @@ export async function getCommandes(filters: {
     mode_paiement: filters.modePaiement,
     date_debut: filters.dateDebut,
     date_fin: filters.dateFin,
+    search: filters.search,
+    sort_by: filters.sortBy,
+    sort_order: filters.sortOrder,
     page: filters.page,
     per_page: filters.limit,
   };

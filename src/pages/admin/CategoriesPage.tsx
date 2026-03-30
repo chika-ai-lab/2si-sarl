@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,12 +12,16 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  FolderOpen, FolderPlus, Search, Plus, Edit, Trash2, ChevronRight, Package, Loader2,
+  FolderOpen, FolderPlus, Search, Plus, Edit, Trash2, ChevronRight, Package, Loader2, RefreshCw,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 
 interface Categorie {
@@ -46,37 +51,43 @@ const INITIAL_CATEGORIES: Categorie[] = [
 const EMPTY_FORM = { nom: "", description: "", couleur: COULEURS[0], icone: "📁" };
 
 export function CategoriesPage() {
-  const [categories, setCategories]   = useState<Categorie[]>([]);
-  const [loading, setLoading]         = useState(true);
+  const qc = useQueryClient();
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories-page'],
+    queryFn: async (): Promise<Categorie[]> => {
+      const res = await apiClient.get<any>('/categories');
+      const items: any[] = res.data ?? res ?? [];
+      return items.map((item: any, index: number) => ({
+        id: String(item.id),
+        nom: item.categorie,
+        description: "",
+        couleur: COULEURS[index % COULEURS.length],
+        icone: "📁",
+        nombreProduits: item.articles_count ?? 0,
+        ordre: index + 1,
+      }));
+    },
+  });
+
+  const categories = categoriesData ?? [];
+
   const [search, setSearch]           = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editId, setEditId]           = useState<string | null>(null);
   const [form, setForm]               = useState(EMPTY_FORM);
 
-  const fetchCategories = async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const res = await apiClient.get<any>('/categories');
+  // Sheet produits
+  const [selectedCat, setSelectedCat] = useState<Categorie | null>(null);
+  const { data: produitsCat = [], isLoading: loadingProduits } = useQuery({
+    queryKey: ['categories-page', 'produits', selectedCat?.id],
+    queryFn: async () => {
+      const res = await apiClient.get<any>('/articles', { categorie_id: selectedCat!.id });
       const items: any[] = res.data ?? res ?? [];
-      const mapped: Categorie[] = items.map((item: any, index: number) => ({
-        id: String(item.id),
-        nom: item.categorie,
-        description: "",
-        couleur: COULEURS[index % COULEURS.length],
-        icone: "📁",
-        nombreProduits: 0,
-        ordre: index + 1,
-      }));
-      setCategories(mapped);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchCategories(); }, []);
+      return items;
+    },
+    enabled: !!selectedCat,
+  });
 
   const filtered = categories.filter((c) =>
     !search || c.nom.toLowerCase().includes(search.toLowerCase())
@@ -100,11 +111,13 @@ export function CategoriesPage() {
     try {
       if (editId) {
         await apiClient.put(`/categories/${editId}`, { categorie: form.nom });
-        setCategories((prev) => prev.map((c) => c.id === editId ? { ...c, ...form } : c));
+        qc.setQueryData<Categorie[]>(['categories-page'], (old = []) =>
+          old.map((c) => c.id === editId ? { ...c, ...form } : c)
+        );
         toast({ title: "Catégorie modifiée" });
       } else {
         await apiClient.post('/categories', { categorie: form.nom });
-        await fetchCategories(true);
+        qc.invalidateQueries({ queryKey: ['categories-page'] });
         toast({ title: "Catégorie créée" });
       }
     } catch (err) {
@@ -116,18 +129,21 @@ export function CategoriesPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    qc.setQueryData<Categorie[]>(['categories-page'], (old = []) =>
+      old.filter((c) => c.id !== deleteTarget)
+    );
+    setDeleteTarget(null);
     try {
       await apiClient.delete(`/categories/${deleteTarget}`);
-      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget));
       toast({ title: "Catégorie supprimée" });
     } catch (err) {
       console.error(err);
+      qc.invalidateQueries({ queryKey: ['categories-page'] });
       toast({ title: "Erreur lors de la suppression", variant: "destructive" });
     }
-    setDeleteTarget(null);
   };
 
-  if (loading) {
+  if (categoriesData === undefined) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -158,6 +174,64 @@ export function CategoriesPage() {
 
   return (
     <>
+      {/* Sheet — produits de la catégorie */}
+      <Sheet open={!!selectedCat} onOpenChange={(o) => !o && setSelectedCat(null)}>
+        <SheetContent className="w-full sm:max-w-lg flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <span style={{ color: selectedCat?.couleur }}>{selectedCat?.icone}</span>
+              {selectedCat?.nom}
+              <Badge variant="secondary" className="ml-1">{selectedCat?.nombreProduits} produit(s)</Badge>
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto mt-4 space-y-2">
+            {loadingProduits && (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
+                  <Skeleton className="h-10 w-10 rounded" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              ))
+            )}
+            {!loadingProduits && produitsCat.length === 0 && (
+              <div className="py-16 text-center text-muted-foreground">
+                <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">Aucun produit dans cette catégorie</p>
+              </div>
+            )}
+            {!loadingProduits && produitsCat.map((p: any) => (
+              <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                {p.images?.[0] ? (
+                  <img src={p.images[0]} alt={p.libelle} className="h-10 w-10 rounded object-cover border shrink-0" />
+                ) : (
+                  <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
+                    <Package className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{p.libelle}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{p.reference || "—"}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-semibold text-sm">{formatCurrency(Number(p.prix) || 0)}</p>
+                  <Badge
+                    variant="outline"
+                    className={p.statut === 'actif' ? 'text-green-700 border-green-200' : p.statut === 'rupture' ? 'text-red-700 border-red-200' : 'text-gray-600'}
+                  >
+                    {p.statut === 'actif' ? 'En stock' : p.statut === 'rupture' ? 'Rupture' : 'Inactif'}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md">
@@ -227,7 +301,12 @@ export function CategoriesPage() {
             </h2>
             <p className="text-muted-foreground">Organisation des produits par catégorie</p>
           </div>
-          <Button onClick={openCreate}><FolderPlus className="mr-2 h-4 w-4" />Nouvelle catégorie</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ['categories-page'] })}>
+              <RefreshCw className="mr-2 h-4 w-4" />Actualiser
+            </Button>
+            <Button onClick={openCreate}><FolderPlus className="mr-2 h-4 w-4" />Nouvelle catégorie</Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -275,7 +354,11 @@ export function CategoriesPage() {
         {/* Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((cat) => (
-            <Card key={cat.id} className="hover:shadow-md transition-shadow group">
+            <Card
+              key={cat.id}
+              className="hover:shadow-md transition-shadow group cursor-pointer"
+              onClick={() => setSelectedCat(cat)}
+            >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div
@@ -285,10 +368,10 @@ export function CategoriesPage() {
                     {cat.icone}
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(cat)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(cat); }}>
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget(cat.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setDeleteTarget(cat.id); }}>
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   </div>
@@ -315,7 +398,7 @@ export function CategoriesPage() {
           {/* Add card */}
           <Card
             className="border-dashed hover:border-primary/50 hover:bg-muted/30 transition-all cursor-pointer flex items-center justify-center min-h-36"
-            onClick={openCreate}
+            onClick={(e) => { e.stopPropagation(); openCreate(); }}
           >
             <CardContent className="flex flex-col items-center gap-2 text-muted-foreground p-5">
               <Plus className="h-8 w-8" />

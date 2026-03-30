@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -113,9 +114,25 @@ function mapItem(item: any): StockItem & { images: string[] } {
 }
 
 export function InventoryPage() {
-  const [stock, setStock]       = useState<StockItem[]>([]);
-  const [categories, setCategories] = useState<Categorie[]>([]);
-  const [loading, setLoading]   = useState(true);
+  const qc = useQueryClient();
+
+  const { data: stockData } = useQuery({
+    queryKey: ['inventory-stock'],
+    queryFn: async (): Promise<(StockItem & { images: string[] })[]> => {
+      const res = await apiClient.get<any>("/articles");
+      const items: any[] = res.data ?? res ?? [];
+      return items.map(mapItem);
+    },
+  });
+  const stock = stockData ?? [];
+  const { data: categories = [] } = useQuery({
+    queryKey: ['inventory-categories'],
+    queryFn: async (): Promise<Categorie[]> => {
+      const res = await apiClient.get<any>("/categories");
+      return res.data ?? res ?? [];
+    },
+  });
+
   const [saving, setSaving]     = useState(false);
   const [search, setSearch]     = useState("");
   const [statutFilter, setStatutFilter] = useState<StockStatut | "all">("all");
@@ -131,26 +148,6 @@ export function InventoryPage() {
   const [editId, setEditId]         = useState<string | null>(null);
   const [form, setForm]             = useState({ ...EMPTY_FORM });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  const loadData = async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const [artRes, catRes] = await Promise.all([
-        apiClient.get<any>("/articles"),
-        apiClient.get<any>("/categories"),
-      ]);
-      const items: any[] = artRes.data ?? artRes ?? [];
-      setStock(items.map(mapItem));
-      setCategories(catRes.data ?? catRes ?? []);
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Erreur de chargement", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { loadData(); }, []);
 
   const filtered = stock.filter((s) => {
     const q = search.toLowerCase();
@@ -223,7 +220,7 @@ export function InventoryPage() {
         toast({ title: "Produit créé avec succès" });
       }
       setIsFormOpen(false);
-      loadData(true);
+      qc.invalidateQueries({ queryKey: ['inventory-stock'] });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur";
       toast({ title: "Erreur", description: msg, variant: "destructive" });
@@ -233,12 +230,13 @@ export function InventoryPage() {
   };
 
   const handleDelete = async (id: string) => {
+    qc.setQueryData<StockItem[]>(['inventory-stock'], (old = []) => old.filter((s) => s.id !== id));
+    setDeleteConfirmId(null);
     try {
       await apiClient.delete(`/articles/${id}`);
-      setStock((prev) => prev.filter((s) => s.id !== id));
-      setDeleteConfirmId(null);
       toast({ title: "Produit supprimé" });
     } catch (err: unknown) {
+      qc.invalidateQueries({ queryKey: ['inventory-stock'] });
       const msg = err instanceof Error ? err.message : "Erreur";
       toast({ title: "Erreur", description: msg, variant: "destructive" });
     }
@@ -260,15 +258,19 @@ export function InventoryPage() {
     }
     const delta = ajustType === "entree" ? qty : -qty;
     const newQty = Math.max(0, selectedItem.quantite + delta);
-    setStock((prev) =>
-      prev.map((s) =>
+    const today = new Date().toISOString().slice(0, 10);
+    qc.setQueryData<StockItem[]>(['inventory-stock'], (old = []) =>
+      old.map((s) =>
         s.id !== selectedItem.id ? s
-          : { ...s, quantite: newQty, derniereModification: new Date().toISOString().slice(0, 10) }
+          : { ...s, quantite: newQty, derniereModification: today }
       )
     );
     try {
       await apiClient.patch(`/articles/${selectedItem.id}`, { quantite: newQty });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      qc.invalidateQueries({ queryKey: ['inventory-stock'] });
+    }
     toast({
       title: ajustType === "entree" ? `+${qty} unités ajoutées` : `-${qty} unités sorties`,
       description: selectedItem.nom,
@@ -276,7 +278,7 @@ export function InventoryPage() {
     setIsAjustOpen(false);
   };
 
-  if (loading) {
+  if (stockData === undefined) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -483,10 +485,14 @@ export function InventoryPage() {
             </h2>
             <p className="text-muted-foreground">Suivi et gestion des stocks</p>
           </div>
-          <Button onClick={openCreate}>
-            <PackagePlus className="h-4 w-4 mr-2" />
-            Nouveau produit
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ['inventory-stock'] })}>
+              <RefreshCw className="h-4 w-4 mr-2" />Actualiser
+            </Button>
+            <Button onClick={openCreate}>
+              <PackagePlus className="h-4 w-4 mr-2" />Nouveau produit
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}

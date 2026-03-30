@@ -35,6 +35,7 @@ export function useTicketsSAV(filters: SAVFilters = {}) {
   return useQuery({
     queryKey: savKeys.list(filters),
     queryFn: () => savService.getTicketsSAV(filters),
+    staleTime: Infinity, // invalidé par les mutations (useUpdateTicketSAV, useChangeStatutTicket…)
   });
 }
 
@@ -46,6 +47,7 @@ export function useTicketSAV(id: string) {
     queryKey: savKeys.detail(id),
     queryFn: () => savService.getTicketSAV(id),
     enabled: !!id,
+    staleTime: Infinity,
   });
 }
 
@@ -56,7 +58,7 @@ export function useStatistiquesSAV() {
   return useQuery({
     queryKey: savKeys.stats(),
     queryFn: () => savService.getStatistiquesSAV(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: Infinity,
   });
 }
 

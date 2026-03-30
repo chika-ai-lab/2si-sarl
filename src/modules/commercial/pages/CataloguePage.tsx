@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -110,9 +111,26 @@ const STATUS_CONFIG = {
 
 export function CataloguePage() {
   const { t } = useTranslation();
-  const [articles, setArticles] = useState<BackendArticle[]>([]);
-  const [categories, setCategories] = useState<Categorie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+
+  const { data: articlesData } = useQuery({
+    queryKey: ['catalogue-articles'],
+    queryFn: async (): Promise<BackendArticle[]> => {
+      const res = await apiClient.get<any>("/articles");
+      return res.data ?? res ?? [];
+    },
+  });
+  const articles = articlesData ?? [];
+  const { data: categories = [] } = useQuery({
+    queryKey: ['catalogue-categories'],
+    queryFn: async (): Promise<Categorie[]> => {
+      const res = await apiClient.get<any>("/categories");
+      return res.data ?? res ?? [];
+    },
+  });
+
+  const loading = articlesData === undefined; // skeleton seulement si jamais chargé
+
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categorieFilter, setCategorieFilter] = useState<string>("all");
@@ -124,27 +142,6 @@ export function CataloguePage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [artRes, catRes] = await Promise.all([
-        apiClient.get<any>("/articles"),
-        apiClient.get<any>("/categories"),
-      ]);
-      setArticles(artRes.data ?? artRes ?? []);
-      setCategories(catRes.data ?? catRes ?? []);
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Erreur de chargement", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Filters
   const filtered = articles.filter((a) => {
@@ -215,7 +212,7 @@ export function CataloguePage() {
         toast({ title: "Produit créé avec succès" });
       }
       setIsFormOpen(false);
-      loadData();
+      qc.invalidateQueries({ queryKey: ['catalogue-articles'] });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur";
       toast({ title: "Erreur", description: msg, variant: "destructive" });
@@ -225,12 +222,13 @@ export function CataloguePage() {
   };
 
   const handleDelete = async (id: number) => {
+    qc.setQueryData<BackendArticle[]>(['catalogue-articles'], (old = []) => old.filter((a) => a.id !== id));
+    setDeleteConfirmId(null);
     try {
       await apiClient.delete(`/articles/${id}`);
-      setArticles((prev) => prev.filter((a) => a.id !== id));
-      setDeleteConfirmId(null);
       toast({ title: "Produit supprimé" });
     } catch (err: unknown) {
+      qc.invalidateQueries({ queryKey: ['catalogue-articles'] });
       const msg = err instanceof Error ? err.message : "Erreur";
       toast({ title: "Erreur", description: msg, variant: "destructive" });
     }
@@ -410,7 +408,7 @@ export function CataloguePage() {
             <p className="text-muted-foreground">Catalogue des produits par garant financier</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={loadData} disabled={loading}>
+            <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ['catalogue-articles'] })} disabled={loading}>
               <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Actualiser
             </Button>
