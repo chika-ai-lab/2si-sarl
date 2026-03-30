@@ -23,7 +23,7 @@ const STEPS = [
     content: (
       <div className="space-y-4">
         <p className="text-muted-foreground leading-relaxed">
-          GestEMC est la plateforme de gestion commerciale de <strong>2SI SARL</strong>.
+          GestEMC est la plateforme de gestion commerciale de <strong>Sen Service International (2SI)</strong>.
           Elle centralise tous vos processus : clients, commandes, catalogue produits,
           accréditifs, SAV et rapports.
         </p>

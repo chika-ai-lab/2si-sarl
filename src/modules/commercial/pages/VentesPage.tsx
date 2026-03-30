@@ -97,9 +97,12 @@ const STATUT_CONFIG: Record<string, { label: string; color: string; icon: any }>
   annulee:    { label: "Annulée",    color: "bg-red-100 text-red-800",      icon: XCircle },
 };
 const PAIEMENT_CONFIG: Record<string, { label: string; color: string }> = {
-  en_attente: { label: "Non payé", color: "bg-red-100 text-red-800" },
-  partiel:    { label: "Partiel",  color: "bg-orange-100 text-orange-800" },
-  complet:    { label: "Payé",     color: "bg-green-100 text-green-800" },
+  en_attente:         { label: "Non payé",           color: "bg-red-100 text-red-800" },
+  partiellement_paye: { label: "Partiellement payé", color: "bg-orange-100 text-orange-800" },
+  paye:               { label: "Payé",               color: "bg-green-100 text-green-800" },
+  // rétrocompat anciennes valeurs
+  partiel:            { label: "Partiellement payé", color: "bg-orange-100 text-orange-800" },
+  complet:            { label: "Payé",               color: "bg-green-100 text-green-800" },
 };
 
 // ── DevisDialog ────────────────────────────────────────────────────────────

@@ -94,7 +94,7 @@ function addFooter(doc: jsPDF, pageNumber: number) {
   doc.line(20, pageHeight - 15, pageWidth - 20, pageHeight - 15);
 
   // Texte du pied de page
-  doc.text("2SI SARL - Rapport Commercial", 20, pageHeight - 10);
+  doc.text("Sen Service International - Rapport Commercial", 20, pageHeight - 10);
   doc.text(`Page ${pageNumber}`, pageWidth - 40, pageHeight - 10);
 }
 

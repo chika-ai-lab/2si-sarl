@@ -32,7 +32,7 @@ function getEnvNumber(key: string, defaultValue = 0): number {
  * Configuration de l'application
  */
 export const appConfig = {
-  name: getEnvString('VITE_APP_NAME', '2SI SARL - Commerce Hub'),
+  name: getEnvString('VITE_APP_NAME', 'Sen Service International'),
   version: getEnvString('VITE_APP_VERSION', '2.0.0'),
   env: getEnvString('VITE_APP_ENV', 'development'),
   isDevelopment: getEnvString('VITE_APP_ENV', 'development') === 'development',

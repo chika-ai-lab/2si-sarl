@@ -45,7 +45,7 @@ function addHeader(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("2SI SARL", MARGIN, 11);
+  doc.text("Sen Service International", MARGIN, 11);
 
   // Titre (centré)
   doc.setFontSize(15);

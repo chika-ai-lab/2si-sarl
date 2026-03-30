@@ -113,8 +113,8 @@ export function FactureDocument({ data }: { data: FactureData }) {
         {/* Header */}
         <View style={s.header}>
           <View>
-            <Text style={s.companyName}>2SI Sarl</Text>
-            <Text style={s.companySub}>Société Sénégalaise d'Investissement et d'Ingénierie</Text>
+            <Text style={s.companyName}>Sen Service International</Text>
+            <Text style={s.companySub}>2SI — Dakar, Sénégal</Text>
             <Text style={s.companySub}>Dakar, Sénégal  ·  contact@2si-sarl.com</Text>
           </View>
           <View>
