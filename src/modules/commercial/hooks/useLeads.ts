@@ -110,7 +110,14 @@ export async function assignerLead(id: number, commercialId: number): Promise<Le
 
 export async function enregistrerDevis(
   id: number,
-  devisData: { prix_vente: number; frais_expedition: number; autres_charges: number; remise: number; duree_paiement: number }
+  devisData: {
+    prix_vente: number;
+    frais_expedition: number;
+    autres_charges: number;
+    remise: number;
+    duree_paiement: number;
+    lignes?: { article_id: number; prix_achat: number; quantite: number }[];
+  }
 ): Promise<{ modalites: Modalite[] }> {
   const res = await fetch(`${API_BASE}/leads/${id}/devis`, {
     method: "POST", headers: authHeaders(),

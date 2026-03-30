@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +19,8 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
-import { InvoicePDF } from "@/components/pdf/InvoicePDF";
-import { downloadPDF } from "@/lib/pdfDownload";
+import { pdf } from "@react-pdf/renderer";
+import { FactureDocument, type FactureData } from "@/modules/commercial/components/FacturePDF";
 
 type FactureStatut = "brouillon" | "envoyee" | "payee" | "en_retard" | "annulee";
 
@@ -35,6 +36,7 @@ interface Facture {
   montantPaye: number;
   statut: FactureStatut;
   lignes: { description: string; quantite: number; prixUnitaire: number; total: number }[];
+  commandeClientId?: number;
 }
 
 const STATUT_CONFIG: Record<FactureStatut, { label: string; color: string; icon: React.ElementType }> = {
@@ -45,56 +47,6 @@ const STATUT_CONFIG: Record<FactureStatut, { label: string; color: string; icon:
   annulee:    { label: "Annulée",     color: "bg-gray-100 text-gray-500",     icon: XCircle },
 };
 
-const INITIAL_FACTURES: Facture[] = [
-  {
-    id: "fct-001", numero: "FAC-2025-001", client: "SARL Diallo & Frères",
-    dateEmission: "2025-01-05", dateEcheance: "2025-02-05",
-    montantHT: 8474576, tva: 1525424, montantTTC: 10000000, montantPaye: 10000000,
-    statut: "payee",
-    lignes: [
-      { description: "Ordinateur Portable Pro × 10", quantite: 10, prixUnitaire: 850000, total: 8500000 },
-    ],
-  },
-  {
-    id: "fct-002", numero: "FAC-2025-002", client: "Groupe TechAfrique",
-    dateEmission: "2025-01-12", dateEcheance: "2025-02-12",
-    montantHT: 5084745, tva: 915255, montantTTC: 6000000, montantPaye: 3000000,
-    statut: "envoyee",
-    lignes: [
-      { description: "Imprimante Multifonction × 5", quantite: 5, prixUnitaire: 800000, total: 4000000 },
-      { description: "Câble Cat6 × 10", quantite: 10, prixUnitaire: 120000, total: 1200000 },
-    ],
-  },
-  {
-    id: "fct-003", numero: "FAC-2025-003", client: "BTP Solutions SARL",
-    dateEmission: "2024-12-01", dateEcheance: "2025-01-01",
-    montantHT: 12711864, tva: 2288136, montantTTC: 15000000, montantPaye: 0,
-    statut: "en_retard",
-    lignes: [
-      { description: "Serveur NAS 4 baies × 5", quantite: 5, prixUnitaire: 1500000, total: 7500000 },
-      { description: "Switch 24 ports × 10", quantite: 10, prixUnitaire: 500000, total: 5000000 },
-    ],
-  },
-  {
-    id: "fct-004", numero: "FAC-2025-004", client: "Import Export Co",
-    dateEmission: "2025-01-20", dateEcheance: "2025-02-20",
-    montantHT: 2118644, tva: 381356, montantTTC: 2500000, montantPaye: 2500000,
-    statut: "payee",
-    lignes: [
-      { description: "Téléphone IP HD × 10", quantite: 10, prixUnitaire: 95000, total: 950000 },
-      { description: "Onduleur 1 KVA × 3", quantite: 3, prixUnitaire: 350000, total: 1050000 },
-    ],
-  },
-  {
-    id: "fct-005", numero: "FAC-2025-005", client: "Cabinet MF Consulting",
-    dateEmission: "2025-01-25", dateEcheance: "2025-03-25",
-    montantHT: 6779661, tva: 1220339, montantTTC: 8000000, montantPaye: 0,
-    statut: "envoyee",
-    lignes: [
-      { description: "Ordinateur Portable Pro × 8", quantite: 8, prixUnitaire: 850000, total: 6800000 },
-    ],
-  },
-];
 
 export function InvoicesPage() {
   const [factures, setFactures] = useState<Facture[]>([]);
@@ -108,7 +60,7 @@ export function InvoicesPage() {
     const fetchFactures = async () => {
       try {
         const res = await apiClient.get<any>('/facture-clients');
-        const items: any[] = res.data ?? res ?? [];
+        const items: any[] = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
         const mapped: Facture[] = items.map((item: any) => {
           const statut: FactureStatut =
             item.etat === "payee"     ? "payee"     :
@@ -116,18 +68,27 @@ export function InvoicesPage() {
             item.etat === "en_retard" ? "en_retard" :
             "envoyee";
           const montantTTC = Number(item.montant) || 0;
+          // commande_client peut être encapsulé dans .data par JsonResource
+          const cmd = item.commande_client?.data ?? item.commande_client;
+          const clientObj = cmd?.client?.data ?? cmd?.client;
+          const clientNom = clientObj?.nom_complet
+            ?? [clientObj?.nom, clientObj?.prenom].filter(Boolean).join(" ")
+            ?? clientObj?.raison_sociale
+            ?? "";
+          const facRef = 'FAC-' + String(item.id).padStart(5, '0');
           return {
             id: String(item.id),
-            numero: item.commande_client?.reference ?? `#${item.id}`,
-            client: item.commande_client?.client?.nom_complet ?? item.commande_client?.client?.raison_sociale ?? "",
+            numero: facRef,
+            client: clientNom,
             dateEmission: item.date ?? "",
             dateEcheance: item.date ?? "",
             montantTTC,
-            montantHT: montantTTC * 0.85,
-            tva: montantTTC * 0.15,
+            montantHT: montantTTC,
+            tva: 0,
             montantPaye: Number(item.recu) || 0,
             statut,
             lignes: [],
+            commandeClientId: item.commande_client_id ?? cmd?.id,
           };
         });
         setFactures(mapped);
@@ -163,12 +124,22 @@ export function InvoicesPage() {
   };
 
   const handleDownload = async (f: Facture) => {
+    if (!f.commandeClientId) {
+      toast({ title: "Données manquantes pour générer le PDF", variant: "destructive" });
+      return;
+    }
     setDownloading(f.id);
     try {
-      await downloadPDF(
-        <InvoicePDF data={{ ...f, statutLabel: STATUT_CONFIG[f.statut].label }} />,
-        `${f.numero}.pdf`
+      const res = await apiClient.post<FactureData & { created: boolean }>(
+        `/leads/${f.commandeClientId}/facture`
       );
+      const blob = await pdf(<FactureDocument data={res} />).toBlob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `${f.numero}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
       toast({ title: `${f.numero} téléchargé` });
     } catch {
       toast({ title: "Erreur lors de la génération du PDF", variant: "destructive" });
@@ -179,8 +150,32 @@ export function InvoicesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2"><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-48" /></div>
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}><CardHeader className="pb-2"><Skeleton className="h-4 w-20" /></CardHeader>
+              <CardContent><Skeleton className="h-8 w-24" /></CardContent></Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-4">
+                  <div className="flex-1 space-y-1"><Skeleton className="h-4 w-28" /><Skeleton className="h-3 w-36" /></div>
+                  <Skeleton className="h-4 w-24 hidden md:block" />
+                  <Skeleton className="h-4 w-24 hidden md:block" />
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -335,6 +330,14 @@ export function InvoicesPage() {
             <CardTitle className="text-base sm:text-lg">{filtered.length} facture(s)</CardTitle>
           </CardHeader>
           <CardContent>
+            {filtered.length === 0 && (
+              <div className="py-16 text-center text-muted-foreground">
+                <Receipt className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">Aucune facture</p>
+                <p className="text-sm mt-1">Les factures générées depuis les commandes apparaîtront ici.</p>
+              </div>
+            )}
+
             {/* ── Mobile card list (< md) ── */}
             <div className="md:hidden space-y-3">
               {filtered.map((f) => {

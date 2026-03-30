@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -248,32 +248,61 @@ interface LignePrix {
 function DevisDialog({ lead, open, onClose, onSaved }: {
   lead: Lead; open: boolean; onClose: () => void; onSaved: () => void;
 }) {
-  // Initialiser une ligne par article avec son prix d'achat pré-rempli
-  const [lignes, setLignes] = useState<LignePrix[]>(() =>
-    (lead.articles ?? []).map((a) => ({
-      article_id:   a.article_id,
-      libelle:      a.article?.libelle ?? `Article #${a.article_id}`,
-      quantite:     a.quantite,
-      prixUnitaire: String(a.article?.prix_achat ?? ""),
-    }))
-  );
+  const initLignes = () => (lead.articles ?? []).map((a) => ({
+    article_id:   a.article_id,
+    libelle:      a.article?.libelle ?? `Article #${a.article_id}`,
+    quantite:     a.quantite,
+    prixUnitaire: String(a.article?.prix_achat ?? ""),
+  }));
+
+  const initMarge = () => {
+    if (!lead.prix_vente) return "";
+    const totalAchat = (lead.articles ?? []).reduce(
+      (s, a) => s + (a.article?.prix_achat ?? 0) * a.quantite, 0
+    );
+    const m = lead.prix_vente
+      - totalAchat
+      - (lead.frais_expedition ?? 0)
+      - (lead.autres_charges ?? 0);
+    return m > 0 ? String(Math.round(m)) : "";
+  };
+
+  const [lignes, setLignes] = useState<LignePrix[]>(initLignes);
   const [fraisExpedition, setFraisExpedition] = useState(String(lead.frais_expedition ?? ""));
   const [autresCharges,   setAutresCharges]   = useState(String(lead.autres_charges ?? ""));
   const [remise,          setRemise]          = useState("0");
-  const [marge,           setMarge]           = useState("");
+  const [marge,           setMarge]           = useState(initMarge);
   const [duree,           setDuree]           = useState(String(lead.duree_paiement ?? "12"));
+
+  // Resync quand le dialog se rouvre avec un lead différent
+  useEffect(() => {
+    if (open) {
+      setLignes(initLignes());
+      setFraisExpedition(String(lead.frais_expedition ?? ""));
+      setAutresCharges(String(lead.autres_charges ?? ""));
+      setDuree(String(lead.duree_paiement ?? "12"));
+      setMarge(initMarge());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lead.id]);
   const [saving,          setSaving]          = useState(false);
+
+  const TAUX_COMMISSION = 0.03; // taux minimum backend
 
   const totalAchat = lignes.reduce(
     (sum, l) => sum + (parseFloat(l.prixUnitaire) || 0) * l.quantite, 0
   );
 
-  const prixVente =
+  // prix_vente = (coûts + marge_nette) / (1 - taux_commission)
+  // Garantit que marge_nette = prix_vente - prix_achat - frais - commission
+  const base =
     totalAchat +
     (parseFloat(fraisExpedition) || 0) +
     (parseFloat(autresCharges) || 0) -
     (parseFloat(remise) || 0) +
     (parseFloat(marge) || 0);
+  const prixVente = base > 0 ? Math.round(base / (1 - TAUX_COMMISSION)) : 0;
+  const commissionEstimee = Math.round(prixVente * TAUX_COMMISSION);
 
   const plansPreview: Modalite[] = prixVente > 0
     ? [6, 12, 24].map((d) => ({ duree: d, mensualite: Math.round(prixVente / d), total: prixVente }))
@@ -293,6 +322,11 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
         autres_charges:   parseFloat(autresCharges)   || 0,
         remise:           parseFloat(remise)           || 0,
         duree_paiement:   parseInt(duree),
+        lignes: lignes.map((l) => ({
+          article_id: l.article_id,
+          prix_achat:  parseFloat(l.prixUnitaire) || 0,
+          quantite:    l.quantite,
+        })),
       });
       toast({ title: "Devis enregistré !" });
       onSaved();
@@ -407,7 +441,13 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
             )}
             {parseFloat(marge) > 0 && (
               <div className="flex justify-between px-4 py-2 text-muted-foreground">
-                <span>Marge</span><span>+ {formatCfa(parseFloat(marge))}</span>
+                <span>Marge nette souhaitée</span><span>+ {formatCfa(parseFloat(marge))}</span>
+              </div>
+            )}
+            {commissionEstimee > 0 && (
+              <div className="flex justify-between px-4 py-2 text-orange-600 text-xs">
+                <span>Commission estimée ({(TAUX_COMMISSION * 100).toFixed(0)}%)</span>
+                <span>+ {formatCfa(commissionEstimee)}</span>
               </div>
             )}
             <div className="flex justify-between px-4 py-2.5 bg-primary/5 font-bold">

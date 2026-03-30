@@ -18,19 +18,6 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:CLIENTS:READ"],
       enabled: isCommercialFeatureEnabled("clients"),
     },
-    // Commandes
-    {
-      path: "/commandes",
-      component: lazy(() => import("./pages/CommandesPage")),
-      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
-      enabled: isCommercialFeatureEnabled("commandes"),
-    },
-    {
-      path: "/commandes/:id",
-      component: lazy(() => import("./pages/CommandeDetailPage")),
-      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
-      enabled: isCommercialFeatureEnabled("commandes"),
-    },
     // Catalogue
     {
       path: "/catalogue",
@@ -44,13 +31,6 @@ function filterRoutesByFeatureFlags() {
       component: lazy(() => import("./pages/AccreditifPage")),
       requiresPermission: ["COMMERCIAL:ACCREDITIF:READ"],
       enabled: isCommercialFeatureEnabled("accreditif"),
-    },
-    // Simulation
-    {
-      path: "/simulation",
-      component: lazy(() => import("./pages/SimulationPage")),
-      requiresPermission: ["COMMERCIAL:SIMULATION:READ"],
-      enabled: isCommercialFeatureEnabled("simulation"),
     },
     // SAV
     {
@@ -76,15 +56,15 @@ function filterRoutesByFeatureFlags() {
     {
       path: "/promotions",
       component: lazy(() => import("./pages/PromotionsPage")),
-      requiresPermission: ["COMMERCIAL:CATALOG:READ"] as any,
+      requiresPermission: ["ADMIN:PROMOTIONS:WRITE"] as any,
       enabled: isCommercialFeatureEnabled("promotions"),
     },
-    // Leads / File d'attente
+    // Ventes (leads + devis + commandes)
     {
-      path: "/leads",
-      component: lazy(() => import("./pages/LeadsPage")),
+      path: "/ventes",
+      component: lazy(() => import("./pages/VentesPage")),
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
-      enabled: isCommercialFeatureEnabled("leads"),
+      enabled: true,
     },
   ];
 
@@ -98,13 +78,13 @@ function filterRoutesByFeatureFlags() {
 function filterNavigationByFeatureFlags() {
   const allNavigation = [
     {
-      label: "File d'attente",
-      path: "/admin/commercial/leads",
-      icon: "Inbox",
+      label: "Mes Ventes",
+      path: "/admin/commercial/ventes",
+      icon: "TrendingUp",
       section: "sales",
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       order: 7,
-      enabled: isCommercialFeatureEnabled("leads"),
+      enabled: true,
     },
     {
       label: "Clients",
@@ -114,15 +94,6 @@ function filterNavigationByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:CLIENTS:READ"],
       order: 8,
       enabled: isCommercialFeatureEnabled("clients"),
-    },
-    {
-      label: "Commandes",
-      path: "/admin/commercial/commandes",
-      icon: "ShoppingCart",
-      section: "sales",
-      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
-      order: 9,
-      enabled: isCommercialFeatureEnabled("commandes"),
     },
     {
       label: "Catalogue",
@@ -141,15 +112,6 @@ function filterNavigationByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ACCREDITIF:READ"],
       order: 12,
       enabled: isCommercialFeatureEnabled("accreditif"),
-    },
-    {
-      label: "Tableau de Simulation",
-      path: "/admin/commercial/simulation",
-      icon: "Calculator",
-      section: "sales",
-      requiresPermission: ["COMMERCIAL:SIMULATION:READ"],
-      order: 13,
-      enabled: isCommercialFeatureEnabled("simulation"),
     },
     {
       label: "S.A.V",
@@ -174,7 +136,7 @@ function filterNavigationByFeatureFlags() {
       path: "/admin/commercial/promotions",
       icon: "Tag",
       section: "sales",
-      requiresPermission: ["COMMERCIAL:CATALOG:READ"] as any,
+      requiresPermission: ["ADMIN:PROMOTIONS:WRITE"] as any,
       order: 16,
       enabled: isCommercialFeatureEnabled("promotions"),
     },

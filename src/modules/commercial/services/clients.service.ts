@@ -30,11 +30,12 @@ function mapBackendToClient(c: any): Client {
     }
   }
 
+  const nomComplet = c.nom_complet || [c.nom, c.prenom].filter(Boolean).join(' ') || c.raison_sociale || '';
   return {
     id: String(c.id),
     code: c.num_compte || `CLT-${String(c.id).padStart(3, '0')}`,
-    nom: c.nom || (c.type === 'particulier' ? (c.nom_complet || '').split(' ')[0] : undefined),
-    prenom: c.prenom || (c.type === 'particulier' ? (c.nom_complet || '').split(' ').slice(1).join(' ') : undefined),
+    nom: c.nom || (c.type === 'particulier' ? nomComplet.split(' ')[0] : c.raison_sociale) || nomComplet || `Client #${c.id}`,
+    prenom: c.prenom || (c.type === 'particulier' ? nomComplet.split(' ').slice(1).join(' ') : undefined),
     raisonSociale: c.raison_sociale || (c.type === 'entreprise' ? c.nom_complet : undefined),
     type: c.type || 'particulier',
     email: c.email || '',
@@ -99,7 +100,7 @@ export async function getClients(filters: ClientFilters = {}): Promise<Paginated
   };
 
   const res = await apiClient.get<any>(API_ENDPOINTS.clients.list, params);
-  const items: any[] = res.data || res;
+  const items: any[] = Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : [];
 
   return {
     data: items.map(mapBackendToClient),
