@@ -528,12 +528,46 @@ function LeadsTable({ leads, loading, emptyIcon: EmptyIcon, emptyText, onAction 
 
 // ── CommandeDetailDialog ───────────────────────────────────────────────────
 
-function CommandeDetailDialog({ commande, clients, onClose, onFacture }: {
-  commande: CommandeCommerciale | null; clients: any[]; onClose: () => void; onFacture?: () => void;
+const PAIEMENT_STATUTS = [
+  { value: "en_attente",        label: "En attente",          color: "bg-yellow-100 text-yellow-800" },
+  { value: "partiellement_paye", label: "Partiellement payé", color: "bg-blue-100 text-blue-800" },
+  { value: "paye",              label: "Payé",                color: "bg-green-100 text-green-800" },
+];
+
+function CommandeDetailDialog({ commande, clients, onClose, onFacture, onPaiementSaved }: {
+  commande: CommandeCommerciale | null; clients: any[]; onClose: () => void;
+  onFacture?: () => void; onPaiementSaved?: () => void;
 }) {
+  const [statutPaiement, setStatutPaiement] = useState(commande?.statutPaiement ?? "en_attente");
+  const [montantRecu, setMontantRecu]       = useState(String(commande?.montantPaye ?? 0));
+  const [savingPaiement, setSavingPaiement] = useState(false);
+
+  useEffect(() => {
+    setStatutPaiement(commande?.statutPaiement ?? "en_attente");
+    setMontantRecu(String(commande?.montantPaye ?? 0));
+  }, [commande?.id]);
+
+  const handleSavePaiement = async () => {
+    if (!commande) return;
+    setSavingPaiement(true);
+    try {
+      await apiClient.patch(`/leads/${commande.id}/paiement`, {
+        statut_paiement: statutPaiement,
+        recu: Number(montantRecu) || 0,
+      });
+      toast({ title: "Paiement mis à jour" });
+      onPaiementSaved?.();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingPaiement(false);
+    }
+  };
+
   if (!commande) return null;
   const getClientName = (id: string) => clients.find((c) => c.id === id)?.nom ?? id;
   const cfg = STATUT_CONFIG[commande.statut] ?? STATUT_CONFIG.brouillon;
+  const paieCfg = PAIEMENT_STATUTS.find((p) => p.value === statutPaiement) ?? PAIEMENT_STATUTS[0];
   return (
     <Dialog open={!!commande} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
@@ -608,6 +642,46 @@ function CommandeDetailDialog({ commande, clients, onClose, onFacture }: {
               <p className="text-sm">{commande.notes}</p>
             </div>
           )}
+
+          {/* ── Section paiement éditable ── */}
+          <div className="rounded-lg border p-4 space-y-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Suivi du paiement</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Statut paiement</Label>
+                <Select value={statutPaiement} onValueChange={setStatutPaiement}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAIEMENT_STATUTS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Montant encaissé (FCFA)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={montantRecu}
+                  onChange={(e) => setMontantRecu(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Statut actuel :</span>
+                <Badge variant="outline" className={paieCfg.color}>{paieCfg.label}</Badge>
+              </div>
+              <Button size="sm" onClick={handleSavePaiement} disabled={savingPaiement}>
+                {savingPaiement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Enregistrer
+              </Button>
+            </div>
+          </div>
         </div>
         <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/20 rounded-b-lg">
           <Button variant="outline" onClick={onClose}>Fermer</Button>
@@ -905,6 +979,7 @@ export default function VentesPage() {
         clients={clients}
         onClose={() => setSelectedCommande(null)}
         onFacture={() => { setFactureCommande(selectedCommande); setSelectedCommande(null); }}
+        onPaiementSaved={() => refetch()}
       />
 
       {factureCommande && (

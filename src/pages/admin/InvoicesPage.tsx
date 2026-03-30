@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
-import { pdf } from "@react-pdf/renderer";
+import { pdf, PDFViewer } from "@react-pdf/renderer";
 import { FactureDocument, type FactureData } from "@/modules/commercial/components/FacturePDF";
 
 type FactureStatut = "brouillon" | "envoyee" | "payee" | "en_retard" | "annulee";
@@ -51,10 +51,13 @@ const STATUT_CONFIG: Record<FactureStatut, { label: string; color: string; icon:
 export function InvoicesPage() {
   const [factures, setFactures] = useState<Facture[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
   const [search, setSearch]     = useState("");
   const [statutFilter, setStatutFilter] = useState<FactureStatut | "all">("all");
-  const [selected, setSelected] = useState<Facture | null>(null);
-  const [downloading, setDownloading] = useState<string | null>(null);
+  const [selected, setSelected]           = useState<Facture | null>(null);
+  const [selectedData, setSelectedData]   = useState<FactureData | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [downloading, setDownloading]     = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFactures = async () => {
@@ -92,8 +95,13 @@ export function InvoicesPage() {
           };
         });
         setFactures(mapped);
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        const msg = err?.message ?? "";
+        if (msg.includes("403") || msg.toLowerCase().includes("forbidden")) {
+          setError("Accès refusé (403) — votre compte n'a pas la permission d'accéder aux factures. Contactez l'administrateur.");
+        } else {
+          setError("Impossible de charger les factures. Vérifiez votre connexion et réessayez.");
+        }
       } finally {
         setLoading(false);
       }
@@ -114,6 +122,21 @@ export function InvoicesPage() {
     paye:     factures.filter((f) => f.statut === "payee").reduce((s, f) => s + f.montantTTC, 0),
     impaye:   factures.filter((f) => ["envoyee", "en_retard"].includes(f.statut)).reduce((s, f) => s + (f.montantTTC - f.montantPaye), 0),
     retard:   factures.filter((f) => f.statut === "en_retard").length,
+  };
+
+  const handleSelect = async (f: Facture) => {
+    setSelected(f);
+    setSelectedData(null);
+    if (!f.commandeClientId) return;
+    setPreviewLoading(true);
+    try {
+      const data = await apiClient.post<FactureData>(`/leads/${f.commandeClientId}/facture`);
+      setSelectedData(data);
+    } catch {
+      // affiche le dialog sans preview si erreur
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const handleMarquerPayee = (id: string) => {
@@ -147,6 +170,18 @@ export function InvoicesPage() {
       setDownloading(null);
     }
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <XCircle className="h-12 w-12 text-red-400" />
+        <div>
+          <p className="text-lg font-semibold text-red-600">Erreur d'accès</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-md">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -182,73 +217,42 @@ export function InvoicesPage() {
 
   return (
     <>
-      {/* Detail Dialog */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selected?.numero}</DialogTitle>
+      {/* Detail Dialog — aperçu PDF */}
+      <Dialog open={!!selected} onOpenChange={(o) => { if (!o) { setSelected(null); setSelectedData(null); } }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[95vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between shrink-0">
+            <DialogTitle className="text-base">{selected?.numero} — {selected?.client}</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => selected && handleDownload(selected)}
+              disabled={!selected || downloading === selected.id}
+            >
+              {selected && downloading === selected.id
+                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                : <Download className="mr-2 h-4 w-4" />}
+              Télécharger
+            </Button>
           </DialogHeader>
-          {selected && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><p className="text-muted-foreground">Client</p><p className="font-semibold">{selected.client}</p></div>
-                <div>
-                  <p className="text-muted-foreground">Statut</p>
-                  <Badge variant="outline" className={STATUT_CONFIG[selected.statut].color}>
-                    {STATUT_CONFIG[selected.statut].label}
-                  </Badge>
-                </div>
-                <div><p className="text-muted-foreground">Date émission</p><p>{new Date(selected.dateEmission).toLocaleDateString("fr-FR")}</p></div>
-                <div><p className="text-muted-foreground">Échéance</p><p>{new Date(selected.dateEcheance).toLocaleDateString("fr-FR")}</p></div>
+
+          <div className="flex-1 min-h-0">
+            {previewLoading && (
+              <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Chargement de l'aperçu…</span>
               </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Qté</TableHead>
-                      <TableHead className="text-right">P.U.</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selected.lignes.map((l, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{l.description}</TableCell>
-                        <TableCell className="text-right">{l.quantite}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(l.prixUnitaire)}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(l.total)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            )}
+            {!previewLoading && selectedData && (
+              <PDFViewer width="100%" height="100%" showToolbar={false}>
+                <FactureDocument data={selectedData} />
+              </PDFViewer>
+            )}
+            {!previewLoading && !selectedData && (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                Aperçu non disponible
               </div>
-              <div className="flex justify-between items-end">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownload(selected)}
-                  disabled={downloading === selected.id}
-                >
-                  {downloading === selected.id
-                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    : <Download className="mr-2 h-4 w-4" />}
-                  Télécharger PDF
-                </Button>
-                <div className="w-56 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Sous-total HT</span><span>{formatCurrency(selected.montantHT)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">TVA (18%)</span><span>{formatCurrency(selected.tva)}</span></div>
-                  <hr />
-                  <div className="flex justify-between font-bold text-base"><span>Total TTC</span><span>{formatCurrency(selected.montantTTC)}</span></div>
-                  <div className="flex justify-between text-green-600"><span>Payé</span><span>{formatCurrency(selected.montantPaye)}</span></div>
-                  {selected.montantTTC - selected.montantPaye > 0 && (
-                    <div className="flex justify-between text-red-600 font-semibold">
-                      <span>Reste à payer</span><span>{formatCurrency(selected.montantTTC - selected.montantPaye)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -365,7 +369,7 @@ export function InvoicesPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => setSelected(f)}>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleSelect(f)}>
                         <Eye className="mr-1 h-3 w-3" />Voir
                       </Button>
                       <Button
@@ -429,7 +433,7 @@ export function InvoicesPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setSelected(f)}>
+                            <Button variant="ghost" size="icon" onClick={() => handleSelect(f)}>
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button

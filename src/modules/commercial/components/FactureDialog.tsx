@@ -29,7 +29,11 @@ export function FactureDialog({ commandeId, commandeRef, open, onClose }: Factur
       setFactureData(data);
       setStep("done");
     } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+      const msg: string = e?.message ?? "";
+      const description = msg.includes("403") || msg.toLowerCase().includes("forbidden")
+        ? "Accès refusé — votre compte n'a pas la permission de générer des factures. Contactez l'administrateur."
+        : msg || "Une erreur est survenue.";
+      toast({ title: "Erreur", description, variant: "destructive" });
       setStep("confirm");
     }
   };
