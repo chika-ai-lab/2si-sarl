@@ -24,9 +24,13 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import {
   MapPin, CreditCard, CheckCircle, Loader2, RefreshCw, Globe, UserCheck,
   ClipboardList, Search, ChevronDown, ChevronUp, ShoppingCart, Plus, Trash2,
   Package, Clock, FileText, Eye, MoreVertical, XCircle, Edit, TrendingUp,
+  Minus, BookOpen, SlidersHorizontal, X,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/currency";
@@ -72,22 +76,10 @@ const LABEL_CANAL: Record<string, string> = {
 // ── Helpers commandes ──────────────────────────────────────────────────────
 
 interface LigneForm {
-  article_id: string; quantite: number; prix_achat: number;
-  frais_livraison_fournisseur: number; frais_livraison_client: number;
-  type_livraison: "agence" | "destination"; taux_commission: number; marge: number;
+  article_id: string;
+  quantite: number;
 }
-const EMPTY_LIGNE: LigneForm = {
-  article_id: "", quantite: 1, prix_achat: 0,
-  frais_livraison_fournisseur: 0, frais_livraison_client: 0,
-  type_livraison: "agence", taux_commission: 0.05, marge: 0,
-};
-function calcLigne(l: LigneForm) {
-  const base = l.prix_achat + l.frais_livraison_fournisseur + l.frais_livraison_client + l.marge;
-  const prix = l.taux_commission < 1 ? base / (1 - l.taux_commission) : base;
-  const commission = prix * l.taux_commission;
-  const cTotal = l.prix_achat + l.frais_livraison_fournisseur + l.frais_livraison_client + commission;
-  return { prix, commission, cTotal };
-}
+const EMPTY_LIGNE: LigneForm = { article_id: "", quantite: 1 };
 
 const STATUT_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   brouillon:  { label: "Brouillon",  color: "bg-gray-100 text-gray-800",    icon: Edit },
@@ -119,44 +111,27 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
     quantite: a.quantite,
     prixUnitaire: String(a.article?.prix_achat ?? ""),
   }));
-  const initMarge = () => {
-    if (!lead.prix_vente) return "";
-    const totalAchat = (lead.articles ?? []).reduce((s, a) => s + (a.article?.prix_achat ?? 0) * a.quantite, 0);
-    const m = lead.prix_vente - totalAchat - (lead.frais_expedition ?? 0) - (lead.autres_charges ?? 0);
-    return m > 0 ? String(Math.round(m)) : "";
-  };
 
-  const [lignes, setLignes]               = useState<LignePrix[]>(initLignes);
+  const [lignes]                          = useState<LignePrix[]>(initLignes);
   const [fraisExpedition, setFraisExp]    = useState(String(lead.frais_expedition ?? ""));
-  const [autresCharges, setAutresCharges] = useState(String(lead.autres_charges ?? ""));
-  const [remise, setRemise]               = useState("0");
-  const [marge, setMarge]                 = useState(initMarge);
   const [duree, setDuree]                 = useState(String(lead.duree_paiement ?? "12"));
   const [saving, setSaving]               = useState(false);
 
   useEffect(() => {
     if (open) {
-      setLignes(initLignes());
       setFraisExp(String(lead.frais_expedition ?? ""));
-      setAutresCharges(String(lead.autres_charges ?? ""));
       setDuree(String(lead.duree_paiement ?? "12"));
-      setMarge(initMarge());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lead.id]);
 
   const TAUX_COMMISSION = 0.03;
   const totalAchat = lignes.reduce((sum, l) => sum + (parseFloat(l.prixUnitaire) || 0) * l.quantite, 0);
-  const base = totalAchat + (parseFloat(fraisExpedition) || 0) + (parseFloat(autresCharges) || 0)
-    - (parseFloat(remise) || 0) + (parseFloat(marge) || 0);
+  const base = totalAchat + (parseFloat(fraisExpedition) || 0);
   const prixVente = base > 0 ? Math.round(base / (1 - TAUX_COMMISSION)) : 0;
-  const commissionEstimee = Math.round(prixVente * TAUX_COMMISSION);
   const plansPreview: Modalite[] = prixVente > 0
     ? [6, 12, 24].map((d) => ({ duree: d, mensualite: Math.round(prixVente / d), total: prixVente }))
     : [];
-
-  const updateLigne = (idx: number, val: string) =>
-    setLignes((prev) => prev.map((l, i) => i === idx ? { ...l, prixUnitaire: val } : l));
 
   const handleSave = async () => {
     if (prixVente <= 0) { toast({ title: "Prix invalide", variant: "destructive" }); return; }
@@ -165,8 +140,8 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
       await enregistrerDevis(lead.id, {
         prix_vente: prixVente,
         frais_expedition: parseFloat(fraisExpedition) || 0,
-        autres_charges: parseFloat(autresCharges) || 0,
-        remise: parseFloat(remise) || 0,
+        autres_charges: 0,
+        remise: 0,
         duree_paiement: parseInt(duree),
         lignes: lignes.map((l) => ({
           article_id: l.article_id,
@@ -183,12 +158,12 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Devis — {lead.reference}</DialogTitle>
+          <DialogTitle>Confirmer le devis — {lead.reference}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* Infos client */}
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm p-3 rounded-lg bg-muted/40 border">
             <span className="text-muted-foreground">Client</span>
@@ -199,106 +174,42 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
             </>}
           </div>
 
-          {/* Prix d'achat par article */}
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Prix d'achat par article</p>
-            <div className="rounded-lg border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Article</th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-muted-foreground w-16">Qté</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground w-36">Prix achat unitaire</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground w-28">Sous-total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {lignes.map((ligne, idx) => (
-                    <tr key={ligne.article_id}>
-                      <td className="px-3 py-2 text-xs">{ligne.libelle}</td>
-                      <td className="px-3 py-2 text-center text-xs">{ligne.quantite}</td>
-                      <td className="px-2 py-1.5">
-                        <Input
-                          type="number" min="0" value={ligne.prixUnitaire}
-                          onChange={(e) => updateLigne(idx, e.target.value)}
-                          className="h-7 text-xs text-right w-full"
-                          placeholder="0"
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-right text-xs font-medium whitespace-nowrap">
-                        {formatCfa((parseFloat(ligne.prixUnitaire) || 0) * ligne.quantite)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="border-t bg-muted/20">
-                  <tr>
-                    <td colSpan={3} className="px-3 py-2 text-xs font-semibold text-right">Total achats</td>
-                    <td className="px-3 py-2 text-right text-xs font-bold">{formatCfa(totalAchat)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+          {/* Articles (lecture seule) */}
+          <div className="rounded-lg border overflow-hidden">
+            <div className="px-3 py-2 bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Articles demandés
             </div>
+            <table className="w-full text-sm">
+              <tbody className="divide-y">
+                {lignes.map((ligne) => (
+                  <tr key={ligne.article_id}>
+                    <td className="px-3 py-2">{ligne.libelle}</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground w-16">×{ligne.quantite}</td>
+                    <td className="px-3 py-2 text-right font-medium w-28 whitespace-nowrap">
+                      {formatCfa((parseFloat(ligne.prixUnitaire) || 0) * ligne.quantite)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* Frais & ajustements */}
+          {/* Frais expédition uniquement */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Frais &amp; ajustements</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Frais expédition (FCFA)</Label>
-                <Input type="number" value={fraisExpedition} onChange={(e) => setFraisExp(e.target.value)} placeholder="0" className="h-8 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Autres charges</Label>
-                <Input type="number" value={autresCharges} onChange={(e) => setAutresCharges(e.target.value)} placeholder="0" className="h-8 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Remise accordée</Label>
-                <Input type="number" value={remise} onChange={(e) => setRemise(e.target.value)} placeholder="0" className="h-8 text-sm" />
-              </div>
-              <div>
-                <Label className="text-xs">Marge commerciale</Label>
-                <Input type="number" value={marge} onChange={(e) => setMarge(e.target.value)} placeholder="0" className="h-8 text-sm" />
-              </div>
-            </div>
+            <Label className="text-xs">Frais d'expédition (FCFA) — si client hors Dakar</Label>
+            <Input
+              type="number" min="0"
+              value={fraisExpedition}
+              onChange={(e) => setFraisExp(e.target.value)}
+              placeholder="0"
+              className="mt-1 h-9 text-sm"
+            />
           </div>
 
-          {/* Récap prix de vente */}
-          <div className="rounded-lg border divide-y text-sm">
-            <div className="flex justify-between px-4 py-2 text-muted-foreground">
-              <span>Total achats</span><span>{formatCfa(totalAchat)}</span>
-            </div>
-            {(parseFloat(fraisExpedition) || 0) > 0 && (
-              <div className="flex justify-between px-4 py-2 text-muted-foreground">
-                <span>Frais expédition</span><span>+ {formatCfa(parseFloat(fraisExpedition) || 0)}</span>
-              </div>
-            )}
-            {(parseFloat(autresCharges) || 0) > 0 && (
-              <div className="flex justify-between px-4 py-2 text-muted-foreground">
-                <span>Autres charges</span><span>+ {formatCfa(parseFloat(autresCharges) || 0)}</span>
-              </div>
-            )}
-            {(parseFloat(remise) || 0) > 0 && (
-              <div className="flex justify-between px-4 py-2 text-orange-600">
-                <span>Remise</span><span>- {formatCfa(parseFloat(remise) || 0)}</span>
-              </div>
-            )}
-            {(parseFloat(marge) || 0) > 0 && (
-              <div className="flex justify-between px-4 py-2 text-muted-foreground">
-                <span>Marge nette souhaitée</span><span>+ {formatCfa(parseFloat(marge) || 0)}</span>
-              </div>
-            )}
-            {commissionEstimee > 0 && (
-              <div className="flex justify-between px-4 py-2 text-orange-600 text-xs">
-                <span>Commission estimée ({(TAUX_COMMISSION * 100).toFixed(0)}%)</span>
-                <span>+ {formatCfa(commissionEstimee)}</span>
-              </div>
-            )}
-            <div className="flex justify-between px-4 py-2.5 bg-primary/5 font-bold">
-              <span className="text-primary">Prix de vente</span>
-              <span className="text-primary text-lg">{formatCfa(Math.max(0, prixVente))}</span>
-            </div>
+          {/* Prix de vente calculé */}
+          <div className="flex justify-between items-center px-4 py-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <span className="font-semibold text-primary">Prix de vente client</span>
+            <span className="font-bold text-xl text-primary">{formatCfa(Math.max(0, prixVente))}</span>
           </div>
 
           {/* Plans de paiement */}
@@ -706,6 +617,259 @@ function CommandeDetailDialog({ commande, clients, onClose, onFacture, onSavePai
   );
 }
 
+// ── ProductPickerSheet ─────────────────────────────────────────────────────
+
+interface BackendArticle {
+  id: number; libelle: string; reference?: string;
+  marque?: string; prix: number; prix_achat?: number;
+  quantite: number; statut?: string; banque?: string;
+  categorie?: { id: number; categorie: string };
+  categories?: number[]; images?: string[];
+}
+
+function ProductPickerSheet({
+  open, onClose, articles, selected, onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  articles: BackendArticle[];
+  selected: LigneForm[];
+  onConfirm: (lines: LigneForm[]) => void;
+}) {
+  const [search, setSearch]         = useState("");
+  const [catFilter, setCatFilter]   = useState("all");
+  const [bankFilter, setBankFilter] = useState("all");
+  const [brandFilter, setBrandFilter] = useState("all");
+  const [onlyStock, setOnlyStock]   = useState(true);
+  const [localSel, setLocalSel]     = useState<LigneForm[]>([]);
+
+  useEffect(() => {
+    if (open) { setLocalSel(selected); setSearch(""); }
+  }, [open]);
+
+  // Derived filters lists
+  const categories = useMemo(() => {
+    const seen = new Map<string, string>();
+    articles.forEach((a) => { if (a.categorie) seen.set(String(a.categorie.id), a.categorie.categorie); });
+    return Array.from(seen.entries()).map(([id, label]) => ({ id, label }));
+  }, [articles]);
+  const brands = useMemo(() => {
+    const s = new Set<string>();
+    articles.forEach((a) => { if (a.marque) s.add(a.marque); });
+    return Array.from(s).sort();
+  }, [articles]);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return articles.filter((a) => {
+      if (onlyStock && a.statut === "rupture") return false;
+      if (onlyStock && a.quantite <= 0) return false;
+      if (catFilter !== "all" && String(a.categorie?.id) !== catFilter) return false;
+      if (bankFilter !== "all" && (a.banque ?? "").toUpperCase() !== bankFilter) return false;
+      if (brandFilter !== "all" && a.marque !== brandFilter) return false;
+      if (q && !a.libelle.toLowerCase().includes(q) && !(a.reference ?? "").toLowerCase().includes(q) && !(a.marque ?? "").toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [articles, search, catFilter, bankFilter, brandFilter, onlyStock]);
+
+  const getQty = (id: number) => localSel.find((l) => l.article_id === String(id))?.quantite ?? 0;
+
+  const add = (id: number) =>
+    setLocalSel((p) => {
+      const existing = p.find((l) => l.article_id === String(id));
+      if (existing) return p.map((l) => l.article_id === String(id) ? { ...l, quantite: l.quantite + 1 } : l);
+      return [...p, { article_id: String(id), quantite: 1 }];
+    });
+
+  const remove = (id: number) =>
+    setLocalSel((p) => {
+      const existing = p.find((l) => l.article_id === String(id));
+      if (!existing) return p;
+      if (existing.quantite <= 1) return p.filter((l) => l.article_id !== String(id));
+      return p.map((l) => l.article_id === String(id) ? { ...l, quantite: l.quantite - 1 } : l);
+    });
+
+  const totalItems = localSel.reduce((s, l) => s + l.quantite, 0);
+  const totalPrice = localSel.reduce((s, l) => {
+    const art = articles.find((a) => String(a.id) === l.article_id);
+    return s + (art?.prix || 0) * l.quantite;
+  }, 0);
+
+  const activeFilters = [catFilter !== "all", bankFilter !== "all", brandFilter !== "all", !onlyStock].filter(Boolean).length;
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0 gap-0">
+        <SheetHeader className="px-4 pt-4 pb-3 border-b">
+          <SheetTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            Catalogue produits
+            {totalItems > 0 && (
+              <Badge className="ml-auto bg-primary text-primary-foreground">{totalItems} sélectionné(s)</Badge>
+            )}
+          </SheetTitle>
+        </SheetHeader>
+
+        {/* ── Filtres ── */}
+        <div className="px-4 py-3 space-y-3 border-b bg-muted/30">
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Nom, référence, marque..."
+              className="pl-9 h-9"
+            />
+            {search && (
+              <button className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setSearch("")}>
+                <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Filtres ligne 1 */}
+          <div className="grid grid-cols-2 gap-2">
+            <Select value={catFilter} onValueChange={setCatFilter}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes catégories</SelectItem>
+                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Marque" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes marques</SelectItem>
+                {brands.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Filtres ligne 2 */}
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border overflow-hidden text-xs h-8">
+              {[
+                { v: "all", label: "Tous" },
+                { v: "CBAO", label: "CBAO" },
+                { v: "CMS",  label: "CMS" },
+              ].map(({ v, label }) => (
+                <button
+                  key={v} type="button"
+                  className={`px-3 transition-colors ${bankFilter === v ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"}`}
+                  onClick={() => setBankFilter(v)}
+                >{label}</button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className={`flex items-center gap-1.5 text-xs px-3 h-8 rounded-lg border transition-colors ${onlyStock ? "bg-green-50 text-green-700 border-green-200" : "hover:bg-muted"}`}
+              onClick={() => setOnlyStock((v) => !v)}
+            >
+              <Package className="h-3.5 w-3.5" />
+              En stock seulement
+            </button>
+            {activeFilters > 0 && (
+              <button
+                type="button" className="text-xs text-muted-foreground hover:text-foreground ml-auto"
+                onClick={() => { setCatFilter("all"); setBankFilter("all"); setBrandFilter("all"); setOnlyStock(true); }}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5 inline mr-1" />
+                Réinitialiser ({activeFilters})
+              </button>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground">{filtered.length} produit(s)</p>
+        </div>
+
+        {/* ── Liste produits ── */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Aucun produit trouvé</p>
+            </div>
+          ) : (
+            filtered.map((a) => {
+              const qty = getQty(a.id);
+              const inCart = qty > 0;
+              return (
+                <div
+                  key={a.id}
+                  className={`flex items-center gap-3 rounded-lg border p-2.5 transition-colors ${inCart ? "border-primary/40 bg-primary/5" : "hover:bg-muted/40"}`}
+                >
+                  {/* Image */}
+                  <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden border">
+                    {a.images?.[0] ? (
+                      <img src={a.images[0]} alt={a.libelle} className="h-full w-full object-cover" />
+                    ) : (
+                      <Package className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm line-clamp-1">{a.libelle}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      {a.reference && <span className="text-xs font-mono text-muted-foreground">{a.reference}</span>}
+                      {a.marque && <Badge variant="outline" className="text-xs px-1 py-0">{a.marque}</Badge>}
+                      {a.banque && <Badge variant="outline" className="text-xs px-1 py-0 bg-blue-50 text-blue-700 border-blue-200">{a.banque}</Badge>}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-sm font-semibold text-primary">{formatCurrency(a.prix)}</span>
+                      <span className={`text-xs ${a.quantite > 0 ? "text-green-600" : "text-red-600"}`}>
+                        stock: {a.quantite}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Qty controls */}
+                  {inCart ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button type="button" onClick={() => remove(a.id)}
+                        className="h-7 w-7 rounded-full border flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-colors">
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-bold">{qty}</span>
+                      <button type="button" onClick={() => add(a.id)}
+                        className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors">
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => add(a.id)}
+                      className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0">
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="border-t px-4 py-3 bg-background">
+          {localSel.length > 0 ? (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{totalItems} article(s) sélectionné(s)</span>
+                <span className="font-semibold">{formatCurrency(totalPrice)}</span>
+              </div>
+              <Button className="w-full" onClick={() => { onConfirm(localSel); onClose(); }}>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Confirmer la sélection
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" className="w-full" onClick={onClose}>Fermer</Button>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 // ── Page principale ─────────────────────────────────────────────────────────
 
 export default function VentesPage() {
@@ -739,14 +903,14 @@ export default function VentesPage() {
   }, []);
 
   const [formClientId, setFormClientId]         = useState("");
-  const [formDate, setFormDate]                 = useState(new Date().toISOString().split("T")[0]);
   const [formModePaiement, setFormModePaiement] = useState<ModePaiement>("virement");
   const [formNotes, setFormNotes]               = useState("");
-  const [lignes, setLignes]                     = useState<LigneForm[]>([{ ...EMPTY_LIGNE }]);
+  const [lignes, setLignes]                     = useState<LigneForm[]>([]);
+  const [pickerOpen, setPickerOpen]             = useState(false);
 
   const resetForm = () => {
-    setFormClientId(""); setFormDate(new Date().toISOString().split("T")[0]);
-    setFormModePaiement("virement"); setFormNotes(""); setLignes([{ ...EMPTY_LIGNE }]);
+    setFormClientId("");
+    setFormModePaiement("virement"); setFormNotes(""); setLignes([]);
   };
 
   const commandesFilters = {
@@ -767,28 +931,29 @@ export default function VentesPage() {
     setLignes((prev) => {
       const next = [...prev];
       next[i] = { ...next[i], [field]: value };
-      if (field === "article_id") {
-        const art = articles.find((a) => String(a.id) === value);
-        if (art) next[i].prix_achat = art.prix_achat ?? 0;
-      }
       return next;
     });
   };
 
   const handleCreate = async () => {
     if (!formClientId) { toast({ title: "Sélectionnez un client", variant: "destructive" }); return; }
-    if (lignes.some((l) => !l.article_id)) { toast({ title: "Sélectionnez un article pour chaque ligne", variant: "destructive" }); return; }
+    if (lignes.length === 0) { toast({ title: "Ajoutez au moins un article", variant: "destructive" }); return; }
     setSaving(true);
     try {
       await createCommande({
         clientId: formClientId,
         lignes: lignes.map((l) => {
-          const { prix } = calcLigne(l);
+          const art = articles.find((a) => String(a.id) === l.article_id);
           return {
-            produitId: l.article_id, quantite: l.quantite, prixUnitaire: Math.round(prix),
-            prixAchat: l.prix_achat, fraisLivraisonFournisseur: l.frais_livraison_fournisseur,
-            fraisLivraisonClient: l.frais_livraison_client, typeLivraison: l.type_livraison,
-            tauxCommission: l.taux_commission, remise: 0,
+            produitId: l.article_id,
+            quantite: l.quantite,
+            prixUnitaire: art?.prix || 0,
+            prixAchat: art?.prix_achat || 0,
+            fraisLivraisonFournisseur: 0,
+            fraisLivraisonClient: 0,
+            typeLivraison: "agence" as const,
+            tauxCommission: 0.03,
+            remise: 0,
           };
         }),
         modeLivraison: "retrait", modePaiement: formModePaiement,
@@ -868,149 +1033,119 @@ export default function VentesPage() {
 
       {/* Create commande dialog */}
       <Dialog open={isCreateOpen} onOpenChange={(o) => { setIsCreateOpen(o); if (!o) resetForm(); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
           <DialogHeader><DialogTitle>Nouvelle commande</DialogTitle></DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-6 pr-1">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Client *</Label>
-                <Select value={formClientId} onValueChange={setFormClientId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Choisir un client..." /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Date</Label>
-                <Input className="mt-1" type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
-              </div>
-              <div>
-                <Label>Mode de paiement</Label>
-                <Select value={formModePaiement} onValueChange={(v) => setFormModePaiement(v as ModePaiement)}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="especes">Espèces</SelectItem>
-                    <SelectItem value="virement">Virement</SelectItem>
-                    <SelectItem value="cheque">Chèque</SelectItem>
-                    <SelectItem value="credit">Crédit</SelectItem>
-                    <SelectItem value="accreditif">Accréditif</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea className="mt-1" value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={1} placeholder="Remarques..." />
-              </div>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {/* Client */}
+            <div>
+              <Label>Client *</Label>
+              <Select value={formClientId} onValueChange={setFormClientId}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Choisir un client..." /></SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.nom} {c.prenom || ""}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
+            {/* Mode de paiement */}
+            <div>
+              <Label>Mode de paiement</Label>
+              <Select value={formModePaiement} onValueChange={(v) => setFormModePaiement(v as ModePaiement)}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="especes">Espèces</SelectItem>
+                  <SelectItem value="virement">Virement</SelectItem>
+                  <SelectItem value="cheque">Chèque</SelectItem>
+                  <SelectItem value="credit">Crédit</SelectItem>
+                  <SelectItem value="accreditif">Accréditif</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Notes */}
+            <div>
+              <Label>Notes</Label>
+              <Textarea className="mt-1" value={formNotes} onChange={(e) => setFormNotes(e.target.value)} rows={2} placeholder="Remarques..." />
+            </div>
+
+            {/* Articles */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">Articles commandés</h3>
-                <Button type="button" variant="outline" size="sm" onClick={() => setLignes((p) => [...p, { ...EMPTY_LIGNE }])}>
-                  <Plus className="h-4 w-4 mr-1" />Ajouter article
+                <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+                  <BookOpen className="h-4 w-4 mr-1" />Parcourir le catalogue
                 </Button>
               </div>
-              <div className="space-y-4">
-                {lignes.map((ligne, i) => {
-                  const { prix, commission, cTotal } = calcLigne(ligne);
-                  return (
-                    <div key={i} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Ligne {i + 1}</span>
-                        {lignes.length > 1 && (
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setLignes((p) => p.filter((_, j) => j !== i))}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+
+              {lignes.length === 0 ? (
+                <button
+                  type="button"
+                  className="w-full border-2 border-dashed rounded-lg py-8 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors flex flex-col items-center gap-2"
+                  onClick={() => setPickerOpen(true)}
+                >
+                  <Package className="h-8 w-8 opacity-40" />
+                  <span className="text-sm">Cliquez pour choisir des articles</span>
+                </button>
+              ) : (
+                <div className="space-y-1.5">
+                  {lignes.map((ligne, i) => {
+                    const art = articles.find((a) => String(a.id) === ligne.article_id);
+                    return (
+                      <div key={ligne.article_id} className="flex items-center gap-3 border rounded-lg px-3 py-2">
+                        {/* Thumbnail */}
+                        <div className="h-9 w-9 rounded bg-muted flex items-center justify-center shrink-0 overflow-hidden border">
+                          {art?.images?.[0]
+                            ? <img src={art.images[0]} alt={art.libelle} className="h-full w-full object-cover" />
+                            : <Package className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                        {/* Name */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium line-clamp-1">{art?.libelle ?? `Article #${ligne.article_id}`}</p>
+                          {art?.prix != null && (
+                            <p className="text-xs text-muted-foreground">{formatCurrency(art.prix)} / unité</p>
+                          )}
+                        </div>
+                        {/* Qty controls */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button type="button"
+                            className="h-6 w-6 rounded-full border flex items-center justify-center hover:bg-red-50 transition-colors"
+                            onClick={() => {
+                              if (ligne.quantite <= 1) setLignes((p) => p.filter((_, j) => j !== i));
+                              else updateLigne(i, "quantite", ligne.quantite - 1);
+                            }}>
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-bold">{ligne.quantite}</span>
+                          <button type="button"
+                            className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
+                            onClick={() => updateLigne(i, "quantite", ligne.quantite + 1)}>
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                        {/* Line total */}
+                        {art?.prix != null && (
+                          <span className="text-sm font-semibold text-primary whitespace-nowrap w-24 text-right shrink-0">
+                            {formatCurrency(art.prix * ligne.quantite)}
+                          </span>
                         )}
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="col-span-2">
-                          <Label className="text-xs font-medium">Article *</Label>
-                          <Select value={ligne.article_id} onValueChange={(v) => updateLigne(i, "article_id", v)}>
-                            <SelectTrigger className="mt-1"><SelectValue placeholder="Choisir un article..." /></SelectTrigger>
-                            <SelectContent>
-                              {articles.map((a) => <SelectItem key={a.id} value={String(a.id)}>{a.libelle}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs font-medium">Quantité</Label>
-                          <Input className="mt-1" type="number" min="1" value={ligne.quantite} onChange={(e) => updateLigne(i, "quantite", Number(e.target.value))} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <Label className="text-xs">Prix d'achat (FCFA)</Label>
-                          <Input className="mt-1" type="number" min="0" value={ligne.prix_achat} onChange={(e) => updateLigne(i, "prix_achat", Number(e.target.value))} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Frais livr. fournisseur</Label>
-                          <Input className="mt-1" type="number" min="0" value={ligne.frais_livraison_fournisseur} onChange={(e) => updateLigne(i, "frais_livraison_fournisseur", Number(e.target.value))} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Frais livr. client</Label>
-                          <Input className="mt-1" type="number" min="0" value={ligne.frais_livraison_client} onChange={(e) => updateLigne(i, "frais_livraison_client", Number(e.target.value))} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <Label className="text-xs">Marge souhaitée (FCFA)</Label>
-                          <Input className="mt-1" type="number" min="0" value={ligne.marge} onChange={(e) => updateLigne(i, "marge", Number(e.target.value))} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Taux de commission</Label>
-                          <Select value={String(ligne.taux_commission)} onValueChange={(v) => updateLigne(i, "taux_commission", Number(v))}>
-                            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0.03">3%</SelectItem>
-                              <SelectItem value="0.04">4%</SelectItem>
-                              <SelectItem value="0.05">5%</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Type de livraison</Label>
-                          <Select value={ligne.type_livraison} onValueChange={(v) => updateLigne(i, "type_livraison", v)}>
-                            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="agence">En agence</SelectItem>
-                              <SelectItem value="destination">À destination</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Commission ({Math.round(ligne.taux_commission * 100)}%)</p>
-                          <p className="font-semibold text-blue-600 mt-1">{formatCurrency(Math.round(commission))}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Coût total</p>
-                          <p className="font-semibold mt-1">{formatCurrency(Math.round(cTotal))}</p>
-                        </div>
-                        <div className="text-center bg-primary/10 rounded-md p-2">
-                          <p className="text-xs font-semibold text-primary">Prix de vente</p>
-                          <p className="font-bold text-lg text-primary mt-1">{formatCurrency(Math.round(prix))}</p>
-                        </div>
-                      </div>
+                    );
+                  })}
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button type="button" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      onClick={() => setPickerOpen(true)}>
+                      <Plus className="h-3.5 w-3.5" />Modifier la sélection
+                    </button>
+                    <div className="text-sm font-semibold px-3 py-1.5 bg-muted rounded-lg">
+                      Total : {formatCurrency(
+                        lignes.reduce((s, l) => {
+                          const art = articles.find((a) => String(a.id) === l.article_id);
+                          return s + (art?.prix || 0) * l.quantite;
+                        }, 0)
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-              <div className="mt-4 p-3 border rounded-lg bg-muted/50 text-sm space-y-1">
-                {(() => {
-                  const totalVente = lignes.reduce((s, l) => s + Math.round(calcLigne(l).prix) * l.quantite, 0);
-                  const totalComm  = lignes.reduce((s, l) => s + calcLigne(l).commission * l.quantite, 0);
-                  const totalMarge = lignes.reduce((s, l) => s + l.marge * l.quantite, 0);
-                  return (
-                    <>
-                      <div className="flex justify-between"><span className="text-muted-foreground">CA total</span><span className="font-semibold">{formatCurrency(totalVente)}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Commissions totales</span><span className="font-semibold">{formatCurrency(totalComm)}</span></div>
-                      <div className="flex justify-between font-semibold border-t pt-1"><span>Marge totale</span><span className={totalMarge >= 0 ? "text-green-600" : "text-red-600"}>{formatCurrency(totalMarge)}</span></div>
-                    </>
-                  );
-                })()}
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="pt-4">
@@ -1021,6 +1156,14 @@ export default function VentesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProductPickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        articles={articles}
+        selected={lignes}
+        onConfirm={(lines) => setLignes(lines)}
+      />
 
       <CommandeDetailDialog
         commande={selectedCommande}

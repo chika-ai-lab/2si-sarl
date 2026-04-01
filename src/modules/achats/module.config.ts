@@ -29,6 +29,10 @@ export const achatsModuleConfig: ModuleConfig = {
         {
             path: "commandes",
             component: lazy(() => import("./pages/CommandesFournisseursPage"))
+        },
+        {
+            path: "livraisons",
+            component: lazy(() => import("./pages/LivraisonsPage"))
         }
     ],
 

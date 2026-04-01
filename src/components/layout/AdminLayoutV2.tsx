@@ -34,27 +34,34 @@ export function AdminLayoutV2() {
 
   // Organiser la navigation par sections
   const navigationBySection = useMemo(() => {
-    const sections: Record<string, { label: string; items: typeof navigation; order: number }> = {
-      general: { label: "Général", items: [], order: 1 },
-      crm: { label: "CRM", items: [], order: 2 },
-      sales: { label: "Ventes", items: [], order: 3 },
-      reporting: { label: "Rapports", items: [], order: 4 },
-      system: { label: "Système", items: [], order: 5 },
-      admin: { label: "Administration", items: [], order: 6 },
+    const SECTION_META: Record<string, { label: string; order: number }> = {
+      general:      { label: "Général",       order: 1 },
+      commercial:   { label: "Commercial",    order: 2 },
+      logistique:   { label: "Logistique",    order: 3 },
+      comptabilite: { label: "Comptabilité",  order: 4 },
+      produits:     { label: "Produits & Stock", order: 5 },
+      admin:        { label: "Administration",order: 6 },
     };
 
+    const sections: Record<string, { label: string; items: typeof navigation; order: number }> = {};
+
     navigation.forEach((item) => {
-      const section = item.section || "general";
-      if (sections[section]) {
-        sections[section].items.push(item);
-      }
+      const key = item.section || "general";
+      const meta = SECTION_META[key] ?? { label: key, order: 99 };
+      if (!sections[key]) sections[key] = { label: meta.label, items: [], order: meta.order };
+      sections[key].items.push(item);
     });
 
-    // Filtrer les sections vides et trier par ordre
     return Object.entries(sections)
-      .filter(([_, section]) => section.items.length > 0)
+      .filter(([_, s]) => s.items.length > 0)
       .sort(([_, a], [__, b]) => a.order - b.order);
   }, [navigation]);
+
+  // Afficher les titres de section uniquement pour l'admin (plusieurs sections)
+  const showSectionHeaders = useMemo(() => {
+    const nonGeneral = navigationBySection.filter(([k]) => k !== "general");
+    return nonGeneral.length > 1;
+  }, [navigationBySection]);
 
   const handleLogout = () => {
     logout();
@@ -75,9 +82,10 @@ export function AdminLayoutV2() {
   const userRoleDisplay = useMemo(() => {
     if (!user) return "";
     const rolesLower = user.roles.map((r) => r.toLowerCase());
-    if (rolesLower.includes("super_admin") || rolesLower.includes("admin")) return "Admin";
-    if (rolesLower.some(r => r === "comptabilite" || r === "comptable")) return "Comptabilité";
-    if (rolesLower.some(r => r === "commercial" || r === "vendeur" || r === "vendeuse" || r === "sales")) return "Commercial";
+    if (rolesLower.some(r => ["admin", "super_admin"].includes(r)))                              return "Admin";
+    if (rolesLower.some(r => ["commercial", "vendeur", "vendeuse", "sales"].includes(r)))        return "Commercial";
+    if (rolesLower.some(r => ["logistique", "logistic"].includes(r)))                            return "Logistique";
+    if (rolesLower.some(r => ["comptabilite", "comptable"].includes(r)))                         return "Comptabilité";
     return "Utilisateur";
   }, [user]);
 
@@ -143,8 +151,8 @@ export function AdminLayoutV2() {
 
               return (
                 <div key={sectionKey} className="space-y-1">
-                  {/* Section Header */}
-                  {sidebarOpen && (
+                  {/* Section Header — visible uniquement pour admin (plusieurs sections) */}
+                  {sidebarOpen && showSectionHeaders && sectionKey !== "general" && (
                     <button
                       onClick={() => toggleSection(sectionKey)}
                       className="w-full flex items-center justify-between px-3 py-2 hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 rounded-lg transition-all group"

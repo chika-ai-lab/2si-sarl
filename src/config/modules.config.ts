@@ -86,34 +86,78 @@ export function getActiveModules(user: User | null): ModuleConfig[] {
     });
 }
 
+// ─────────────────────────────────────────────────────────────
+// Navigation par rôle — source unique de vérité pour le sidebar
+// ─────────────────────────────────────────────────────────────
+const NAV_GENERAL: NavigationItem[] = [
+  { label: "Tableau de Bord", path: "/admin", icon: "LayoutDashboard", section: "general", order: 0 },
+];
+
+const NAV_COMMERCIAL: NavigationItem[] = [
+  { label: "Mes Ventes",  path: "/admin/commercial/ventes",      icon: "TrendingUp",  section: "commercial", order: 1 },
+  { label: "Clients",     path: "/admin/commercial/clients",     icon: "Users",       section: "commercial", order: 2 },
+  { label: "Accréditif",  path: "/admin/commercial/accreditif",  icon: "CreditCard",  section: "commercial", order: 3 },
+  { label: "SAV",         path: "/admin/commercial/sav",         icon: "Wrench",      section: "commercial", order: 4 },
+  { label: "Rapports",    path: "/admin/commercial/rapports",    icon: "BarChart3",   section: "commercial", order: 5 },
+];
+
+const NAV_LOGISTIQUE: NavigationItem[] = [
+  { label: "Livraisons",             path: "/admin/achats/livraisons",      icon: "Truck",       section: "logistique", order: 1 },
+  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",    section: "logistique", order: 2 },
+  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",   section: "logistique", order: 3 },
+  { label: "Commandes Fournisseurs", path: "/admin/achats/commandes",       icon: "ShoppingCart",section: "logistique", order: 4 },
+  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",       section: "logistique", order: 5 },
+  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",      section: "logistique", order: 6 },
+];
+
+const NAV_COMPTABILITE: NavigationItem[] = [
+  { label: "Devis",        path: "/admin/orders/quotes",          icon: "FileText",    section: "comptabilite", order: 1 },
+  { label: "Factures",     path: "/admin/orders/invoices",        icon: "Receipt",     section: "comptabilite", order: 2 },
+  { label: "Fournisseurs", path: "/admin/achats/fournisseurs",    icon: "Building2",   section: "comptabilite", order: 3 },
+  { label: "Clients",      path: "/admin/commercial/clients",     icon: "Users",       section: "comptabilite", order: 4 },
+];
+
+const NAV_PRODUITS: NavigationItem[] = [
+  { label: "Catalogue",  path: "/admin/commercial/catalogue", icon: "BookOpen", section: "produits", order: 1 },
+  { label: "Inventaire", path: "/admin/products/inventory",   icon: "Warehouse", section: "produits", order: 2 },
+];
+
+const NAV_ADMIN: NavigationItem[] = [
+  { label: "Utilisateurs", path: "/admin/settings/users", icon: "Users",  section: "admin", order: 1 },
+  { label: "Rôles",        path: "/admin/settings/roles", icon: "Shield", section: "admin", order: 2 },
+];
+
 /**
- * Récupère la navigation pour les modules actifs
+ * Récupère la navigation selon le rôle de l'utilisateur.
+ * Admin → tout, groupé par rôle.
+ * Autres → uniquement leur section + tableau de bord.
  */
 export function getModuleNavigation(user: User | null): NavigationItem[] {
   if (!user) return [];
 
-  const activeModules = getActiveModules(user);
+  const rolesLower = user.roles.map((r) => r.toLowerCase().trim());
+  const isAdmin       = rolesLower.some(r => ["admin", "super_admin"].includes(r));
+  const isCommercial  = rolesLower.some(r => ["commercial", "vendeur", "vendeuse", "sales"].includes(r));
+  const isLogistique  = rolesLower.some(r => ["logistique", "logistic"].includes(r));
+  const isComptable   = rolesLower.some(r => ["comptabilite", "comptable"].includes(r));
 
-  const navigationItems = activeModules
-    .flatMap((module) =>
-      module.navigation.filter((navItem) => {
-        // Vérifier si l'utilisateur a les permissions pour cet item de navigation
-        if (!navItem.requiresPermission || navItem.requiresPermission.length === 0) {
-          return true;
-        }
+  if (isAdmin) {
+    return [
+      ...NAV_GENERAL,
+      ...NAV_COMMERCIAL,
+      ...NAV_LOGISTIQUE,
+      ...NAV_COMPTABILITE,
+      ...NAV_PRODUITS,
+      ...NAV_ADMIN,
+    ];
+  }
 
-        return navItem.requiresPermission.every((permission) =>
-          hasPermission(user, permission)
-        );
-      })
-    )
-    .sort((a, b) => {
-      const orderA = a.order || 999;
-      const orderB = b.order || 999;
-      return orderA - orderB;
-    });
+  if (isCommercial)  return [...NAV_GENERAL, ...NAV_COMMERCIAL];
+  if (isLogistique)  return [...NAV_GENERAL, ...NAV_LOGISTIQUE];
+  if (isComptable)   return [...NAV_GENERAL, ...NAV_COMPTABILITE];
 
-  return navigationItems;
+  // Fallback : dashboard uniquement
+  return NAV_GENERAL;
 }
 
 /**

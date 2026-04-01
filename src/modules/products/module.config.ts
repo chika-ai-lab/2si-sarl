@@ -23,11 +23,6 @@ export const productsModuleConfig: ModuleConfig = {
       exact: true
     },
     {
-      path: "/categories",
-      component: lazy(() => import("../../pages/admin/CategoriesPage")),
-      requiresPermission: ["PRODUCTS:PRODUCT:READ"]
-    },
-    {
       path: "/inventory",
       component: lazy(() => import("../../pages/admin/InventoryPage")),
       requiresPermission: ["PRODUCTS:PRODUCT:READ"]
@@ -35,14 +30,6 @@ export const productsModuleConfig: ModuleConfig = {
   ],
 
   navigation: [
-    {
-      label: "Catégories",
-      path: "/admin/products/categories",
-      icon: "FolderOpen",
-      section: "sales",
-      requiresPermission: ["PRODUCTS:PRODUCT:READ"],
-      order: 10
-    },
     {
       label: "Inventaire",
       path: "/admin/products/inventory",
