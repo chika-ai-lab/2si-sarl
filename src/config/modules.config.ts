@@ -84,12 +84,22 @@ const NAV_GENERAL: NavigationItem[] = [
   { label: "Tableau de Bord", path: "/admin", icon: "LayoutDashboard", section: "general", order: 0 },
 ];
 
+// Nav for commercial users (their own sales)
 const NAV_COMMERCIAL: NavigationItem[] = [
   { label: "Mes Ventes",  path: "/admin/commercial/ventes",      icon: "TrendingUp",  section: "commercial", order: 1 },
   { label: "Clients",     path: "/admin/commercial/clients",     icon: "Users",       section: "commercial", order: 2 },
   { label: "Accréditif",  path: "/admin/commercial/accreditif",  icon: "CreditCard",  section: "commercial", order: 3 },
   { label: "SAV",         path: "/admin/commercial/sav",         icon: "Wrench",      section: "commercial", order: 4 },
   { label: "Rapports",    path: "/admin/commercial/rapports",    icon: "BarChart3",   section: "commercial", order: 5 },
+];
+
+// Nav for admin — shows team overview instead of personal sales
+const NAV_COMMERCIAL_ADMIN: NavigationItem[] = [
+  { label: "Commerciales", path: "/admin/commercial/commerciaux", icon: "Users2",     section: "commercial", order: 1 },
+  { label: "Clients",      path: "/admin/commercial/clients",     icon: "Users",      section: "commercial", order: 2 },
+  { label: "Accréditif",   path: "/admin/commercial/accreditif",  icon: "CreditCard", section: "commercial", order: 3 },
+  { label: "SAV",          path: "/admin/commercial/sav",         icon: "Wrench",     section: "commercial", order: 4 },
+  { label: "Rapports",     path: "/admin/commercial/rapports",    icon: "BarChart3",  section: "commercial", order: 5 },
 ];
 
 const NAV_LOGISTIQUE: NavigationItem[] = [
@@ -135,7 +145,7 @@ export function getModuleNavigation(user: User | null): NavigationItem[] {
   if (isAdmin) {
     return [
       ...NAV_GENERAL,
-      ...NAV_COMMERCIAL,
+      ...NAV_COMMERCIAL_ADMIN,
       ...NAV_LOGISTIQUE,
       ...NAV_COMPTABILITE,
       ...NAV_PRODUITS,

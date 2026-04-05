@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { CalendarIcon, Save, Tag } from "lucide-react";
 import { Promotion, getActivePromotions, LOCAL_STORAGE_PROMO_KEY } from "@/config/promotions.config";
+import { WipBadge } from "@/components/ui/WipBadge";
 
 export default function PromotionsPage() {
     const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -72,10 +73,13 @@ export default function PromotionsPage() {
             {/* En-tête de page */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent flex items-center gap-2">
-                        <Tag className="h-8 w-8 text-amber-500" />
-                        Gestion des Bannières
-                    </h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent flex items-center gap-2">
+                            <Tag className="h-8 w-8 text-amber-500" />
+                            Gestion des Bannières
+                        </h1>
+                        <WipBadge label="localStorage only" />
+                    </div>
                     <p className="text-muted-foreground mt-2">
                         Activez et planifiez les bannières promotionnelles visibles par vos clients.
                     </p>

@@ -139,6 +139,14 @@ export function isCommercialFeatureEnabled(featureId: string): boolean {
 }
 
 /**
+ * Developer flags — visibles uniquement en développement
+ * Mettre VITE_SHOW_WIP_BADGES=false en production pour masquer les badges
+ */
+export const devConfig = {
+  showWipBadges: getEnvBoolean('VITE_SHOW_WIP_BADGES', true),
+};
+
+/**
  * Export de toutes les configs
  */
 export const config = {

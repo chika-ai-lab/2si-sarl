@@ -66,6 +66,19 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       enabled: true,
     },
+    // Vue admin — catalogue des commerciaux
+    {
+      path: "/commerciaux",
+      component: lazy(() => import("./pages/CommerciauxPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: true,
+    },
+    {
+      path: "/commerciaux/:id",
+      component: lazy(() => import("./pages/CommercialDetailPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: true,
+    },
   ];
 
   // Filtrer uniquement les routes activées

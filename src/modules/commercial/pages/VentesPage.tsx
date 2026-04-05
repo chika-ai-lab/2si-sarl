@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Package, Plus, RefreshCw, Search, ShoppingCart } from "lucide-react";
+import { ClipboardList, Package, Pencil, Plus, RefreshCw, Search, ShoppingCart } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { apiClient } from "../services/apiClient";
 import { useClients } from "../hooks/useClients";
@@ -52,7 +52,7 @@ async function fetchCommandes(): Promise<CommandeRow[]> {
 
 // ── CommandesTab ──────────────────────────────────────────────────────────
 
-function CommandesTab({ onOpenCreate }: { onOpenCreate: () => void }) {
+function CommandesTab({ onOpenCreate, onEdit }: { onOpenCreate: () => void; onEdit: (id: string) => void }) {
   const qc = useQueryClient();
   const { data: commandes = [], isLoading } = useQuery({
     queryKey: COMMERCIAL_COMMANDES_KEY,
@@ -130,12 +130,14 @@ function CommandesTab({ onOpenCreate }: { onOpenCreate: () => void }) {
                 <TableHead className="text-xs text-center whitespace-nowrap w-16">Articles</TableHead>
                 <TableHead className="text-xs text-right whitespace-nowrap">Total</TableHead>
                 <TableHead className="text-xs whitespace-nowrap">Statut</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c) => {
                 const cfg  = CMD_STATUT[c.statut] ?? CMD_STATUT.brouillon;
                 const Icon = cfg.icon;
+                const editable = !["livree", "annulee"].includes(c.statut);
                 return (
                   <TableRow key={c.id} className="hover:bg-muted/30 transition-colors">
                     <TableCell className="font-mono text-xs font-medium whitespace-nowrap">{c.reference}</TableCell>
@@ -159,6 +161,13 @@ function CommandesTab({ onOpenCreate }: { onOpenCreate: () => void }) {
                       <Badge variant="outline" className={`text-xs ${cfg.color}`}>
                         <Icon className="h-3 w-3 mr-1" />{cfg.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-3">
+                      {editable && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(c.id)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -202,15 +211,19 @@ export default function VentesPage() {
   const activeCount = commandes.filter((c) => !["livree", "annulee"].includes(c.statut)).length;
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [editId,     setEditId]     = useState<string | undefined>();
+
+  const handleCreated = () => qc.invalidateQueries({ queryKey: COMMERCIAL_COMMANDES_KEY });
 
   return (
     <>
       <CreateCommandeDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => qc.invalidateQueries({ queryKey: COMMERCIAL_COMMANDES_KEY })}
+        open={createOpen || !!editId}
+        onClose={() => { setCreateOpen(false); setEditId(undefined); }}
+        onCreated={handleCreated}
         articles={articles}
         clients={clients}
+        editCommandeId={editId}
       />
 
       <div className="space-y-6">
@@ -265,7 +278,7 @@ export default function VentesPage() {
           </TabsContent>
 
           <TabsContent value="commandes" className="mt-4">
-            <CommandesTab onOpenCreate={() => setCreateOpen(true)} />
+            <CommandesTab onOpenCreate={() => setCreateOpen(true)} onEdit={(id) => setEditId(id)} />
           </TabsContent>
         </Tabs>
       </div>

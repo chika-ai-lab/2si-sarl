@@ -582,11 +582,11 @@ export function LivraisonsPage() {
                         const isAct = actionLoading === cmd.id;
                         return (
                           <TableRow key={cmd.id}>
-                            <TableCell>
+                            <TableCell className="whitespace-nowrap">
                               <span className="font-mono font-semibold text-sm">{cmd.reference}</span>
                               <div className="text-xs text-muted-foreground mt-0.5">{cmd.dateCommande}</div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="whitespace-nowrap">
                               <p className="font-medium">{clientDisplayName(cmd.client)}</p>
                               <p className="text-xs text-muted-foreground">{cmd.client?.telephone || "—"}</p>
                             </TableCell>

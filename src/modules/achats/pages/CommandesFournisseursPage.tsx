@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, RefreshCcw, ShoppingCart, CheckCircle, Clock, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { WipBadge } from "@/components/ui/WipBadge";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
     brouillon: { label: "Brouillon", icon: Clock, color: "text-gray-500" },
@@ -52,10 +53,13 @@ export default function CommandesFournisseursPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                        <ShoppingCart className="h-8 w-8 text-indigo-500" />
-                        Commandes Fournisseurs
-                    </h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                            <ShoppingCart className="h-8 w-8 text-indigo-500" />
+                            Commandes Fournisseurs
+                        </h1>
+                        <WipBadge label="Lecture seule" />
+                    </div>
                     <p className="text-muted-foreground mt-1">Suivi des achats et réceptions.</p>
                 </div>
                 <div className="flex gap-2">

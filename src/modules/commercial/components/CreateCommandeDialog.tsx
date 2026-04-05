@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,14 +14,18 @@ import { MODES_PAIEMENT } from "../lib/commandes.constants";
 import { ClientPickerSheet } from "./ClientPickerSheet";
 import { ProductPickerSheet, type BackendArticle, type LigneForm } from "./ProductPickerSheet";
 
-export function CreateCommandeDialog({ open, onClose, onCreated, articles, clients }: {
+export function CreateCommandeDialog({ open, onClose, onCreated, articles, clients, editCommandeId }: {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
   articles: BackendArticle[];
   clients: any[];
+  editCommandeId?: string;
 }) {
+  const isEdit = !!editCommandeId;
+
   const [saving, setSaving]                     = useState(false);
+  const [loadingEdit, setLoadingEdit]           = useState(false);
   const [clientId, setClientId]                 = useState("");
   const [modePaiement, setModePaiement]         = useState("virement");
   const [notes, setNotes]                       = useState("");
@@ -30,6 +34,26 @@ export function CreateCommandeDialog({ open, onClose, onCreated, articles, clien
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
 
   const reset = () => { setClientId(""); setModePaiement("virement"); setNotes(""); setLignes([]); };
+
+  // Pre-fill form when opening in edit mode
+  useEffect(() => {
+    if (!open || !editCommandeId) return;
+    setLoadingEdit(true);
+    apiClient.get<any>(`/commande-clients/${editCommandeId}`)
+      .then((raw) => {
+        const c = raw?.data ?? raw;
+        setClientId(String(c.client_id || c.client?.id || ""));
+        setModePaiement(c.mode_paiement || "virement");
+        setNotes(c.note || c.notes || "");
+        const arts: LigneForm[] = (c.articles || []).map((a: any) => ({
+          article_id: String(a.article_id || a.id),
+          quantite:   Number(a.quantite) || 1,
+        }));
+        setLignes(arts);
+      })
+      .catch(() => toast({ title: "Impossible de charger la commande", variant: "destructive" }))
+      .finally(() => setLoadingEdit(false));
+  }, [open, editCommandeId]);
 
   const updateQty = (idx: number, delta: number) =>
     setLignes((prev) => {
@@ -44,18 +68,24 @@ export function CreateCommandeDialog({ open, onClose, onCreated, articles, clien
     if (!clientId) { toast({ title: "Sélectionnez un client", variant: "destructive" }); return; }
     if (lignes.length === 0) { toast({ title: "Ajoutez au moins un article", variant: "destructive" }); return; }
     setSaving(true);
+    const payload = {
+      client_id:     clientId,
+      date:          new Date().toISOString().split("T")[0],
+      mode_paiement: modePaiement,
+      note:          notes || undefined,
+      lignes: lignes.map((l) => {
+        const art = articles.find((a) => String(a.id) === l.article_id);
+        return { article_id: l.article_id, quantite: l.quantite, prix: art?.prix ?? 0, prix_achat: art?.prix_achat ?? 0 };
+      }),
+    };
     try {
-      await apiClient.post("/commande-clients", {
-        client_id:     clientId,
-        date:          new Date().toISOString().split("T")[0],
-        mode_paiement: modePaiement,
-        note:          notes || undefined,
-        lignes: lignes.map((l) => {
-          const art = articles.find((a) => String(a.id) === l.article_id);
-          return { article_id: l.article_id, quantite: l.quantite, prix: art?.prix ?? 0, prix_achat: art?.prix_achat ?? 0 };
-        }),
-      });
-      toast({ title: "Commande créée avec succès" });
+      if (isEdit) {
+        await apiClient.put(`/commande-clients/${editCommandeId}`, payload);
+        toast({ title: "Commande modifiée avec succès" });
+      } else {
+        await apiClient.post("/commande-clients", payload);
+        toast({ title: "Commande créée avec succès" });
+      }
       onCreated();
       onClose();
       reset();
@@ -74,9 +104,17 @@ export function CreateCommandeDialog({ open, onClose, onCreated, articles, clien
     <>
       <Dialog open={open} onOpenChange={(o) => { if (!o) { onClose(); reset(); } }}>
         <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
-          <DialogHeader><DialogTitle>Nouvelle commande</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Modifier la commande" : "Nouvelle commande"}</DialogTitle>
+          </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {loadingEdit ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : null}
+
+          <div className={`flex-1 overflow-y-auto space-y-4 pr-1 ${loadingEdit ? "hidden" : ""}`}>
             {/* Client */}
             <div>
               <Label>Client *</Label>
@@ -177,8 +215,9 @@ export function CreateCommandeDialog({ open, onClose, onCreated, articles, clien
 
           <DialogFooter className="pt-4">
             <Button variant="outline" onClick={() => { onClose(); reset(); }}>Annuler</Button>
-            <Button onClick={handleCreate} disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Créer la commande
+            <Button onClick={handleCreate} disabled={saving || loadingEdit}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEdit ? "Enregistrer" : "Créer la commande"}
             </Button>
           </DialogFooter>
         </DialogContent>
