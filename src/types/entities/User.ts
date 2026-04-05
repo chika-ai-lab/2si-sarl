@@ -22,6 +22,9 @@ export interface User {
   lastLogin?: string;
   createdAt: string;
   updatedAt: string;
+
+  // Version du schéma de permissions — permet de détecter les sessions obsolètes
+  permissionsVersion?: number;
 }
 
 export interface UserModuleAccess {

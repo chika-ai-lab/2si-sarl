@@ -1,5 +1,5 @@
 import { ModuleConfig, User, NavigationItem } from "@/types";
-import { hasPermission, hasModuleAccess } from "@/core/auth/services/permissionService";
+import { hasModuleAccess } from "@/core/auth/services/permissionService";
 import { isModuleEnabled, isCommercialFeatureEnabled } from "@/config/env.config";
 
 // Import modules configurations
@@ -47,7 +47,7 @@ export const MODULES_REGISTRY: Record<string, ModuleConfig> = {
   },
   achats: {
     ...achatsModule,
-    enabled: isModuleEnabled('achats') ?? true,
+    enabled: true,
   },
 };
 
@@ -59,24 +59,15 @@ export function getActiveModules(user: User | null): ModuleConfig[] {
 
   return Object.values(MODULES_REGISTRY)
     .filter((module) => {
-      // 1. Vérifier si le module est activé
+      // 1. Vérifier si le module est activé globalement
       if (!module.enabled) return false;
 
-      // 2. Les modules core sont toujours accessibles
+      // 2. Les modules core (dashboard) sont toujours accessibles aux utilisateurs connectés
       if (module.isCore) return true;
 
-      // 3. Vérifier si l'utilisateur a accès au module (admin bypass dans hasModuleAccess)
-      if (!hasModuleAccess(user, module.id)) return false;
-
-      // 4. Vérifier si l'utilisateur a les permissions requises
-      if (module.requiredPermissions.length > 0) {
-        const hasAllPermissions = module.requiredPermissions.every((permission) =>
-          hasPermission(user, permission)
-        );
-        if (!hasAllPermissions) return false;
-      }
-
-      return true;
+      // 3. Accès au module défini par user.moduleAccess (construit au login via ROLE_CONFIG)
+      //    La protection fine est assurée par requiresPermission sur chaque route.
+      return hasModuleAccess(user, module.id);
     })
     .sort((a, b) => {
       // Trier par ordre (si défini dans navigation)

@@ -7,10 +7,7 @@ export function hasPermission(
   user: User,
   permission: PermissionString
 ): boolean {
-  // Les rôles staff (admin, commercial, vendeur, comptable) ont des permissions par défaut (comparaison insensible à la casse)
   const rolesLower = user.roles.map((r) => r.toLowerCase().trim());
-  const isStaff = rolesLower.some(r => ["admin", "super_admin", "commercial", "vendeur", "vendeuse", "sales", "comptable", "comptabilite", "logistique", "logistic"].includes(r));
-  
   if (rolesLower.includes("admin") || rolesLower.includes("super_admin")) {
     return true;
   }
@@ -64,19 +61,13 @@ export function hasAnyPermission(
 }
 
 /**
- * Vérifie si l'utilisateur a accès à un module
+ * Vérifie si l'utilisateur a accès à un module.
+ * Les admins ont accès à tout. Les autres rôles sont limités à leur moduleAccess.
  */
 export function hasModuleAccess(user: User, moduleId: string): boolean {
-  // Les rôles staff ont accès à tous les modules par défaut (comparaison insensible à la casse)
   const rolesLower = user.roles.map((r) => r.toLowerCase().trim());
-  const isStaff = rolesLower.some(r => ["admin", "super_admin", "commercial", "vendeur", "vendeuse", "sales", "comptable", "comptabilite", "logistique", "logistic"].includes(r));
-  
-  if (isStaff) {
-    return true;
-  }
-
-  const moduleAccess = user.moduleAccess.find((m) => m.moduleId === moduleId);
-  return moduleAccess?.enabled ?? false;
+  if (rolesLower.some((r) => r === "admin" || r === "super_admin")) return true;
+  return user.moduleAccess.find((m) => m.moduleId === moduleId)?.enabled ?? false;
 }
 
 /**

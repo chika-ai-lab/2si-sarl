@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button";
 import { isCommercialFeatureEnabled } from "@/config/env.config";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { API_ENDPOINTS } from "@/modules/commercial/services/api.config";
+import { useAuth } from "@/core/auth/providers/AuthProviderV2";
+import CommercialDashboard from "@/modules/commercial/pages/CommercialDashboard";
+import LogistiqueDashboard from "@/modules/achats/pages/LogistiqueDashboard";
 
 interface DashboardStats {
   totalOrders: number;
@@ -52,7 +55,31 @@ const ETAT_TO_STATUS: Record<string, RecentOrder["status"]> = {
   annule: "rejected",
 };
 
+// ── Role detection ────────────────────────────────────────────────────────
+
+function detectRole(roles: string[]): "admin" | "commercial" | "logistique" | "comptabilite" | "other" {
+  const lower = roles.map((r) => r.toLowerCase().trim());
+  if (lower.some((r) => r === "admin" || r === "super_admin")) return "admin";
+  if (lower.some((r) => r === "logistique" || r === "logistic")) return "logistique";
+  if (lower.some((r) => r === "comptabilite" || r === "comptable")) return "comptabilite";
+  if (lower.some((r) => ["commercial", "vendeur", "vendeuse", "sales", "salesman"].includes(r))) return "commercial";
+  return "other";
+}
+
+// ── Role switcher ─────────────────────────────────────────────────────────
+
 export function DashboardPage() {
+  const { user } = useAuth();
+  const role = detectRole(user?.roles ?? []);
+
+  if (role === "commercial")  return <CommercialDashboard />;
+  if (role === "logistique")  return <LogistiqueDashboard />;
+  return <AdminDashboard />;
+}
+
+// ── Admin / Comptabilité dashboard ────────────────────────────────────────
+
+function AdminDashboard() {
   const { t } = useTranslation();
 
   const [stats, setStats] = useState<DashboardStats>({

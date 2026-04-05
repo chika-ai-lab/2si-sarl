@@ -122,7 +122,7 @@ export function AdminLayoutV2() {
                   {companyConfig.legalName}
                 </span>
                 <span className="text-xs text-secondary-foreground/70">
-                  Admin
+                  {userRoleDisplay}
                 </span>
               </div>
             </Link>
@@ -294,7 +294,7 @@ export function AdminLayoutV2() {
           <div className="flex flex-1 items-center justify-between gap-4">
             <div className="min-w-0">
               <h1 className="text-lg md:text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">
-                Administration
+                {companyConfig.legalName}
               </h1>
               {user && (
                 <p className="text-xs text-muted-foreground hidden sm:block">

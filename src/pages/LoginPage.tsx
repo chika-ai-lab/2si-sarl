@@ -255,6 +255,27 @@ export function LoginPage() {
                     </div>
                   </div>
                 </button>
+
+                {/* Logistique */}
+                <button
+                  type="button"
+                  onClick={() => fillCredentials("logistique@2si.sarl", "logistique123", "Logistique")}
+                  disabled={isSubmitting}
+                  className="w-full p-3 bg-gradient-to-r from-orange-50 to-orange-100/50 border-2 border-orange-200 hover:border-orange-400 rounded-lg transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                      <UserCog className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-xs font-semibold text-foreground">Logistique</p>
+                      <p className="text-xs text-muted-foreground">Livraisons, catalogue, fournisseurs</p>
+                    </div>
+                    <div className="text-xs text-orange-600 font-medium group-hover:translate-x-1 transition-transform">
+                      →
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
           </CardContent>

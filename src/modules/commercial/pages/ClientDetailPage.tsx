@@ -67,9 +67,9 @@ export default function ClientDetailPage() {
       email: client.email,
       telephone: client.telephone,
       telephoneSecondaire: client.telephoneSecondaire,
-      adresse: { ...client.adresse },
+      adresse: { ...(client.adresse ?? {}) },
       categorie: client.categorie,
-      creditLimite: client.credit.limite,
+      creditLimite: credit.limite,
       banquePartenaire: client.banquePartenaire,
       numeroCompte: client.numeroCompte,
       notes: client.notes,
@@ -101,9 +101,10 @@ export default function ClientDetailPage() {
       </div>
     );
 
-  const cfg = STATUT_CONFIG[client.statut];
-  const creditPct = client.credit.limite > 0
-    ? Math.min(Math.round((client.credit.utilise / client.credit.limite) * 100), 100)
+  const cfg = STATUT_CONFIG[client.statut] ?? STATUT_CONFIG.actif;
+  const credit = client.credit ?? { limite: 0, utilise: 0, disponible: 0 };
+  const creditPct = credit.limite > 0
+    ? Math.min(Math.round((credit.utilise / credit.limite) * 100), 100)
     : 0;
 
   return (
@@ -276,7 +277,7 @@ export default function ClientDetailPage() {
               icon: <CreditCard className="h-5 w-5 text-purple-600" />,
               bg: "bg-purple-100",
               label: "Crédit dispo",
-              value: formatCurrency(client.credit.disponible),
+              value: formatCurrency(credit.disponible),
             },
             {
               icon: <cfg.Icon className="h-5 w-5 text-orange-600" />,
@@ -312,7 +313,7 @@ export default function ClientDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <Row label="Type" value={<Badge variant="outline">{client.type === "entreprise" ? "Entreprise" : "Particulier"}</Badge>} />
-              <Row label="Catégorie"   value={<Badge variant="secondary">Cat. {client.categorie}</Badge>} />
+              <Row label="Catégorie" value={<Badge variant="secondary">{{ A: "A — Premium", B: "B — Standard", C: "C — Basique" }[client.categorie] ?? client.categorie}</Badge>} />
               <Row label="Banque"      value={client.banquePartenaire} />
               {client.numeroCompte && <Row label="N° Compte" value={<span className="font-mono">{client.numeroCompte}</span>} />}
               <Row label="Depuis"      value={new Date(client.dateCreation).toLocaleDateString("fr-FR")} />
@@ -332,13 +333,14 @@ export default function ClientDetailPage() {
                   <span>{client.telephoneSecondaire}</span>
                 </div>
               )}
-              <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <span>
-                  {client.adresse.rue}, {client.adresse.ville}
-                  {client.adresse.codePostal ? ` ${client.adresse.codePostal}` : ""}, {client.adresse.pays}
-                </span>
-              </div>
+              {client.adresse && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <span>
+                    {[client.adresse.rue, client.adresse.ville, client.adresse.codePostal, client.adresse.pays].filter(Boolean).join(", ")}
+                  </span>
+                </div>
+              )}
               {client.notes && (
                 <div className="bg-muted rounded p-3 mt-2">
                   <p className="font-medium text-muted-foreground mb-1">Notes</p>
@@ -355,9 +357,9 @@ export default function ClientDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Row label="Limite"     value={<span className="font-semibold">{formatCurrency(client.credit.limite)}</span>} />
-              <Row label="Utilisé"    value={<span className="font-semibold text-orange-600">{formatCurrency(client.credit.utilise)}</span>} />
-              <Row label="Disponible" value={<span className="font-semibold text-green-600">{formatCurrency(client.credit.disponible)}</span>} />
+              <Row label="Limite"     value={<span className="font-semibold">{formatCurrency(credit.limite)}</span>} />
+              <Row label="Utilisé"    value={<span className="font-semibold text-orange-600">{formatCurrency(credit.utilise)}</span>} />
+              <Row label="Disponible" value={<span className="font-semibold text-green-600">{formatCurrency(credit.disponible)}</span>} />
               <div className="pt-2">
                 <div className="w-full bg-muted rounded-full h-3">
                   <div

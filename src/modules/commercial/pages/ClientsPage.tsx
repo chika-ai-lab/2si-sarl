@@ -360,9 +360,9 @@ export function ClientsPage() {
   };
 
   const categorieConfig = {
-    A: { label: "A", color: "bg-primary/10 text-primary" },
-    B: { label: "B", color: "bg-blue-100 text-blue-800" },
-    C: { label: "C", color: "bg-gray-100 text-gray-800" },
+    A: { label: "A — Premium",  color: "bg-primary/10 text-primary" },
+    B: { label: "B — Standard", color: "bg-blue-100 text-blue-800" },
+    C: { label: "C — Basique",  color: "bg-gray-100 text-gray-800" },
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -512,9 +512,9 @@ export function ClientsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Toutes les catégories</SelectItem>
-                      <SelectItem value="A">Catégorie A</SelectItem>
-                      <SelectItem value="B">Catégorie B</SelectItem>
-                      <SelectItem value="C">Catégorie C</SelectItem>
+                      <SelectItem value="A">A — Premium</SelectItem>
+                      <SelectItem value="B">B — Standard</SelectItem>
+                      <SelectItem value="C">C — Basique</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -572,20 +572,24 @@ export function ClientsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Banque</TableHead>
-                      <TableHead>Catégorie</TableHead>
-                      <TableHead>Crédit</TableHead>
-                      <TableHead>Total achats</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="whitespace-nowrap">Client</TableHead>
+                      <TableHead className="whitespace-nowrap">Contact</TableHead>
+                      <TableHead className="whitespace-nowrap">Banque</TableHead>
+                      <TableHead className="whitespace-nowrap">Catégorie</TableHead>
+                      <TableHead className="whitespace-nowrap">Crédit</TableHead>
+                      <TableHead className="whitespace-nowrap">Total achats</TableHead>
+                      <TableHead className="whitespace-nowrap">Statut</TableHead>
+                      <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {clients.map((client) => (
-                      <TableRow key={client.id}>
-                        <TableCell>
+                      <TableRow
+                        key={client.id}
+                        className="cursor-pointer hover:bg-primary/5 transition-colors"
+                        onClick={() => navigate(`/admin/commercial/clients/${client.id}`)}
+                      >
+                        <TableCell className="whitespace-nowrap">
                           <div className="flex items-start gap-3">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
                               {client.type === "entreprise" ? (
@@ -606,7 +610,7 @@ export function ClientsPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <div className="space-y-1">
                             <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3 text-muted-foreground" />
@@ -618,22 +622,20 @@ export function ClientsPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <Badge variant="outline">
                             {client.banquePartenaire}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <Badge
                             variant="outline"
-                            className={
-                              categorieConfig[client.categorie].color
-                            }
+                            className={`whitespace-nowrap ${categorieConfig[client.categorie].color}`}
                           >
                             {categorieConfig[client.categorie].label}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <div className="space-y-1">
                             <div className="text-sm font-medium">
                               {formatCurrency(client.credit.disponible)}
@@ -643,7 +645,7 @@ export function ClientsPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <div className="space-y-1">
                             <div className="font-semibold">
                               {formatCurrency(client.totalAchats)}
@@ -653,7 +655,7 @@ export function ClientsPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <Badge
                             variant="outline"
                             className={statusConfig[client.statut].color}
@@ -661,7 +663,7 @@ export function ClientsPage() {
                             {statusConfig[client.statut].label}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">

@@ -4,6 +4,100 @@ import { toast } from "@/hooks/use-toast";
 
 const AUTH_STORAGE_KEY = "2si-auth-user";
 
+// ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
+// Stored sessions with a lower version are automatically rebuilt on load.
+const PERMISSIONS_VERSION = 2;
+
+// ─── Liste exhaustive des modules de l'application ───────────────────────────
+const ALL_MODULE_IDS = [
+  "dashboard", "commercial", "achats", "products", "orders", "reports", "admin", "crm",
+] as const;
+
+type ModuleId = typeof ALL_MODULE_IDS[number];
+type RoleKey = "admin" | "commercial" | "logistique" | "comptabilite" | "default";
+
+// ─── Source unique de vérité : permissions et accès modules par rôle ─────────
+const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] }> = {
+  admin: {
+    permissions: ["*:*:*"],
+    modules: [...ALL_MODULE_IDS],
+  },
+  commercial: {
+    permissions: [
+      "DASHBOARD:*:READ",
+      "COMMERCIAL:*:*",       // ventes, clients, catalogue, accréditif, SAV, rapports
+      "PRODUCTS:PRODUCT:READ",
+    ],
+    modules: ["dashboard", "commercial", "products"],
+  },
+  logistique: {
+    permissions: [
+      "DASHBOARD:*:READ",
+      "COMMERCIAL:CATALOG:READ",
+      "COMMERCIAL:CLIENTS:READ",
+      "COMMERCIAL:SAV:READ",
+      "ACHATS:*:*",           // livraisons, fournisseurs, commandes fournisseurs
+    ],
+    modules: ["dashboard", "commercial", "achats"],
+  },
+  comptabilite: {
+    permissions: [
+      "DASHBOARD:*:READ",
+      "ORDERS:ORDER:READ",
+      "REPORTS:*:*",
+      "ACHATS:*:*",
+      "COMMERCIAL:CLIENTS:READ",
+    ],
+    modules: ["dashboard", "orders", "reports", "achats", "commercial"],
+  },
+  default: {
+    permissions: ["DASHBOARD:*:READ"],
+    modules: ["dashboard"],
+  },
+};
+
+// ─── Détection du rôle depuis un tableau de titres backend ───────────────────
+function detectRoleKey(roleTitles: string[]): RoleKey {
+  const lower = roleTitles.map((r) => r.toLowerCase().trim());
+  if (lower.some((r) => r === "admin" || r === "super_admin")) return "admin";
+  if (lower.some((r) => r === "logistique" || r === "logistic")) return "logistique";
+  if (lower.some((r) => r === "comptabilite" || r === "comptable")) return "comptabilite";
+  if (lower.some((r) => r === "commercial" || r === "vendeur" || r === "vendeuse" || r === "sales" || r === "salesman")) return "commercial";
+  return "default";
+}
+
+// ─── Construction de l'objet User à partir des rôles ─────────────────────────
+// Utilisé à la fois au login et lors de la migration de sessions obsolètes.
+function buildUserObject(
+  id: string,
+  name: string,
+  email: string,
+  roles: string[],
+  extra: Partial<User> = {},
+): User {
+  const roleKey = detectRoleKey(roles);
+  const config  = ROLE_CONFIG[roleKey];
+
+  return {
+    id,
+    email,
+    name,
+    roles,
+    customPermissions: config.permissions as any,
+    moduleAccess: ALL_MODULE_IDS.map((moduleId) => ({
+      moduleId,
+      enabled: (config.modules as string[]).includes(moduleId),
+    })),
+    status:             "active" as UserStatus,
+    createdAt:          new Date().toISOString(),
+    updatedAt:          new Date().toISOString(),
+    permissionsVersion: PERMISSIONS_VERSION,
+    ...extra,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -11,135 +105,80 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
-  isAdmin: () => boolean; // Kept for backward compatibility
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * Adapter pour convertir les utilisateurs V1 vers V2
- */
-function adaptUserV1ToV2(oldUser: UserV1): User {
-  const isAdmin = oldUser.role === "admin";
-
-  return {
-    id: oldUser.id,
-    email: oldUser.email,
-    name: oldUser.name,
-    roles: isAdmin ? ["admin"] : ["client"],
-    customPermissions: isAdmin
-      ? [
-        "DASHBOARD:*:*",
-        "CRM:*:*",
-        "ORDERS:*:*",
-        "PRODUCTS:*:*",
-        "REPORTS:*:READ",
-        "COMMERCIAL:*:*"
-      ]
-      : [] as any,
-    moduleAccess: isAdmin
-      ? [
-        { moduleId: "dashboard", enabled: true },
-        { moduleId: "crm", enabled: true },
-        { moduleId: "orders", enabled: true },
-        { moduleId: "products", enabled: true },
-        { moduleId: "reports", enabled: true },
-        { moduleId: "commercial", enabled: true },
-        { moduleId: "admin", enabled: true },
-      ]
-      : [],
-    status: "active" as UserStatus,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+// ─── Adapter V1 → V2 (legacy) ─────────────────────────────────────────────
+function adaptUserV1ToV2(old: UserV1): User {
+  return buildUserObject(old.id, old.name, old.email, [old.role === "admin" ? "admin" : "default"]);
 }
 
-/**
- * Charger l'utilisateur depuis localStorage
- */
+// ─── Chargement depuis localStorage ──────────────────────────────────────────
 function loadUserFromStorage(): User | null {
   try {
-    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
 
-      // Vérifier si c'est un utilisateur V1 (ancien format)
-      if (parsed.role && !parsed.roles) {
-        return adaptUserV1ToV2(parsed as UserV1);
-      }
+    const parsed = JSON.parse(raw);
 
-      // Vérifier si l'utilisateur V2 a tous les modules (migration incomplète)
-      const user = parsed as User;
-      const rolesLower = user.roles?.map(r => r.toLowerCase().trim()) || [];
-      const isStaff = rolesLower.some(r => ["admin", "super_admin", "commercial", "vendeur", "vendeuse", "sales", "salesman", "comptable", "comptabilite"].includes(r));
-
-      if (!user.moduleAccess || user.moduleAccess.length === 0) {
-        if (isStaff) {
-          user.moduleAccess = [
-            { moduleId: "dashboard", enabled: true },
-            { moduleId: "crm", enabled: true },
-            { moduleId: "orders", enabled: true },
-            { moduleId: "products", enabled: true },
-            { moduleId: "reports", enabled: true },
-            { moduleId: "commercial", enabled: true },
-            { moduleId: "admin", enabled: true },
-          ];
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-        }
-      } else if (isStaff && !user.moduleAccess.find((m) => m.moduleId === "admin")) {
-        // Migration : ajouter le module admin manquant pour les sessions existantes
-        user.moduleAccess = [...user.moduleAccess, { moduleId: "admin", enabled: true }];
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-      }
-
-      return user;
+    // Format V1 (legacy)
+    if (parsed.role && !parsed.roles) {
+      return adaptUserV1ToV2(parsed as UserV1);
     }
-  } catch (error) {
-    console.error("Failed to load user from localStorage:", error);
+
+    const stored = parsed as User;
+
+    // Version obsolète → reconstruire les permissions depuis les rôles stockés
+    if (!stored.permissionsVersion || stored.permissionsVersion < PERMISSIONS_VERSION) {
+      if (stored.roles && Array.isArray(stored.roles) && stored.roles.length > 0) {
+        const rebuilt = buildUserObject(stored.id, stored.name, stored.email, stored.roles, {
+          lastLogin:  stored.lastLogin,
+          createdAt:  stored.createdAt,
+        });
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(rebuilt));
+        return rebuilt;
+      }
+      // Impossible de reconstruire → forcer une reconnexion
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+
+    return stored;
+  } catch {
+    return null;
   }
-  return null;
 }
 
-/**
- * Sauvegarder l'utilisateur dans localStorage
- */
 function saveUserToStorage(user: User | null): void {
   try {
-    if (user) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
-  } catch (error) {
-    console.error("Failed to save user to localStorage:", error);
-  }
+    if (user) localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    else       localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch { /* ignore */ }
 }
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AuthProviderProps { children: ReactNode; }
 
 export function AuthProviderV2({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser]         = useState<User | null>(null);
+  const [isLoading, setLoading] = useState(true);
 
-  // Charger l'utilisateur au démarrage
   useEffect(() => {
-    const savedUser = loadUserFromStorage();
-    setUser(savedUser);
-    setIsLoading(false);
+    setUser(loadUserFromStorage());
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    setIsLoading(true);
-
+    setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
       const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -147,113 +186,51 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
         throw new Error(err.message || "Email ou mot de passe incorrect");
       }
 
-      const data = await response.json();
-      // data = { access_token, token_type, user: { id, name, email, roles: [{title}] } }
-
-      localStorage.setItem('auth-token', data.access_token);
-
+      const data        = await response.json();
       const backendUser = data.user;
-      
-      // Extraire tous les titres/noms de rôles de manière plus robuste
-      const roleTitles: string[] = backendUser.roles && backendUser.roles.length > 0
-        ? backendUser.roles.map((r: any) => {
-            if (typeof r === 'string') return r;
-            return r.title || r.name || r.slug || r.displayName;
-          }).filter(Boolean)
-        : ['commercial'];
 
-      // Normaliser les rôles pour la détection
-      const rolesLower = roleTitles.map(r => r.toLowerCase().trim());
-      
-      const isAdmin      = rolesLower.some(r => r === 'admin' || r === 'super_admin');
-      const isComptable  = rolesLower.some(r => r === 'comptable' || r === 'comptabilite');
-      const isCommercial = rolesLower.some(r => r === 'commercial' || r === 'vendeur' || r === 'vendeuse' || r === 'sales' || r === 'salesman');
+      localStorage.setItem("auth-token", data.access_token);
 
-      const customPermissions: string[] = isAdmin
-        ? ["*:*:*"]
-        : isComptable
-        ? [
-            "DASHBOARD:*:READ",
-            "ORDERS:ORDER:READ",
-            "REPORTS:REPORT:READ",
-            "REPORTS:*:*",
-            "ACHATS:*:*",
-            "PRODUCTS:PRODUCT:READ",
-          ]
-        : isCommercial
-        ? [
-            "DASHBOARD:*:READ",
-            "COMMERCIAL:*:*",
-            "CRM:CUSTOMER:READ",
-            "CRM:*:*",
-            "ORDERS:ORDER:READ",
-            "PRODUCTS:PRODUCT:READ",
-          ]
-        : [
-            "DASHBOARD:*:READ",
-          ];
+      // Extraire les titres de rôles depuis la réponse backend
+      const roleTitles: string[] = (backendUser.roles ?? [])
+        .map((r: any) => (typeof r === "string" ? r : (r.title || r.name || r.slug || "")))
+        .filter(Boolean);
 
-      const moduleAccess = [
-        { moduleId: "dashboard",  enabled: true },
-        { moduleId: "crm",        enabled: isAdmin || isCommercial },
-        { moduleId: "orders",     enabled: isAdmin || isCommercial || isComptable },
-        { moduleId: "products",   enabled: isAdmin || isCommercial || isComptable },
-        { moduleId: "reports",    enabled: isAdmin || isComptable },
-        { moduleId: "commercial", enabled: isAdmin || isCommercial },
-        { moduleId: "achats",     enabled: isAdmin || isComptable },
-        { moduleId: "admin",      enabled: isAdmin },
-      ];
+      if (roleTitles.length === 0) roleTitles.push("default");
 
-      const user: User = {
-        id: String(backendUser.id),
-        email: backendUser.email,
-        name: backendUser.name,
-        roles: roleTitles,
-        customPermissions: customPermissions as any,
-        moduleAccess,
-        status: "active" as UserStatus,
-        lastLogin: new Date().toISOString(),
-        createdAt: backendUser.created_at || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const user = buildUserObject(
+        String(backendUser.id),
+        backendUser.name,
+        backendUser.email,
+        roleTitles,
+        { lastLogin: new Date().toISOString(), createdAt: backendUser.created_at },
+      );
 
       setUser(user);
       saveUserToStorage(user);
 
-      toast({
-        title: "Connexion réussie",
-        description: `Bienvenue, ${user.name}`,
-      });
+      toast({ title: "Connexion réussie", description: `Bienvenue, ${user.name}` });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      const token = localStorage.getItem('auth-token');
+      const token = localStorage.getItem("auth-token");
       if (token) {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
         await fetch(`${API_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+          method:  "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
       }
-    } catch (error) {
-      console.error("Failed to invalidate session on server:", error);
-    } finally {
+    } catch { /* session déjà expirée côté serveur */ } finally {
       setUser(null);
       saveUserToStorage(null);
       localStorage.removeItem("auth-token");
       localStorage.removeItem("refresh-token");
-
-      toast({
-        title: "Déconnexion",
-        description: "Vous avez été déconnecté avec succès"
-      });
+      toast({ title: "Déconnexion", description: "Vous avez été déconnecté avec succès" });
     }
   };
 
@@ -262,30 +239,21 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     saveUserToStorage(updatedUser);
   };
 
+  // Retourne true pour tout rôle métier (gate d'entrée sur /admin)
   const isAdmin = (): boolean => {
-    // Tous les rôles métier (admin, commercial, comptable, vendeur) accèdent à l'espace /admin
-    return user?.roles.some(role =>
-      ["admin", "super_admin", "comptable", "comptabilite", "commercial", "vendeur", "vendeuse", "sales", "salesman"].includes(role.toLowerCase().trim())
-    ) || false;
+    if (!user) return false;
+    return detectRoleKey(user.roles) !== "default";
   };
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    login,
-    logout,
-    updateUser,
-    isAdmin
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, updateUser, isAdmin }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProviderV2");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProviderV2");
+  return ctx;
 }
