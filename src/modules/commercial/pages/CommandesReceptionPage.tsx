@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,24 @@ import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 import { apiClient } from "../services/apiClient";
 import { mapCmdStatut, CMD_STATUT } from "../lib/commandes.constants";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function _resolveAgenceId(c: any): number | null {
+  const raw = c.agence_id ?? c.agenceId ?? c.agence?.id;
+  if (raw == null || raw === "" || raw === 0 || raw === "0") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// MySQL retourne "1899-11-30" ou "0000-00-00" pour les dates NULL/invalides
+function formatDate(d: string | null | undefined): string {
+  if (!d) return "—";
+  if (d.startsWith("1899-") || d.startsWith("0000-") || d === "null") return "—";
+  return d.slice(0, 10); // garder seulement YYYY-MM-DD
+}
+
+const PAGE_SIZE = 20;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,6 +312,7 @@ export default function CommandesReceptionPage() {
   const [selected, setSelected]     = useState<Set<number>>(new Set());
   const [assigning, setAssigning]   = useState<Set<number>>(new Set());
   const [bdcResult, setBdcResult]   = useState<BDCResultItem[] | null>(null);
+  const [page, setPage]             = useState(1);
 
   // ── Data ─────────────────────────────────────────────────────────────────
   const { data: raw = [], isLoading, refetch } = useQuery({
@@ -314,29 +333,11 @@ export default function CommandesReceptionPage() {
     staleTime: 1000 * 60 * 10,
   });
 
-  const { data: bdcRes } = useQuery({
-    queryKey: ["bon-commandes"],
-    // Même shape que BonCommandesService.getAll → { data: [], meta: {} }
-    queryFn: async () => {
-      const r = await apiClient.get<any>("/bon-commandes", { per_page: 500 });
-      const data = (Array.isArray(r) ? r : (r?.data ?? [])) as any[];
-      return { data, meta: r?.meta ?? {} };
-    },
-    staleTime: 1000 * 30,
-  });
-  const bdcList = bdcRes?.data ?? [];
-
-  // IDs des commandes-clients déjà présentes dans un BDC (persistant, toutes sessions)
-  const alreadyInBdc = useMemo<Set<number>>(() => {
-    const ids = new Set<number>();
-    for (const bdc of bdcList) {
-      for (const l of (bdc.lignes ?? bdc.lines ?? [])) {
-        const cid = l.commandeClientId ?? l.commande_client_id;
-        if (cid) ids.add(Number(cid));
-      }
-    }
-    return ids;
-  }, [bdcList]);
+  // Les commandes marquées est_assigne=true sont déjà dans un BDC
+  const alreadyInBdc = useMemo<Set<number>>(
+    () => new Set(raw.filter((c: any) => c.est_assigne || c.estAssigne).map((c: any) => c.id)),
+    [raw],
+  );
 
   const { data: cfList = [] } = useQuery({
     queryKey: ["commandes-fournisseurs-count"],
@@ -414,7 +415,7 @@ export default function CommandesReceptionPage() {
         clientVille,
         clientVilleFallback,
         clientAdresse,
-        agenceId:     c.agenceId ?? c.agence_id ?? null,
+        agenceId:     _resolveAgenceId(c),
         agenceNom:    c.agence?.agence ?? null,
         regionNom:    c.agence?.region?.region ?? null,
         montant:      Number(c.montant) || 0,
@@ -447,8 +448,16 @@ export default function CommandesReceptionPage() {
     });
   }, [commandes, tab, filterSource, filterAgence, filterEtat, search]);
 
+  // Remettre à la page 1 quand les filtres changent
+  useEffect(() => { setPage(1); }, [tab, search, filterSource, filterAgence, filterEtat]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   // ── Sélection — les commandes déjà en BDC ne peuvent pas être sélectionnées ──
-  const selectable    = filtered.filter((c) => !alreadyInBdc.has(c.id));
+  // "Select all" opère sur la page courante uniquement
+  const selectable    = paginated.filter((c) => !alreadyInBdc.has(c.id));
   const allSelected   = selectable.length > 0 && selectable.every((c) => selected.has(c.id));
   const someSelected  = filtered.some((c) => selected.has(c.id));
   const selectedList  = filtered.filter((c) => selected.has(c.id));
@@ -575,7 +584,7 @@ export default function CommandesReceptionPage() {
       {/* Pipeline flux de traitement */}
       <FluxPipeline
         nbCommandes={commandes.length}
-        nbBDC={bdcList.length}
+        nbBDC={alreadyInBdc.size}
         nbCF={cfList.length}
         nbLivraisons={0}
       />
@@ -750,7 +759,7 @@ export default function CommandesReceptionPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.map((c) => {
+                {paginated.map((c) => {
                   const isSelected   = selected.has(c.id);
                   const isAssigning  = assigning.has(c.id);
                   const nonAssignee  = !c.agenceId;
@@ -845,7 +854,7 @@ export default function CommandesReceptionPage() {
 
                       {/* Date */}
                       <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
-                        {c.date}
+                        {formatDate(c.date)}
                       </td>
 
                       {/* Actions */}
@@ -875,8 +884,56 @@ export default function CommandesReceptionPage() {
           </div>
 
           {/* Pied de table */}
-          <div className="bg-muted/30 border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
-            <span>{filtered.length} commande(s) affichée(s) sur {commandes.length}</span>
+          <div className="bg-muted/30 border-t px-4 py-2 flex items-center justify-between gap-3 text-xs text-muted-foreground flex-wrap">
+            <span>{filtered.length} commande(s) — page {page}/{totalPages}</span>
+
+            {/* Pagination */}
+            <div className="flex items-center gap-1">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(1)}
+                className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+              >«</button>
+              <button
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+              >‹ Préc.</button>
+              {/* Pages autour de la courante */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                  if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, i) =>
+                  p === "…" ? (
+                    <span key={`dots-${i}`} className="px-1">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p as number)}
+                      className={`w-7 py-1 rounded border text-xs transition-colors ${
+                        page === p
+                          ? "bg-primary text-white border-primary font-semibold"
+                          : "hover:bg-muted"
+                      }`}
+                    >{p}</button>
+                  )
+                )}
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+              >Suiv. ›</button>
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(totalPages)}
+                className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+              >»</button>
+            </div>
+
             {someSelected && (
               <span className="font-medium text-primary">
                 {selectedList.length} sélectionnée(s) — {formatCurrency(selectedList.reduce((s, c) => s + c.montant, 0))}
