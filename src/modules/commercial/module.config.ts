@@ -66,6 +66,33 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       enabled: true,
     },
+    // Réception & traitement commandes — espace Mme Barro
+    {
+      path: "/commandes",
+      component: lazy(() => import("./pages/CommandesReceptionPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: true,
+    },
+    // Détail et édition commande
+    {
+      path: "/commandes/:id",
+      component: lazy(() => import("./pages/CommandeDetailPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: true,
+    },
+    {
+      path: "/commandes/:id/edit",
+      component: lazy(() => import("./pages/CommandeDetailPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:WRITE"],
+      enabled: true,
+    },
+    // Comptabilité — consultation minimale pour Mme Barro
+    {
+      path: "/compta",
+      component: lazy(() => import("./pages/ComptaPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: true,
+    },
     // Vue admin — catalogue des commerciaux
     {
       path: "/commerciaux",
@@ -90,6 +117,24 @@ function filterRoutesByFeatureFlags() {
 // Fonction helper pour filtrer la navigation selon les feature flags
 function filterNavigationByFeatureFlags() {
   const allNavigation = [
+    {
+      label: "Commandes",
+      path: "/admin/commercial/commandes",
+      icon: "ClipboardList",
+      section: "sales",
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      order: 6,
+      enabled: true,
+    },
+    {
+      label: "Comptabilité",
+      path: "/admin/commercial/compta",
+      icon: "Receipt",
+      section: "sales",
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      order: 16,
+      enabled: true,
+    },
     {
       label: "Mes Ventes",
       path: "/admin/commercial/ventes",

@@ -3,9 +3,9 @@ import { paymentConfig } from "@/config/payments.config";
 /**
  * Format a number as currency based on config
  */
-export function formatCurrency(amount: number | undefined | null): string {
-  // Handle undefined/null values
-  if (amount === undefined || amount === null || isNaN(amount)) {
+export function formatCurrency(amount: number | string | undefined | null): string {
+  const num = Number(amount);
+  if (amount === undefined || amount === null || isNaN(num)) {
     return "0";
   }
 
@@ -14,7 +14,7 @@ export function formatCurrency(amount: number | undefined | null): string {
   // XOF (Franc CFA) doesn't use decimal places
   const decimals = currency === "XOF" ? 0 : 2;
 
-  const formatted = amount
+  const formatted = num
     .toFixed(decimals)
     .replace(".", decimalSeparator)
     .replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);

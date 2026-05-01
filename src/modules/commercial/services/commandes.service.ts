@@ -107,21 +107,27 @@ function mapBackendToCommande(c: any): CommandeCommerciale {
 
 export async function getCommandes(filters: {
   page?: number; limit?: number; search?: string; clientId?: string;
-  statut?: CommandeStatut; statutPaiement?: string; modePaiement?: ModePaiement;
+  statut?: CommandeStatut; statuts?: CommandeStatut[];
+  statutPaiement?: string; modePaiement?: ModePaiement;
   banque?: BanquePartenaire; dateDebut?: string; dateFin?: string;
   sortBy?: string; sortOrder?: 'asc' | 'desc';
 } = {}): Promise<PaginatedResponse<CommandeCommerciale>> {
+  // Résoudre les statuts : tableau prioritaire sur statut unique
+  const etats = filters.statuts?.length
+    ? filters.statuts.map((s) => STATUT_TO_ETAT[s] || s).join(',')
+    : filters.statut ? STATUT_TO_ETAT[filters.statut] : undefined;
+
   const params: Record<string, string | number | undefined> = {
-    client_id: filters.clientId,
-    etat: filters.statut ? STATUT_TO_ETAT[filters.statut] : undefined,
-    mode_paiement: filters.modePaiement,
-    date_debut: filters.dateDebut,
-    date_fin: filters.dateFin,
-    search: filters.search,
-    sort_by: filters.sortBy,
-    sort_order: filters.sortOrder,
-    page: filters.page,
-    per_page: filters.limit,
+    client_id:    filters.clientId,
+    etat:         etats,
+    mode_paiement:filters.modePaiement,
+    date_debut:   filters.dateDebut,
+    date_fin:     filters.dateFin,
+    search:       filters.search,
+    sort_by:      filters.sortBy,
+    sort_order:   filters.sortOrder,
+    page:         filters.page,
+    per_page:     filters.limit,
   };
 
   const res = await apiClient.get<any>(API_ENDPOINTS.commandes.list, params);

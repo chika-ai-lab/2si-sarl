@@ -39,6 +39,7 @@ export function useCommandes(filters: {
   search?: string;
   clientId?: string;
   statut?: CommandeStatut;
+  statuts?: CommandeStatut[];
   statutPaiement?: string;
   modePaiement?: ModePaiement;
   banque?: BanquePartenaire;

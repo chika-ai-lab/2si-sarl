@@ -1,6 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -135,10 +145,17 @@ const PAIEMENT_CONFIG: Record<string, { label: string; color: string }> = {
 
 export function CommandesPage() {
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery]     = useState("");
-  const [statutFilter, setStatutFilter]   = useState<CommandeStatut | "all">("all");
-  const [page, setPage]                   = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab]     = useState<"a_valider" | "a_livrer" | "en_cours" | "terminees">("a_valider");
+  const [page, setPage]               = useState(1);
   const limit = 10;
+
+  const TAB_STATUTS: Record<typeof activeTab, (CommandeStatut | "all")[]> = {
+    a_valider: ["brouillon", "en_attente"],
+    a_livrer:  ["validee"],
+    en_cours:  ["en_cours"],
+    terminees: ["livree", "annulee"],
+  };
 
   // Modals state
   const [selectedCommande, setSelectedCommande]   = useState<CommandeCommerciale | null>(null);
@@ -167,11 +184,13 @@ export function CommandesPage() {
   };
 
   // Fetch
+  const activeStatuts = TAB_STATUTS[activeTab];
+
   const { data, isLoading, error, refetch } = useCommandes({
     page, limit,
-    search: searchQuery || undefined,
-    statut: statutFilter !== "all" ? statutFilter : undefined,
-    sortBy: "dateCommande", sortOrder: "desc",
+    search:  searchQuery || undefined,
+    statuts: activeStatuts as CommandeStatut[],
+    sortBy:  "dateCommande", sortOrder: "desc",
   });
   const { data: clientsData } = useClients({ limit: 1000 });
   const clients  = clientsData?.data || [];
@@ -597,32 +616,36 @@ export function CommandesPage() {
           ))}
         </div>
 
-        {/* Search + Filter */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Rechercher par référence, client..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
-              </div>
-              <Select value={statutFilter} onValueChange={(v) => setStatutFilter(v as CommandeStatut | "all")}>
-                <SelectTrigger className="w-48"><SelectValue placeholder="Statut" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="brouillon">Brouillon</SelectItem>
-                  <SelectItem value="en_attente">En attente</SelectItem>
-                  <SelectItem value="validee">Validée</SelectItem>
-                  <SelectItem value="en_cours">En cours</SelectItem>
-                  <SelectItem value="livree">Livrée</SelectItem>
-                  <SelectItem value="annulee">Annulée</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Tabs workflow */}
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setPage(1); }}>
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+            <TabsList className="grid grid-cols-4 w-full md:w-auto">
+              <TabsTrigger value="a_valider" className="gap-1.5">
+                <Clock className="h-3.5 w-3.5" />À valider
+              </TabsTrigger>
+              <TabsTrigger value="a_livrer" className="gap-1.5">
+                <Package className="h-3.5 w-3.5" />À livrer
+              </TabsTrigger>
+              <TabsTrigger value="en_cours" className="gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5" />En cours
+              </TabsTrigger>
+              <TabsTrigger value="terminees" className="gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5" />Terminées
+              </TabsTrigger>
+            </TabsList>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par référence, client..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                className="pl-10"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Table */}
-        {isLoading ? (
+          {/* Table (shared across tabs) */}
+          {isLoading ? (
           <Card><CardContent className="p-0 divide-y">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-4">
@@ -640,7 +663,14 @@ export function CommandesPage() {
           <Card><CardContent className="py-8 text-center text-muted-foreground">Aucune commande</CardContent></Card>
         ) : (
           <Card>
-            <CardHeader><CardTitle>{pagination?.total || 0} commande(s)</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>{pagination?.total || 0} commande(s)</CardTitle>
+              {pagination && pagination.totalPages > 1 && (
+                <p className="text-sm text-muted-foreground">
+                  Page {pagination.page} sur {pagination.totalPages}
+                </p>
+              )}
+            </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
@@ -685,25 +715,36 @@ export function CommandesPage() {
                               <DropdownMenuItem onClick={() => { setSelectedCommande(commande); setIsDetailsOpen(true); }}>
                                 <Eye className="mr-2 h-4 w-4" />Voir détails
                               </DropdownMenuItem>
-                              {commande.statut === "brouillon" && (
+
+                              {/* Actions contextuelles par étape */}
+                              {activeTab === "a_valider" && (
                                 <DropdownMenuItem onClick={() => handleStatut(commande.id, "validee")}>
-                                  <CheckCircle className="mr-2 h-4 w-4" />Valider
+                                  <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                  Valider la commande
                                 </DropdownMenuItem>
                               )}
-                              {commande.statut === "validee" && (
+                              {activeTab === "a_livrer" && (
                                 <DropdownMenuItem onClick={() => handleStatut(commande.id, "livree")}>
-                                  <Package className="mr-2 h-4 w-4" />Marquer livrée
+                                  <Package className="mr-2 h-4 w-4 text-blue-600" />
+                                  Créer bon de livraison
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem>
-                                <FileText className="mr-2 h-4 w-4" />Générer facture
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => setDeleteId(commande.id)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />Supprimer
-                              </DropdownMenuItem>
+                              {activeTab === "en_cours" && (
+                                <DropdownMenuItem>
+                                  <FileText className="mr-2 h-4 w-4 text-purple-600" />
+                                  Voir bon associé
+                                </DropdownMenuItem>
+                              )}
+
+                              {/* Supprimer uniquement sur brouillon */}
+                              {activeTab === "a_valider" && (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setDeleteId(commande.id)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />Supprimer
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -718,14 +759,65 @@ export function CommandesPage() {
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">Page {pagination.page} sur {pagination.totalPages}</div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={page === 1}>Précédent</Button>
-              <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={page === pagination.totalPages}>Suivant</Button>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              {pagination.total} résultat{pagination.total > 1 ? "s" : ""} —{" "}
+              page {pagination.page} sur {pagination.totalPages}
+            </p>
+            <Pagination className="mx-0 w-auto">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1); }}
+                    className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {(() => {
+                  const total = pagination.totalPages;
+                  const pages: (number | "ellipsis")[] = [];
+                  if (total <= 7) {
+                    for (let i = 1; i <= total; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    if (page > 3) pages.push("ellipsis");
+                    for (let i = Math.max(2, page - 1); i <= Math.min(total - 1, page + 1); i++) pages.push(i);
+                    if (page < total - 2) pages.push("ellipsis");
+                    pages.push(total);
+                  }
+                  return pages.map((p, i) =>
+                    p === "ellipsis" ? (
+                      <PaginationItem key={`ell-${i}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          href="#"
+                          isActive={p === page}
+                          onClick={(e) => { e.preventDefault(); setPage(p); }}
+                          className="cursor-pointer"
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  );
+                })()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (page < pagination.totalPages) setPage(page + 1); }}
+                    className={page === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
+        </Tabs>
       </div>
     </>
   );

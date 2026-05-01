@@ -86,29 +86,36 @@ const NAV_GENERAL: NavigationItem[] = [
 
 // Nav for commercial users (their own sales)
 const NAV_COMMERCIAL: NavigationItem[] = [
-  { label: "Mes Ventes",  path: "/admin/commercial/ventes",      icon: "TrendingUp",  section: "commercial", order: 1 },
-  { label: "Clients",     path: "/admin/commercial/clients",     icon: "Users",       section: "commercial", order: 2 },
-  { label: "Accréditif",  path: "/admin/commercial/accreditif",  icon: "CreditCard",  section: "commercial", order: 3 },
-  { label: "SAV",         path: "/admin/commercial/sav",         icon: "Wrench",      section: "commercial", order: 4 },
-  { label: "Rapports",    path: "/admin/commercial/rapports",    icon: "BarChart3",   section: "commercial", order: 5 },
+  { label: "Commandes",        path: "/admin/commercial/commandes",   icon: "ClipboardList", section: "commercial", order: 1 },
+  { label: "Bons de Commande", path: "/admin/achats/bon-commandes",   icon: "FileCheck",     section: "commercial", order: 2 },
+  { label: "Mes Ventes",       path: "/admin/commercial/ventes",      icon: "TrendingUp",    section: "commercial", order: 3 },
+  { label: "Clients",          path: "/admin/commercial/clients",     icon: "Users",         section: "commercial", order: 4 },
+  { label: "Accréditif",       path: "/admin/commercial/accreditif",  icon: "CreditCard",    section: "commercial", order: 5 },
+  { label: "SAV",              path: "/admin/commercial/sav",         icon: "Wrench",        section: "commercial", order: 6 },
+  { label: "Comptabilité",     path: "/admin/commercial/compta",      icon: "Receipt",       section: "commercial", order: 7 },
+  { label: "Rapports",         path: "/admin/commercial/rapports",    icon: "BarChart3",     section: "commercial", order: 8 },
 ];
 
 // Nav for admin — shows team overview instead of personal sales
 const NAV_COMMERCIAL_ADMIN: NavigationItem[] = [
-  { label: "Commerciales", path: "/admin/commercial/commerciaux", icon: "Users2",     section: "commercial", order: 1 },
-  { label: "Clients",      path: "/admin/commercial/clients",     icon: "Users",      section: "commercial", order: 2 },
-  { label: "Accréditif",   path: "/admin/commercial/accreditif",  icon: "CreditCard", section: "commercial", order: 3 },
-  { label: "SAV",          path: "/admin/commercial/sav",         icon: "Wrench",     section: "commercial", order: 4 },
-  { label: "Rapports",     path: "/admin/commercial/rapports",    icon: "BarChart3",  section: "commercial", order: 5 },
+  { label: "Commandes",        path: "/admin/commercial/commandes",   icon: "ClipboardList", section: "commercial", order: 1 },
+  { label: "Bons de Commande", path: "/admin/achats/bon-commandes",   icon: "FileCheck",     section: "commercial", order: 2 },
+  { label: "Commerciales",     path: "/admin/commercial/commerciaux", icon: "Users2",        section: "commercial", order: 3 },
+  { label: "Clients",          path: "/admin/commercial/clients",     icon: "Users",         section: "commercial", order: 4 },
+  { label: "Accréditif",       path: "/admin/commercial/accreditif",  icon: "CreditCard",    section: "commercial", order: 5 },
+  { label: "SAV",              path: "/admin/commercial/sav",         icon: "Wrench",        section: "commercial", order: 6 },
+  { label: "Comptabilité",     path: "/admin/commercial/compta",      icon: "Receipt",       section: "commercial", order: 7 },
+  { label: "Rapports",         path: "/admin/commercial/rapports",    icon: "BarChart3",     section: "commercial", order: 8 },
 ];
 
 const NAV_LOGISTIQUE: NavigationItem[] = [
-  { label: "Livraisons",             path: "/admin/achats/livraisons",      icon: "Truck",       section: "logistique", order: 1 },
-  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",    section: "logistique", order: 2 },
-  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",   section: "logistique", order: 3 },
-  { label: "Commandes Fournisseurs", path: "/admin/achats/commandes",       icon: "ShoppingCart",section: "logistique", order: 4 },
-  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",       section: "logistique", order: 5 },
-  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",      section: "logistique", order: 6 },
+  { label: "Bons de Commande",       path: "/admin/achats/bon-commandes",   icon: "ClipboardList", section: "logistique", order: 1 },
+  { label: "Commandes Fournisseurs", path: "/admin/achats/commandes",       icon: "ShoppingCart",  section: "logistique", order: 2 },
+  { label: "Livraisons",             path: "/admin/achats/livraisons",      icon: "Truck",         section: "logistique", order: 3 },
+  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",      section: "logistique", order: 4 },
+  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",     section: "logistique", order: 5 },
+  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",         section: "logistique", order: 6 },
+  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",        section: "logistique", order: 7 },
 ];
 
 const NAV_COMPTABILITE: NavigationItem[] = [

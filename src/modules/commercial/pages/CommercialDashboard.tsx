@@ -2,122 +2,108 @@ import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Users, ShoppingCart, BookOpen, FileText, Calculator, Wrench,
-  BarChart3, TrendingUp, Clock, CheckCircle2, Wallet,
-  Package, ArrowUp, ArrowDown, Minus as MinusIcon, RefreshCw,
+  ClipboardList, AlertCircle, CheckCircle2, Store, UserCheck,
+  Building2, RefreshCw, ArrowRight, Package, TrendingUp, Receipt,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { apiClient } from "../services/apiClient";
-import { useTicketsOuverts, useMesTickets, leadsKeys } from "../hooks/useLeads";
 import { mapCmdStatut } from "../lib/commandes.constants";
 
-// ── helpers ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-function fmtMonth(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
-}
+interface Agence { id: number; agence: string; region: { id: number; region: string } }
 
-function getMonthKey(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-const COMMISSION_RATE = 0.03;
-export const DASHBOARD_CMD_KEY = ["dashboard-commandes-raw"] as const;
-
-// ── dashboard ──────────────────────────────────────────────────────────────
+// ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function CommercialDashboard() {
   const qc = useQueryClient();
 
-  const { data: rawCmd, isLoading: cmdLoading, isFetching: cmdFetching } = useQuery({
-    queryKey: DASHBOARD_CMD_KEY,
+  const { data: rawCmd = [], isLoading: cmdLoading, isFetching } = useQuery({
+    queryKey: ["dashboard-commandes-raw"],
     queryFn: async () => {
-      const res = await apiClient.get<any>("/commande-clients");
-      return (res.data ?? res ?? []) as any[];
+      const r = await apiClient.get<any>("/commande-clients", { per_page: 500 });
+      return (r.data ?? r ?? []) as any[];
     },
-    staleTime: 1000 * 30,          // 30s — refresh fréquent
-    refetchOnWindowFocus: true,    // sync automatique au retour sur l'onglet
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 
-  const { leads: ouverts } = useTicketsOuverts();
-  const { leads: mesLeads } = useMesTickets();
+  const { data: agences = [] } = useQuery<Agence[]>({
+    queryKey: ["agences-list"],
+    queryFn: async () => {
+      const r = await apiClient.get<any>("/agences");
+      return (Array.isArray(r) ? r : r?.data ?? []) as Agence[];
+    },
+    staleTime: 1000 * 60 * 10,
+  });
 
-  const commandes = rawCmd ?? [];
+  const { data: bdcRaw } = useQuery({
+    queryKey: ["bon-commandes"],
+    queryFn: async () => {
+      const r = await apiClient.get<any>("/bon-commandes", { per_page: 200 });
+      return r.data ?? r ?? [];
+    },
+    staleTime: 1000 * 60,
+  });
+  const bdcs: any[] = bdcRaw ?? [];
 
   const refresh = () => {
-    qc.invalidateQueries({ queryKey: DASHBOARD_CMD_KEY });
-    qc.invalidateQueries({ queryKey: leadsKeys.ouverts() });
-    qc.invalidateQueries({ queryKey: leadsKeys.mesTickets() });
+    qc.invalidateQueries({ queryKey: ["dashboard-commandes-raw"] });
+    qc.invalidateQueries({ queryKey: ["bon-commandes"] });
   };
 
-  // ── stats dérivées (via mapCmdStatut pour cohérence) ──────────────────
+  // ── Stats ─────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    // Normalise tous les statuts via mapCmdStatut
-    const rows = commandes.map((c: any) => ({
+    const cmds = rawCmd.map((c: any) => ({
       ...c,
-      statut: mapCmdStatut(c.etat),
+      statut:    mapCmdStatut(c.etat),
+      agenceId:  c.agenceId ?? c.agence_id ?? null,
+      source:    c.userId || c.user_id ? "terrain" : "marketplace",
+      montant:   Number(c.montant) || 0,
+      agenceNom: c.agence?.agence ?? null,
+      regionNom: c.agence?.region?.region ?? null,
     }));
 
-    const total    = rows.length;
-    const actives  = rows.filter((c) => !["livree", "annulee"].includes(c.statut)).length;
-    const livrees  = rows.filter((c) => c.statut === "livree");
-    const caLivre  = livrees.reduce((s: number, c: any) => s + (Number(c.montant) || 0), 0);
-    const commission = caLivre * COMMISSION_RATE;
+    const total        = cmds.length;
+    const nonAssignees = cmds.filter((c: any) => !c.agenceId);
+    const terrain      = cmds.filter((c: any) => c.source === "terrain").length;
+    const marketplace  = cmds.filter((c: any) => c.source === "marketplace").length;
+    const validees     = cmds.filter((c: any) => c.statut === "validee").length;
+    const montantTotal = cmds.reduce((s: number, c: any) => s + c.montant, 0);
 
-    // 6 derniers mois
-    const now = new Date();
-    const months: { key: string; label: string; ca: number; commissions: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      months.push({ key, label: fmtMonth(d.toISOString()), ca: 0, commissions: 0 });
+    // Par agence
+    const parAgence = new Map<string, { nom: string; count: number; montant: number }>();
+    for (const c of cmds) {
+      if (!c.agenceId) continue;
+      const key = c.agenceNom ?? `Agence #${c.agenceId}`;
+      const prev = parAgence.get(key) ?? { nom: key, count: 0, montant: 0 };
+      parAgence.set(key, { ...prev, count: prev.count + 1, montant: prev.montant + c.montant });
     }
-    livrees.forEach((c: any) => {
-      const k = getMonthKey(c.date || c.created_at || "");
-      const m = months.find((m) => m.key === k);
-      if (m) { m.ca += Number(c.montant) || 0; m.commissions += (Number(c.montant) || 0) * COMMISSION_RATE; }
-    });
+    const agenceList = [...parAgence.values()].sort((a, b) => b.count - a.count);
 
-    const lastMonth = months[months.length - 2]?.ca ?? 0;
-    const thisMonth = months[months.length - 1]?.ca ?? 0;
-    const mChange   = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : null;
+    // BDC stats
+    const bdcCeMois = bdcs.filter((b: any) => {
+      const d = b.createdAt ?? b.date ?? "";
+      return d.startsWith(new Date().toISOString().slice(0, 7));
+    }).length;
 
-    // Commandes du mois courant
-    const moisKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const cmdMois = rows.filter((c: any) => (c.date || c.created_at?.split("T")[0] || "").startsWith(moisKey));
+    return { total, nonAssignees: nonAssignees.length, terrain, marketplace, validees, montantTotal, agenceList, bdcCeMois };
+  }, [rawCmd, bdcs]);
 
-    return { total, actives, caLivre, commission, months, thisMonth, mChange, cmdMois: cmdMois.length };
-  }, [commandes]);
-
-  const totalLeads = ouverts.length + mesLeads.length;
-
-  const quickActions = [
-    { label: "Clients",    icon: Users,       path: "/admin/commercial/clients",    color: "from-blue-500 to-blue-600" },
-    { label: "Mes Ventes", icon: ShoppingCart, path: "/admin/commercial/ventes",     color: "from-green-500 to-green-600" },
-    { label: "Catalogue",  icon: BookOpen,     path: "/admin/commercial/catalogue",  color: "from-orange-500 to-orange-600" },
-    { label: "Accréditif", icon: FileText,     path: "/admin/commercial/accreditif", color: "from-pink-500 to-pink-600" },
-    { label: "Simulation", icon: Calculator,   path: "/admin/commercial/simulation", color: "from-teal-500 to-teal-600" },
-    { label: "S.A.V",      icon: Wrench,       path: "/admin/commercial/sav",        color: "from-red-500 to-red-600" },
-    { label: "Rapports",   icon: BarChart3,    path: "/admin/commercial/rapports",   color: "from-indigo-500 to-indigo-600" },
-  ];
-
-  const maxCa = Math.max(...stats.months.map((m) => m.ca), 1);
-  const isRefreshing = cmdFetching && !cmdLoading;
+  const isRefreshing = isFetching && !cmdLoading;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Tableau de bord
-          </h1>
-          <p className="text-muted-foreground mt-1">Votre activité et performances commerciales</p>
+          <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Vue d'ensemble — réception et traitement des commandes
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh} disabled={isRefreshing}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -125,246 +111,222 @@ export default function CommercialDashboard() {
         </Button>
       </div>
 
-      {/* KPI cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Mes commandes */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mes commandes</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <ShoppingCart className="h-4 w-4 text-white" />
+      {/* KPI principaux */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Non assignées — priorité haute */}
+        <Card className={stats.nonAssignees > 0 ? "border-amber-300 bg-amber-50" : ""}>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                {cmdLoading
+                  ? <Skeleton className="h-8 w-10 mb-1" />
+                  : <p className="text-3xl font-bold text-amber-700">{stats.nonAssignees}</p>}
+                <p className="text-xs font-medium text-amber-700">Non assignées</p>
+                <p className="text-xs text-muted-foreground mt-0.5">à traiter en priorité</p>
+              </div>
+              <AlertCircle className={`h-8 w-8 ${stats.nonAssignees > 0 ? "text-amber-500" : "text-gray-300"}`} />
             </div>
-          </CardHeader>
-          <CardContent>
-            {cmdLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.total}</div>}
-            <div className="flex items-center gap-2 mt-1">
-              {cmdLoading ? <Skeleton className="h-3 w-28" /> : (
-                <>
-                  <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded">{stats.actives} actives</span>
-                  <span className="text-xs text-muted-foreground">{stats.cmdMois} ce mois</span>
-                </>
-              )}
+            {stats.nonAssignees > 0 && (
+              <Link to="/admin/commercial/commandes" className="mt-3 flex items-center gap-1 text-xs text-amber-700 font-medium hover:underline">
+                Traiter maintenant <ArrowRight className="h-3 w-3" />
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Total commandes */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                {cmdLoading
+                  ? <Skeleton className="h-8 w-10 mb-1" />
+                  : <p className="text-3xl font-bold">{stats.total}</p>}
+                <p className="text-xs font-medium text-muted-foreground">Total commandes</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{stats.validees} validées</p>
+              </div>
+              <Package className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
 
-        {/* CA livré */}
+        {/* BDC créés ce mois */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CA livré total</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-white" />
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-bold text-green-700">{stats.bdcCeMois}</p>
+                <p className="text-xs font-medium text-muted-foreground">BDC ce mois</p>
+                <p className="text-xs text-muted-foreground mt-0.5">bons de commande créés</p>
+              </div>
+              <ClipboardList className="h-8 w-8 text-green-500" />
             </div>
-          </CardHeader>
-          <CardContent>
-            {cmdLoading ? <Skeleton className="h-8 w-28" /> : <div className="text-2xl font-bold">{formatCurrency(stats.caLivre)}</div>}
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              {cmdLoading ? <Skeleton className="h-3 w-28" /> : stats.mChange !== null ? (
-                <>
-                  {stats.mChange > 0
-                    ? <ArrowUp className="h-3 w-3 text-green-600" />
-                    : stats.mChange < 0
-                    ? <ArrowDown className="h-3 w-3 text-red-600" />
-                    : <MinusIcon className="h-3 w-3 text-muted-foreground" />}
-                  <span className={stats.mChange > 0 ? "text-green-600" : stats.mChange < 0 ? "text-red-600" : "text-muted-foreground"}>
-                    {Math.abs(stats.mChange).toFixed(1)}% vs mois dernier
-                  </span>
-                </>
-              ) : <span>Aucune donnée comparative</span>}
-            </p>
+            <Link to="/admin/achats/bon-commandes" className="mt-3 flex items-center gap-1 text-xs text-green-700 font-medium hover:underline">
+              Voir logistique <ArrowRight className="h-3 w-3" />
+            </Link>
           </CardContent>
         </Card>
 
-        {/* Commission estimée */}
-        <Card className="border-primary/30 bg-primary/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Commission estimée</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Wallet className="h-4 w-4 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {cmdLoading ? <Skeleton className="h-8 w-28" /> : <div className="text-2xl font-bold text-primary">{formatCurrency(stats.commission)}</div>}
-            <p className="text-xs text-muted-foreground mt-1">
-              Taux : <span className="font-semibold">{(COMMISSION_RATE * 100).toFixed(0)}%</span> du CA livré
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Leads actifs */}
+        {/* Montant total */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leads actifs</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center">
-              <Clock className="h-4 w-4 text-white" />
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                {cmdLoading
+                  ? <Skeleton className="h-8 w-28 mb-1" />
+                  : <p className="text-2xl font-bold leading-tight">{formatCurrency(stats.montantTotal)}</p>}
+                <p className="text-xs font-medium text-muted-foreground">Valeur totale</p>
+                <p className="text-xs text-muted-foreground mt-0.5">toutes commandes</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-indigo-500" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalLeads}</div>
-            <p className="text-xs text-muted-foreground mt-1 flex gap-1 flex-wrap">
-              <span className="font-medium text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded">{ouverts.length} en attente</span>
-              <span className="font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{mesLeads.length} assignés</span>
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Performance mensuelle */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-primary" />CA et commissions — 6 derniers mois
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {cmdLoading ? (
-            <div className="flex items-end gap-3 h-32">
-              {[...Array(6)].map((_, i) => <Skeleton key={i} className="flex-1 rounded" style={{ height: `${40 + i * 10}%` }} />)}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Barres */}
-              <div className="flex items-end gap-2 h-28">
-                {stats.months.map((m) => (
-                  <div key={m.key} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full flex flex-col justify-end h-20 relative group">
-                      {m.ca > 0 ? (
-                        <>
-                          <div className="w-full rounded-t bg-primary/20 relative" style={{ height: `${(m.ca / maxCa) * 100}%` }}>
-                            <div className="absolute bottom-0 w-full rounded-t bg-primary transition-all" style={{ height: `${COMMISSION_RATE * 100}%` }} />
-                          </div>
-                          <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-popover border rounded px-1.5 py-0.5 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-                            {formatCurrency(m.ca)}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="w-full h-0.5 bg-border rounded" />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground capitalize">{m.label}</span>
+      {/* Sources */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-green-600" />
+              Répartition par source
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 space-y-3">
+            {cmdLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-6" /><Skeleton className="h-6" />
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1 w-28 shrink-0">
+                    <UserCheck className="h-3 w-3" />Terrain
+                  </span>
+                  <div className="flex-1 bg-muted rounded-full h-2">
+                    <div
+                      className="bg-green-500 h-2 rounded-full"
+                      style={{ width: stats.total > 0 ? `${(stats.terrain / stats.total) * 100}%` : "0%" }}
+                    />
+                  </div>
+                  <span className="text-sm font-semibold w-8 text-right">{stats.terrain}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded px-2 py-1 w-28 shrink-0">
+                    <Store className="h-3 w-3" />Marketplace
+                  </span>
+                  <div className="flex-1 bg-muted rounded-full h-2">
+                    <div
+                      className="bg-purple-500 h-2 rounded-full"
+                      style={{ width: stats.total > 0 ? `${(stats.marketplace / stats.total) * 100}%` : "0%" }}
+                    />
+                  </div>
+                  <span className="text-sm font-semibold w-8 text-right">{stats.marketplace}</span>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Par agence */}
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              Commandes par agence
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            {cmdLoading ? (
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-6" />)}
+              </div>
+            ) : stats.agenceList.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">Aucune commande assignée</p>
+            ) : (
+              <div className="space-y-2">
+                {stats.agenceList.slice(0, 6).map(({ nom, count, montant }) => (
+                  <div key={nom} className="flex items-center gap-2 text-sm">
+                    <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="flex-1 font-medium truncate">{nom}</span>
+                    <span className="text-xs text-muted-foreground">{count} cmd</span>
+                    <span className="text-xs font-semibold text-right w-28">{formatCurrency(montant)}</span>
                   </div>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-              {/* Tableau mensuel */}
-              <div className="rounded-lg border overflow-hidden text-sm">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted/40 text-xs text-muted-foreground uppercase tracking-wide">
-                      <th className="px-3 py-2 text-left font-medium">Mois</th>
-                      <th className="px-3 py-2 text-right font-medium">CA livré</th>
-                      <th className="px-3 py-2 text-right font-medium">Commission (3%)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {stats.months.map((m) => (
-                      <tr key={m.key} className="hover:bg-muted/20">
-                        <td className="px-3 py-2 capitalize">{m.label}</td>
-                        <td className="px-3 py-2 text-right font-medium">
-                          {m.ca > 0 ? formatCurrency(m.ca) : <span className="text-muted-foreground">—</span>}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {m.commissions > 0
-                            ? <span className="font-semibold text-primary">{formatCurrency(m.commissions)}</span>
-                            : <span className="text-muted-foreground">—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="bg-muted/40 font-semibold">
-                      <td className="px-3 py-2">Total</td>
-                      <td className="px-3 py-2 text-right">{formatCurrency(stats.caLivre)}</td>
-                      <td className="px-3 py-2 text-right text-primary">{formatCurrency(stats.commission)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary/20 border border-primary/40 inline-block" />CA livré</span>
-                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary inline-block" />Commission (3%)</span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Commandes récentes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Package className="h-4 w-4 text-primary" />Commandes récentes
-            <Link to="/admin/commercial/ventes" className="ml-auto text-xs text-primary hover:underline font-normal">Voir tout</Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {cmdLoading ? (
-            <div className="px-4 py-3 space-y-2">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-32 flex-1" /><Skeleton className="h-5 w-16" />
-                </div>
-              ))}
-            </div>
-          ) : commandes.length === 0 ? (
-            <div className="px-4 py-8 text-center text-muted-foreground text-sm">Aucune commande enregistrée</div>
-          ) : (
+      {/* Commandes récentes non assignées */}
+      {stats.nonAssignees > 0 && (
+        <Card className="border-amber-200">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-700">
+              <AlertCircle className="h-4 w-4" />
+              Commandes sans agence — à traiter
+              <Link to="/admin/commercial/commandes" className="ml-auto text-xs font-normal text-amber-700 hover:underline flex items-center gap-1">
+                Voir tout <ArrowRight className="h-3 w-3" />
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
             <div className="divide-y">
-              {commandes.slice(0, 6).map((c: any) => {
-                const statut = mapCmdStatut(c.etat);
-                const COLORS: Record<string, string> = {
-                  livree:     "bg-green-100 text-green-800",
-                  validee:    "bg-blue-100 text-blue-800",
-                  en_cours:   "bg-orange-100 text-orange-800",
-                  annulee:    "bg-red-100 text-red-800",
-                  brouillon:  "bg-gray-100 text-gray-700",
-                  en_attente: "bg-yellow-100 text-yellow-800",
-                };
-                const LABELS: Record<string, string> = {
-                  livree: "Livrée", validee: "Validée", en_cours: "En livraison",
-                  annulee: "Annulée", brouillon: "Brouillon", en_attente: "En attente",
-                };
-                return (
-                  <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
-                    <span className="font-mono text-xs text-muted-foreground w-28 shrink-0">
-                      {c.reference || `CMD-${String(c.id).padStart(5, "0")}`}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">
-                        {c.client ? `${c.client.nom || ""} ${c.client.prenom || ""}`.trim() || c.client.raison_sociale : "—"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{c.date || c.created_at?.split("T")[0]}</p>
+              {rawCmd
+                .filter((c: any) => !(c.agenceId ?? c.agence_id))
+                .slice(0, 5)
+                .map((c: any) => {
+                  const ref = c.reference || `CMD-${String(c.id).padStart(5, "0")}`;
+                  const client = c.client
+                    ? (`${c.client.nom ?? ""} ${c.client.prenom ?? ""}`).trim() || c.client.raison_sociale || "—"
+                    : "—";
+                  const source = c.userId || c.user_id ? "terrain" : "marketplace";
+                  return (
+                    <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50/50">
+                      <span className="font-mono text-xs font-semibold text-muted-foreground w-28 shrink-0">{ref}</span>
+                      <span className="flex-1 text-sm font-medium">{client}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        source === "terrain"
+                          ? "bg-green-50 text-green-700"
+                          : "bg-purple-50 text-purple-700"
+                      }`}>
+                        {source === "terrain" ? "Terrain" : "Marketplace"}
+                      </span>
+                      <span className="text-sm font-semibold text-right w-28">{formatCurrency(Number(c.montant) || 0)}</span>
                     </div>
-                    <span className="font-semibold text-sm whitespace-nowrap shrink-0">{formatCurrency(Number(c.montant) || 0)}</span>
-                    <Badge variant="outline" className={`text-xs shrink-0 ${COLORS[statut] ?? "bg-gray-100 text-gray-700"}`}>
-                      {LABELS[statut] ?? statut}
-                    </Badge>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Accès rapide */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Accès rapide</h2>
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-          {quickActions.map((a) => {
-            const Icon = a.icon;
-            return (
-              <Link key={a.path} to={a.path}>
-                <Card className="hover:border-primary/50 transition-all hover:shadow-md cursor-pointer group">
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                    <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${a.color} flex items-center justify-center shadow group-hover:scale-110 transition-transform`}>
-                      <Icon className="h-5 w-5 text-white" />
-                    </div>
-                    <p className="font-medium text-sm">{a.label}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Accès rapide</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Commandes",     path: "/admin/commercial/commandes",  icon: ClipboardList, color: "from-primary to-primary/80",   desc: "Réception & assignation" },
+            { label: "Bons Commande", path: "/admin/achats/bon-commandes",  icon: CheckCircle2,  color: "from-green-500 to-green-600",   desc: "Transmis à logistique" },
+            { label: "Comptabilité",  path: "/admin/commercial/compta",     icon: Receipt,       color: "from-indigo-500 to-indigo-600", desc: "Factures & créances" },
+            { label: "Clients",       path: "/admin/commercial/clients",    icon: Building2,     color: "from-blue-500 to-blue-600",    desc: "Gestion clients" },
+          ].map(({ label, path, icon: Icon, color, desc }) => (
+            <Link key={path} to={path}>
+              <Card className="hover:border-primary/40 transition-all hover:shadow-sm cursor-pointer group h-full">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{label}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

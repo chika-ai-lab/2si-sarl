@@ -1,0 +1,26 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8080",
+      "localStorage": [
+        {
+          "name": "progresspay_wishlist",
+          "value": "[]"
+        },
+        {
+          "name": "gestemc_onboarding_v1",
+          "value": "1"
+        },
+        {
+          "name": "2si-auth-user",
+          "value": "{\"id\":\"8\",\"email\":\"aissatou@2si.sn\",\"name\":\"Aissatou Camara\",\"roles\":[\"Commercial\"],\"customPermissions\":[\"DASHBOARD:*:READ\",\"COMMERCIAL:*:*\",\"PRODUCTS:PRODUCT:READ\"],\"moduleAccess\":[{\"moduleId\":\"dashboard\",\"enabled\":true},{\"moduleId\":\"commercial\",\"enabled\":true},{\"moduleId\":\"achats\",\"enabled\":false},{\"moduleId\":\"products\",\"enabled\":true},{\"moduleId\":\"orders\",\"enabled\":false},{\"moduleId\":\"reports\",\"enabled\":false},{\"moduleId\":\"admin\",\"enabled\":false},{\"moduleId\":\"crm\",\"enabled\":false}],\"status\":\"active\",\"updatedAt\":\"2026-04-28T12:17:02.669Z\",\"permissionsVersion\":2,\"lastLogin\":\"2026-04-28T12:17:02.668Z\"}"
+        },
+        {
+          "name": "auth-token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjgsImVtYWlsIjoiYWlzc2F0b3VAMnNpLnNuIiwiaWF0IjoxNzc3Mzc4NjIyLCJleHAiOjE3Nzc5ODM0MjJ9.33dcRlSxKzMcN2eLGHIwAOTk6Ac8oiv0RAgsTyHxCtU"
+        }
+      ]
+    }
+  ]
+}

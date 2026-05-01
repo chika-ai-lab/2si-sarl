@@ -6,7 +6,7 @@ const AUTH_STORAGE_KEY = "2si-auth-user";
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
-const PERMISSIONS_VERSION = 2;
+const PERMISSIONS_VERSION = 4; // v4: achats ajouté au rôle commercial
 
 // ─── Liste exhaustive des modules de l'application ───────────────────────────
 const ALL_MODULE_IDS = [
@@ -25,10 +25,11 @@ const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] 
   commercial: {
     permissions: [
       "DASHBOARD:*:READ",
-      "COMMERCIAL:*:*",       // ventes, clients, catalogue, accréditif, SAV, rapports
+      "COMMERCIAL:*:*",          // ventes, clients, catalogue, accréditif, SAV, rapports
       "PRODUCTS:PRODUCT:READ",
+      "ACHATS:BON_COMMANDES:READ", // lecture des BDC créés depuis les commandes
     ],
-    modules: ["dashboard", "commercial", "products"],
+    modules: ["dashboard", "commercial", "products", "achats"],
   },
   logistique: {
     permissions: [

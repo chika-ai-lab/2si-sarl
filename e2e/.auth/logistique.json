@@ -1,0 +1,26 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8080",
+      "localStorage": [
+        {
+          "name": "progresspay_wishlist",
+          "value": "[]"
+        },
+        {
+          "name": "gestemc_onboarding_v1",
+          "value": "1"
+        },
+        {
+          "name": "2si-auth-user",
+          "value": "{\"id\":\"9\",\"email\":\"fatou@2si.sn\",\"name\":\"Fatou Sarr\",\"roles\":[\"Logistique\"],\"customPermissions\":[\"DASHBOARD:*:READ\",\"COMMERCIAL:CATALOG:READ\",\"COMMERCIAL:CLIENTS:READ\",\"COMMERCIAL:SAV:READ\",\"ACHATS:*:*\"],\"moduleAccess\":[{\"moduleId\":\"dashboard\",\"enabled\":true},{\"moduleId\":\"commercial\",\"enabled\":true},{\"moduleId\":\"achats\",\"enabled\":true},{\"moduleId\":\"products\",\"enabled\":false},{\"moduleId\":\"orders\",\"enabled\":false},{\"moduleId\":\"reports\",\"enabled\":false},{\"moduleId\":\"admin\",\"enabled\":false},{\"moduleId\":\"crm\",\"enabled\":false}],\"status\":\"active\",\"updatedAt\":\"2026-04-28T12:16:57.432Z\",\"permissionsVersion\":2,\"lastLogin\":\"2026-04-28T12:16:57.432Z\"}"
+        },
+        {
+          "name": "auth-token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjksImVtYWlsIjoiZmF0b3VAMnNpLnNuIiwiaWF0IjoxNzc3Mzc4NjE3LCJleHAiOjE3Nzc5ODM0MTd9.NptMHI4YSA429LxiX3lCcwpTE1UZye8WlCBKJghmQnw"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { useCommande, useChangeCommandeStatut, useDeleteCommande } from "../hooks/useCommandes";
+import { useCommande, useChangeCommandeStatut, useDeleteCommande, useUpdateCommande } from "../hooks/useCommandes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft, Package, User, MapPin, CreditCard, FileText, Truck,
-  CheckCircle, XCircle, Clock, AlertCircle, Trash2, RefreshCw,
+  CheckCircle, XCircle, Clock, AlertCircle, Trash2, RefreshCw, Pencil, Eye,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import type { CommandeStatut } from "../types";
@@ -51,10 +51,15 @@ const TRANSITIONS: Record<CommandeStatut, CommandeStatut[]> = {
 export default function CommandeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Détecte si on est en mode édition (URL finit par /edit)
+  const isEditMode = location.pathname.endsWith("/edit");
 
   const { data: commande, isLoading, isError } = useCommande(id!);
   const changeStatut  = useChangeCommandeStatut();
   const deleteCommande = useDeleteCommande();
+  const updateCommande = useUpdateCommande();
 
   const [isStatutOpen,  setIsStatutOpen]  = useState(false);
   const [isDeleteOpen,  setIsDeleteOpen]  = useState(false);
@@ -88,11 +93,13 @@ export default function CommandeDetailPage() {
       </div>
     );
 
-  const statutCfg     = STATUT_CONFIG[commande.statut];
+  const statutCfg     = STATUT_CONFIG[commande.statut] ?? STATUT_CONFIG.brouillon;
   const paiementCfg   = PAIEMENT_STATUT[commande.statutPaiement] ?? PAIEMENT_STATUT.en_attente;
   const StatusIcon    = statutCfg.icon;
-  const nextStatuts   = TRANSITIONS[commande.statut];
-  const resteAPayer   = commande.total - commande.montantPaye;
+  const nextStatuts   = TRANSITIONS[commande.statut] ?? [];
+  const total         = commande.total ?? 0;
+  const montantPaye   = commande.montantPaye ?? 0;
+  const resteAPayer   = total - montantPaye;
 
   return (
     <>
@@ -143,25 +150,52 @@ export default function CommandeDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-4">
-            <Link to="/admin/commercial/commandes">
-              <Button variant="outline" size="sm"><ArrowLeft className="mr-2 h-4 w-4" />Retour</Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/admin/commercial/commandes")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />Retour à la liste
+            </Button>
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold font-mono">{commande.reference}</h2>
+                <h2 className="text-2xl font-bold font-mono">{commande.reference ?? `CMD-${id}`}</h2>
                 <Badge variant="outline" className={statutCfg.color}>
                   <StatusIcon className="mr-1 h-3 w-3" />
                   {statutCfg.label}
                 </Badge>
+                {isEditMode && (
+                  <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+                    <Pencil className="mr-1 h-3 w-3" />
+                    Mode édition
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {new Date(commande.dateCommande).toLocaleDateString("fr-FR", {
+                {commande.dateCommande ? new Date(commande.dateCommande).toLocaleDateString("fr-FR", {
                   year: "numeric", month: "long", day: "numeric",
-                })}
+                }) : "Date inconnue"}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
+            {/* Bouton Modifier */}
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/admin/commercial/commandes/${id}/edit`)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />Modifier
+              </Button>
+            )}
+            {isEditMode && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/admin/commercial/commandes/${id}`)}
+              >
+                <Eye className="mr-2 h-4 w-4" />Voir
+              </Button>
+            )}
             {nextStatuts.length > 0 && (
               <Button onClick={() => setIsStatutOpen(true)}>
                 <RefreshCw className="mr-2 h-4 w-4" />Changer statut
@@ -181,19 +215,19 @@ export default function CommandeDetailPage() {
             icon={<Package className="h-5 w-5 text-blue-600" />}
             bg="bg-blue-100"
             label="Sous-total"
-            value={formatCurrency(commande.sousTotal)}
+            value={formatCurrency(commande.sousTotal ?? 0)}
           />
           <KpiCard
             icon={<AlertCircle className="h-5 w-5 text-orange-500" />}
             bg="bg-orange-100"
             label="Taxe (18%)"
-            value={formatCurrency(commande.taxe)}
+            value={formatCurrency(commande.taxe ?? 0)}
           />
           <KpiCard
             icon={<CreditCard className="h-5 w-5 text-green-600" />}
             bg="bg-green-100"
             label="Total"
-            value={<span className="text-green-700">{formatCurrency(commande.total)}</span>}
+            value={<span className="text-green-700">{formatCurrency(total)}</span>}
           />
           <KpiCard
             icon={<Clock className="h-5 w-5 text-red-500" />}
@@ -228,16 +262,19 @@ export default function CommandeDetailPage() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Truck className="h-4 w-4 text-muted-foreground" />Livraison</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Row label="Mode" value={commande.modeLivraison.replace(/_/g, " ")} />
+              <Row label="Mode" value={(commande.modeLivraison ?? "retrait").replace(/_/g, " ")} />
               {commande.fraisLivraison > 0 && <Row label="Frais" value={formatCurrency(commande.fraisLivraison)} />}
               {commande.dateLivraison && (
                 <Row label="Date" value={new Date(commande.dateLivraison).toLocaleDateString("fr-FR")} />
               )}
+              {!commande.dateLivraison && (
+                <Row label="Date" value="—" />
+              )}
               <div className="flex items-start gap-2 pt-1">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <span>
-                  {commande.adresseLivraison.rue}, {commande.adresseLivraison.ville},{" "}
-                  {commande.adresseLivraison.pays}
+                  {commande.adresseLivraison?.rue ?? "—"}, {commande.adresseLivraison?.ville ?? "—"},{" "}
+                  {commande.adresseLivraison?.pays ?? "Sénégal"}
                 </span>
               </div>
             </CardContent>
@@ -247,12 +284,12 @@ export default function CommandeDetailPage() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4 text-muted-foreground" />Paiement</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <Row label="Mode" value={<span className="capitalize">{commande.modePaiement}</span>} />
+              <Row label="Mode" value={<span className="capitalize">{commande.modePaiement ?? "virement"}</span>} />
               <Row
                 label="Statut"
                 value={<Badge variant="outline" className={paiementCfg.color}>{paiementCfg.label}</Badge>}
               />
-              <Row label="Payé"     value={<span className="text-green-600 font-semibold">{formatCurrency(commande.montantPaye)}</span>} />
+              <Row label="Payé"     value={<span className="text-green-600 font-semibold">{formatCurrency(montantPaye)}</span>} />
               <Row label="Restant"  value={<span className={resteAPayer > 0 ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>{formatCurrency(resteAPayer)}</span>} />
               {commande.accreditif && <Row label="Accréditif" value={<span className="font-mono text-xs">{commande.accreditif}</span>} />}
             </CardContent>
@@ -262,7 +299,7 @@ export default function CommandeDetailPage() {
         {/* Lignes de commande */}
         <Card>
           <CardHeader>
-            <CardTitle>Articles commandés ({commande.lignes.length})</CardTitle>
+            <CardTitle>Articles commandés ({commande.lignes?.length ?? 0})</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -276,7 +313,7 @@ export default function CommandeDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {commande.lignes.map((ligne) => (
+                {(commande.lignes ?? []).map((ligne) => (
                   <TableRow key={ligne.id}>
                     <TableCell>
                       <p className="font-medium">{ligne.produit?.nom ?? ligne.produitId}</p>
@@ -304,15 +341,15 @@ export default function CommandeDetailPage() {
               <div className="w-72 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sous-total</span>
-                  <span>{formatCurrency(commande.sousTotal)}</span>
+                  <span>{formatCurrency(commande.sousTotal ?? 0)}</span>
                 </div>
-                {commande.remise > 0 && (
+                {(commande.remise ?? 0) > 0 && (
                   <div className="flex justify-between text-orange-600">
                     <span>Remise</span>
                     <span>-{formatCurrency(commande.remise)}</span>
                   </div>
                 )}
-                {commande.fraisLivraison > 0 && (
+                {(commande.fraisLivraison ?? 0) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Frais de livraison</span>
                     <span>{formatCurrency(commande.fraisLivraison)}</span>
@@ -320,12 +357,12 @@ export default function CommandeDetailPage() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">TVA (18%)</span>
-                  <span>{formatCurrency(commande.taxe)}</span>
+                  <span>{formatCurrency(commande.taxe ?? 0)}</span>
                 </div>
                 <hr />
                 <div className="flex justify-between text-base font-bold">
                   <span>Total</span>
-                  <span>{formatCurrency(commande.total)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
               </div>
             </div>
