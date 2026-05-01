@@ -426,10 +426,23 @@ export default function BonCommandesPage() {
                         size="sm"
                         className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white"
                         disabled={generating === bdc.id}
-                        onClick={(e) => { e.stopPropagation(); toggleBdc(bdc); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Tous les fournisseurs déjà assignés → générer directement
+                          if (assignees === totalLignes && totalLignes > 0) {
+                            handleGenerer(bdc);
+                          } else {
+                            // Fournisseurs manquants → ouvrir le détail pour les assigner
+                            if (openId !== bdc.id) toggleBdc(bdc);
+                          }
+                        }}
                       >
-                        <Zap className="h-3 w-3" />
-                        Assigner &amp; Générer
+                        {generating === bdc.id
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : <Zap className="h-3 w-3" />}
+                        {assignees === totalLignes && totalLignes > 0
+                          ? "Générer les commandes"
+                          : "Assigner les fournisseurs"}
                       </Button>
                     )}
 
