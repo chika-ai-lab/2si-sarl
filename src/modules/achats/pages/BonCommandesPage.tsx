@@ -392,20 +392,19 @@ export default function BonCommandesPage() {
                       : <AlertCircle className="h-4 w-4 text-amber-500" />}
                     {statutBadge(bdc.statut)}
 
-                    {/* Actions brouillon — commercial uniquement */}
+                    {/* Brouillon : transmettre à la logistique */}
                     {(isCommercial || isAdmin) && bdc.statut === "brouillon" && (
                       <>
                         <Button
                           size="sm"
-                          variant="outline"
-                          className="h-7 text-xs gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+                          className="h-7 text-xs gap-1 bg-blue-600 hover:bg-blue-700 text-white"
                           disabled={transmitting === bdc.id}
                           onClick={(e) => { e.stopPropagation(); handleTransmettre(bdc); }}
                         >
                           {transmitting === bdc.id
                             ? <Loader2 className="h-3 w-3 animate-spin" />
                             : <Send className="h-3 w-3" />}
-                          Transmettre
+                          Transmettre à la logistique
                         </Button>
                         <Button
                           size="sm"
@@ -419,6 +418,26 @@ export default function BonCommandesPage() {
                             : <Trash2 className="h-3 w-3" />}
                         </Button>
                       </>
+                    )}
+
+                    {/* Transmis : prêt pour génération des commandes fournisseurs */}
+                    {(isLogistique || isAdmin) && bdc.statut === "transmis" && (
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white"
+                        disabled={generating === bdc.id}
+                        onClick={(e) => { e.stopPropagation(); toggleBdc(bdc); }}
+                      >
+                        <Zap className="h-3 w-3" />
+                        Assigner &amp; Générer
+                      </Button>
+                    )}
+
+                    {/* En cours / terminé : statut informatif */}
+                    {(bdc.statut === "en_cours" || bdc.statut === "termine") && (
+                      <span className="text-xs text-muted-foreground italic">
+                        {bdc.statut === "en_cours" ? "CFs générées" : "Terminé"}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -534,9 +553,9 @@ export default function BonCommandesPage() {
                           <TooltipTrigger asChild>
                             <Button
                               size="sm"
-                              disabled={generating === bdc.id || bdc.statut === "en_cours" || bdc.statut === "termine" || bdc.statut === "brouillon"}
+                              disabled={generating === bdc.id || bdc.statut !== "transmis"}
                               onClick={() => handleGenerer(bdc)}
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-green-600 hover:bg-green-700"
                             >
                               {generating === bdc.id
                                 ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -544,16 +563,16 @@ export default function BonCommandesPage() {
                               {bdc.statut === "brouillon"
                                 ? "En attente de transmission"
                                 : bdc.statut === "en_cours" || bdc.statut === "termine"
-                                ? "Déjà généré"
+                                ? "Commandes déjà générées"
                                 : "Générer Commandes Fournisseurs"}
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs text-center">
                             {bdc.statut === "brouillon"
-                              ? "Le responsable commercial doit d'abord transmettre ce BDC"
+                              ? "Le commercial doit d'abord transmettre ce BDC à la logistique"
                               : bdc.statut === "en_cours" || bdc.statut === "termine"
                               ? "Les commandes fournisseurs ont déjà été générées"
-                              : "Crée une commande par fournisseur à partir des lignes de ce bon de commande"}
+                              : "Assigne les fournisseurs et génère les commandes d'achat"}
                           </TooltipContent>
                         </Tooltip>
                       </div>
