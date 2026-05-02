@@ -97,11 +97,11 @@ export default function UsersPage() {
     setLoading(true);
     try {
       const [usersRes, rolesRes] = await Promise.all([
-        apiClient.get<UsersResponse>("/users"),
-        apiClient.get<RolesResponse>("/roles"),
+        apiClient.get<any>("/users"),
+        apiClient.get<any>("/roles"),
       ]);
-      setUsers(usersRes.data ?? []);
-      setRoles(rolesRes.data ?? []);
+      setUsers(Array.isArray(usersRes) ? usersRes : (usersRes?.data ?? []));
+      setRoles(Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []));
     } catch (err) {
       console.error(err);
       toast({

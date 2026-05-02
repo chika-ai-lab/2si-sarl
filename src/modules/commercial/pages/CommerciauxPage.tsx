@@ -78,10 +78,8 @@ async function fetchCommerciauxStats(): Promise<CommercialStats[]> {
   const users: BackendUser[] = Array.isArray(usersRaw) ? usersRaw : (usersRaw?.data ?? []);
   const commandes: RawCommande[] = Array.isArray(commandesRaw) ? commandesRaw : (commandesRaw?.data ?? []);
 
-  // Keep only commercial-role users
-  const commerciaux = users.filter((u) => isCommercialRole(u.roles));
-
-  return commerciaux.map((user) => {
+  // Tous les utilisateurs — pas de filtre par rôle pour ne pas exclure ceux sans rôle assigné
+  return users.map((user) => {
     const mine = commandes.filter((c) => {
       const uid = c.commercial_id ?? c.user_id;
       return uid === user.id;
@@ -119,6 +117,11 @@ function CommercialCard({ stat, onClick }: { stat: CommercialStats; onClick: () 
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-sm truncate">{user.name}</p>
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            {user.roles?.length > 0 && (
+              <p className="text-[10px] mt-0.5 text-muted-foreground/70 truncate">
+                {user.roles.map((r) => r.title).join(", ")}
+              </p>
+            )}
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
         </div>
@@ -213,10 +216,10 @@ export default function CommerciauxPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            Équipe Commerciale
+            Équipe
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {isLoading ? "Chargement…" : `${stats.length} commercial${stats.length !== 1 ? "aux" : ""}`}
+            {isLoading ? "Chargement…" : `${stats.length} utilisateur${stats.length !== 1 ? "s" : ""}`}
           </p>
         </div>
       </div>
