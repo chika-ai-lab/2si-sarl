@@ -18,7 +18,7 @@ export const reportsModuleConfig: ModuleConfig = {
   routes: [
     {
       path: "/",
-      component: lazy(() => import("../../pages/admin/ReportsPage")),
+      component: lazy(() => import("./pages/ReportsPage")),
       requiresPermission: ["REPORTS:REPORT:READ"],
       exact: true
     }

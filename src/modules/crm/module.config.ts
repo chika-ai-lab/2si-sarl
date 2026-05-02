@@ -24,23 +24,23 @@ export const crmModuleConfig: ModuleConfig = {
   routes: [
     {
       path: "/",
-      component: lazy(() => import("../../pages/admin/CustomersPage")),
+      component: lazy(() => import("./pages/CustomersPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"],
       exact: true
     },
     {
       path: "/customers",
-      component: lazy(() => import("../../pages/admin/CustomersPage")),
+      component: lazy(() => import("./pages/CustomersPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
     },
     {
       path: "/contacts",
-      component: lazy(() => import("../../pages/admin/ContactsPage")),
+      component: lazy(() => import("./pages/ContactsPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
     },
     {
       path: "/leads",
-      component: lazy(() => import("../../pages/admin/LeadsPage")),
+      component: lazy(() => import("./pages/LeadsPage")),
       requiresPermission: ["CRM:CUSTOMER:READ"]
     }
   ],

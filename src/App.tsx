@@ -18,7 +18,7 @@ import OrderPage from "./pages/OrderPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
-import NotFoundAdminPage from "./pages/admin/NotFoundAdminPage";
+import NotFoundAdminPage from "./components/layout/NotFoundAdminPage";
 import { AdminLayoutV2 } from "./components/layout/AdminLayoutV2";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { isMaintenanceModeEnabled } from "./services/settingsService";
@@ -30,11 +30,11 @@ import { Loader2 } from "lucide-react";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime:            Infinity,       // cache permanent — invalidation explicite sur mutation
-      gcTime:               Infinity,       // ne jamais vider le cache pendant la session
-      retry:                1,              // 1 seul retry sur erreur réseau
+      staleTime:            1000 * 60 * 2,  // 2 min — revalide si stale au montage
+      gcTime:               1000 * 60 * 10, // 10 min — libère les entrées non utilisées
+      retry:                1,
       refetchOnWindowFocus: false,
-      refetchOnMount:       false,          // pas de refetch si le cache existe déjà
+      refetchOnMount:       "stale",        // refetch uniquement si les données ont expiré
     },
   },
 });

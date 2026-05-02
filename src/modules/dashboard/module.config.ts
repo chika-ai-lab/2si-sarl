@@ -24,12 +24,8 @@ export const dashboardModuleConfig: ModuleConfig = {
   routes: [
     {
       path: "/",
-      component: lazy(() => import("../../pages/admin/DashboardPage")),
+      component: lazy(() => import("./pages/DashboardPage")),
       exact: true
-    },
-    {
-      path: "dashboard",
-      component: lazy(() => import("../../pages/admin/DashboardPage"))
     }
   ],
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, UserV1, UserStatus } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AUTH_STORAGE_KEY = "2si-auth-user";
 
@@ -166,6 +167,7 @@ interface AuthProviderProps { children: ReactNode; }
 export function AuthProviderV2({ children }: AuthProviderProps) {
   const [user, setUser]         = useState<User | null>(null);
   const [isLoading, setLoading] = useState(true);
+  const queryClient             = useQueryClient();
 
   useEffect(() => {
     setUser(loadUserFromStorage());
@@ -207,6 +209,9 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
         { lastLogin: new Date().toISOString(), createdAt: backendUser.created_at },
       );
 
+      // Vider le cache avant de charger les données du nouvel utilisateur
+      queryClient.clear();
+
       setUser(user);
       saveUserToStorage(user);
 
@@ -231,6 +236,8 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
       saveUserToStorage(null);
       localStorage.removeItem("auth-token");
       localStorage.removeItem("refresh-token");
+      // Vider tout le cache React Query pour éviter les fuites de données entre sessions
+      queryClient.clear();
       toast({ title: "Déconnexion", description: "Vous avez été déconnecté avec succès" });
     }
   };

@@ -40,7 +40,7 @@ export function useRapportEvolutionCA(filters: RapportFilters = {}) {
     queryKey: rapportsKeys.evolutionCA(filters),
     queryFn: () => getRapportEvolutionCA(filters),
     select: (response) => response.data,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -52,7 +52,7 @@ export function useStatistiquesGlobales() {
     queryKey: rapportsKeys.statistiques(),
     queryFn: () => getStatistiquesGlobales(),
     select: (response) => response.data,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

@@ -14,11 +14,11 @@
         },
         {
           "name": "2si-auth-user",
-          "value": "{\"id\":\"8\",\"email\":\"aissatou@2si.sn\",\"name\":\"Aissatou Camara\",\"roles\":[\"Commercial\"],\"customPermissions\":[\"DASHBOARD:*:READ\",\"COMMERCIAL:*:*\",\"PRODUCTS:PRODUCT:READ\"],\"moduleAccess\":[{\"moduleId\":\"dashboard\",\"enabled\":true},{\"moduleId\":\"commercial\",\"enabled\":true},{\"moduleId\":\"achats\",\"enabled\":false},{\"moduleId\":\"products\",\"enabled\":true},{\"moduleId\":\"orders\",\"enabled\":false},{\"moduleId\":\"reports\",\"enabled\":false},{\"moduleId\":\"admin\",\"enabled\":false},{\"moduleId\":\"crm\",\"enabled\":false}],\"status\":\"active\",\"updatedAt\":\"2026-04-28T12:17:02.669Z\",\"permissionsVersion\":2,\"lastLogin\":\"2026-04-28T12:17:02.668Z\"}"
+          "value": "{\"id\":\"26\",\"email\":\"aissatou@2si.sn\",\"name\":\"Aissatou Camara\",\"roles\":[\"Commercial\"],\"customPermissions\":[\"DASHBOARD:*:READ\",\"COMMERCIAL:*:*\",\"PRODUCTS:PRODUCT:READ\",\"ACHATS:BON_COMMANDES:READ\"],\"moduleAccess\":[{\"moduleId\":\"dashboard\",\"enabled\":true},{\"moduleId\":\"commercial\",\"enabled\":true},{\"moduleId\":\"achats\",\"enabled\":true},{\"moduleId\":\"products\",\"enabled\":true},{\"moduleId\":\"orders\",\"enabled\":false},{\"moduleId\":\"reports\",\"enabled\":false},{\"moduleId\":\"admin\",\"enabled\":false},{\"moduleId\":\"crm\",\"enabled\":false}],\"status\":\"active\",\"updatedAt\":\"2026-05-01T21:17:07.398Z\",\"permissionsVersion\":4,\"lastLogin\":\"2026-05-01T21:17:07.397Z\"}"
         },
         {
           "name": "auth-token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjgsImVtYWlsIjoiYWlzc2F0b3VAMnNpLnNuIiwiaWF0IjoxNzc3Mzc4NjIyLCJleHAiOjE3Nzc5ODM0MjJ9.33dcRlSxKzMcN2eLGHIwAOTk6Ac8oiv0RAgsTyHxCtU"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI2LCJlbWFpbCI6ImFpc3NhdG91QDJzaS5zbiIsImlhdCI6MTc3NzY3MDIyNiwiZXhwIjoxNzc4Mjc1MDI2fQ.3N3Mu4m7tX27vMiO1KxqLBlopxg7wZHjQU1p5BibQmo"
         }
       ]
     }

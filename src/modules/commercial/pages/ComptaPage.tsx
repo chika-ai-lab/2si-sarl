@@ -74,7 +74,13 @@ export default function ComptaPage() {
     queryKey: ["factures-clients"],
     queryFn: async () => {
       const r = await apiClient.get<any>("/facture-clients", { per_page: 500 });
-      return (r.data ?? r ?? []) as FactureClient[];
+      if (import.meta.env.DEV) console.log("[ComptaPage] /facture-clients raw:", r);
+      // Laravel peut envoyer : tableau direct, {data:[]}, ou {data:{data:[]}}
+      const list = Array.isArray(r) ? r
+        : Array.isArray(r?.data) ? r.data
+        : Array.isArray(r?.data?.data) ? r.data.data
+        : [];
+      return list as FactureClient[];
     },
     staleTime: 1000 * 60,
   });
@@ -84,7 +90,12 @@ export default function ComptaPage() {
     queryKey: ["factures-fournisseurs"],
     queryFn: async () => {
       const r = await apiClient.get<any>("/facture-fournisseurs", { per_page: 500 });
-      return (r.data ?? r ?? []) as FactureFournisseur[];
+      if (import.meta.env.DEV) console.log("[ComptaPage] /facture-fournisseurs raw:", r);
+      const list = Array.isArray(r) ? r
+        : Array.isArray(r?.data) ? r.data
+        : Array.isArray(r?.data?.data) ? r.data.data
+        : [];
+      return list as FactureFournisseur[];
     },
     staleTime: 1000 * 60,
   });

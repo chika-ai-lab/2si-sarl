@@ -18,18 +18,18 @@ export const ordersModuleConfig: ModuleConfig = {
   routes: [
     {
       path: "/",
-      component: lazy(() => import("../../pages/admin/OrdersPage")),
+      component: lazy(() => import("./pages/OrdersPage")),
       requiresPermission: ["ORDERS:ORDER:READ"],
       exact: true
     },
     {
       path: "/quotes",
-      component: lazy(() => import("../../pages/admin/QuotesPage")),
+      component: lazy(() => import("./pages/QuotesPage")),
       requiresPermission: ["ORDERS:ORDER:READ"]
     },
     {
       path: "/invoices",
-      component: lazy(() => import("../../pages/admin/InvoicesPage")),
+      component: lazy(() => import("./pages/InvoicesPage")),
       requiresPermission: ["ORDERS:ORDER:READ"]
     }
   ],

@@ -29,6 +29,10 @@ export const adminModuleConfig: ModuleConfig = {
         {
             path: "roles",
             component: lazy(() => import("./pages/RolesPage"))
+        },
+        {
+            path: "config",
+            component: lazy(() => import("./pages/SettingsPage"))
         }
     ],
 
@@ -46,6 +50,13 @@ export const adminModuleConfig: ModuleConfig = {
             icon: "Shield",
             section: "admin",
             order: 21
+        },
+        {
+            label: "Paramètres",
+            path: "/admin/settings/config",
+            icon: "Settings",
+            section: "admin",
+            order: 22
         }
     ],
 

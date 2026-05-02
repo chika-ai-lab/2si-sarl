@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,10 +42,47 @@ import {
   Percent,
   FileSpreadsheet,
   ChevronDown,
+  RefreshCw,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useRapportEvolutionCA } from "../hooks/useRapports";
+import { rapportsKeys } from "../hooks/useRapports";
 import type { RapportFilters } from "../services/rapports.service";
+
+// ── Helpers période ────────────────────────────────────────────────────────
+
+type PeriodePreset = "mois" | "trimestre" | "semestre" | "annee" | "custom";
+
+function getPeriodeDates(preset: PeriodePreset): { dateDebut: string; dateFin: string } {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth(); // 0-indexed
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  if (preset === "mois") {
+    return {
+      dateDebut: `${y}-${pad(m + 1)}-01`,
+      dateFin: fmt(new Date(y, m + 1, 0)),
+    };
+  }
+  if (preset === "trimestre") {
+    const trimStart = Math.floor(m / 3) * 3;
+    return {
+      dateDebut: `${y}-${pad(trimStart + 1)}-01`,
+      dateFin: fmt(new Date(y, trimStart + 3, 0)),
+    };
+  }
+  if (preset === "semestre") {
+    const semStart = m < 6 ? 0 : 6;
+    return {
+      dateDebut: `${y}-${pad(semStart + 1)}-01`,
+      dateFin: fmt(new Date(y, semStart + 6, 0)),
+    };
+  }
+  // annee (default)
+  return { dateDebut: `${y}-01-01`, dateFin: `${y}-12-31` };
+}
 import {
   LineChart,
   Line,
@@ -84,17 +122,32 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 export default function RapportsPage() {
-  const [filters, setFilters] = useState<RapportFilters>({
-    dateDebut: "2024-07-01",
-    dateFin: "2024-12-31",
-  });
+  const qc = useQueryClient();
+
+  const [periodePreset, setPeriodePreset] = useState<PeriodePreset>("annee");
+  const [filters, setFilters] = useState<RapportFilters>(() => getPeriodeDates("annee"));
 
   const [periodeVue, setPeriodeVue] = useState<"mensuelle" | "hebdomadaire">("mensuelle");
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
-  const { data: rapportData, isLoading } = useRapportEvolutionCA(filters);
+  const { data: rapportData, isLoading, isFetching } = useRapportEvolutionCA(filters);
   const stats = rapportData?.statistiques;
+
+  // Banques disponibles extraites des données (dynamique)
+  const banquesDisponibles = useMemo(() => {
+    const fromData = (rapportData?.repartitionBanques ?? []).map((b) => b.banque).filter(Boolean);
+    return fromData.length > 0 ? fromData : [];
+  }, [rapportData]);
+
+  const applyPreset = (preset: PeriodePreset) => {
+    setPeriodePreset(preset);
+    if (preset !== "custom") {
+      setFilters((f) => ({ ...f, ...getPeriodeDates(preset) }));
+    }
+  };
+
+  const refresh = () => qc.invalidateQueries({ queryKey: rapportsKeys.all });
 
   const handleExportComplet = () => {
     if (!rapportData) {
@@ -534,6 +587,9 @@ export default function RapportsPage() {
           <h2 className="text-3xl font-bold tracking-tight">Rapports Commerciaux</h2>
           <p className="text-muted-foreground">
             Analyse des performances et statistiques d'activité
+            {isFetching && !isLoading && (
+              <span className="ml-2 text-xs text-primary animate-pulse">• Actualisation…</span>
+            )}
           </p>
         </div>
 
@@ -625,68 +681,115 @@ export default function RapportsPage() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            <div>
-              <Label className="text-sm font-medium mb-2 block">
-                <Calendar className="inline h-4 w-4 mr-1" />
-                Date début
-              </Label>
-              <input
-                type="date"
-                value={filters.dateDebut}
-                onChange={(e) => setFilters({ ...filters, dateDebut: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium mb-2 block">
-                <Calendar className="inline h-4 w-4 mr-1" />
-                Date fin
-              </Label>
-              <input
-                type="date"
-                value={filters.dateFin}
-                onChange={(e) => setFilters({ ...filters, dateFin: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Banque</Label>
-              <Select
-                value={filters.banque || "all"}
-                onValueChange={(value) =>
-                  setFilters({ ...filters, banque: value === "all" ? undefined : value })
-                }
+        <CardContent className="pt-5 pb-4 space-y-4">
+          {/* Ligne 1 : raccourcis période + rafraîchir */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground mr-1">
+              <Calendar className="inline h-4 w-4 mr-1" />
+              Période :
+            </span>
+            {(["mois", "trimestre", "semestre", "annee", "custom"] as PeriodePreset[]).map((p) => {
+              const labels: Record<PeriodePreset, string> = {
+                mois: "Ce mois",
+                trimestre: "Ce trimestre",
+                semestre: "Ce semestre",
+                annee: "Cette année",
+                custom: "Personnalisé",
+              };
+              return (
+                <Button
+                  key={p}
+                  size="sm"
+                  variant={periodePreset === p ? "default" : "outline"}
+                  onClick={() => applyPreset(p)}
+                >
+                  {labels[p]}
+                </Button>
+              );
+            })}
+            <div className="ml-auto">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={refresh}
+                disabled={isFetching}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Toutes les banques" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les banques</SelectItem>
-                  <SelectItem value="CBAO">CBAO</SelectItem>
-                  <SelectItem value="CMS">CMS</SelectItem>
-                  <SelectItem value="Autre">Autre</SelectItem>
-                </SelectContent>
-              </Select>
+                <RefreshCw className={`h-4 w-4 mr-1 ${isFetching ? "animate-spin" : ""}`} />
+                Actualiser
+              </Button>
             </div>
+          </div>
 
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Vue période</Label>
-              <Select
-                value={periodeVue}
-                onValueChange={(value) => setPeriodeVue(value as "mensuelle" | "hebdomadaire")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mensuelle">Mensuelle</SelectItem>
-                  <SelectItem value="hebdomadaire">Hebdomadaire</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Ligne 2 : date pickers (visibles seulement en mode Personnalisé) + banque + vue */}
+          <div className="flex flex-wrap gap-4 items-end">
+            {periodePreset === "custom" && (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Date début</Label>
+                  <input
+                    type="date"
+                    value={filters.dateDebut ?? ""}
+                    onChange={(e) => setFilters({ ...filters, dateDebut: e.target.value })}
+                    className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Date fin</Label>
+                  <input
+                    type="date"
+                    value={filters.dateFin ?? ""}
+                    onChange={(e) => setFilters({ ...filters, dateFin: e.target.value })}
+                    className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Résumé période sélectionnée */}
+            {periodePreset !== "custom" && filters.dateDebut && filters.dateFin && (
+              <p className="text-xs text-muted-foreground">
+                Du <strong>{filters.dateDebut}</strong> au <strong>{filters.dateFin}</strong>
+              </p>
+            )}
+
+            <div className="ml-auto flex gap-3">
+              {/* Banque — dynamique si données disponibles */}
+              {(banquesDisponibles.length > 0 || filters.banque) && (
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Banque</Label>
+                  <Select
+                    value={filters.banque || "all"}
+                    onValueChange={(v) => setFilters({ ...filters, banque: v === "all" ? undefined : v })}
+                  >
+                    <SelectTrigger className="h-9 w-44">
+                      <SelectValue placeholder="Toutes les banques" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les banques</SelectItem>
+                      {banquesDisponibles.map((b) => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Vue graphique */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Granularité</Label>
+                <Select
+                  value={periodeVue}
+                  onValueChange={(v) => setPeriodeVue(v as "mensuelle" | "hebdomadaire")}
+                >
+                  <SelectTrigger className="h-9 w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mensuelle">Mensuelle</SelectItem>
+                    <SelectItem value="hebdomadaire">Hebdomadaire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardContent>

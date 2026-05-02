@@ -18,13 +18,13 @@ export const productsModuleConfig: ModuleConfig = {
   routes: [
     {
       path: "/",
-      component: lazy(() => import("../../pages/admin/ProductsPage")),
+      component: lazy(() => import("./pages/ProductsPage")),
       requiresPermission: ["PRODUCTS:PRODUCT:READ"],
       exact: true
     },
     {
       path: "/inventory",
-      component: lazy(() => import("../../pages/admin/InventoryPage")),
+      component: lazy(() => import("./pages/InventoryPage")),
       requiresPermission: ["PRODUCTS:PRODUCT:READ"]
     }
   ],

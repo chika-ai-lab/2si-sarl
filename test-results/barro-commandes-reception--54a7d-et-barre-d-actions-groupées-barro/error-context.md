@@ -1,0 +1,2855 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: barro\commandes-reception.spec.ts >> Mme Barro — Page commandes à traiter >> sélection multiple et barre d'actions groupées
+- Location: e2e\barro\commandes-reception.spec.ts:108:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('button', { name: /assigner agence/i })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('button', { name: /assigner agence/i })
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - link "Logo 2SI.Sarl Commercial" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Logo" [ref=e8]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 2SI.Sarl
+            - generic [ref=e12]: Commercial
+        - button [ref=e13] [cursor=pointer]:
+          - img [ref=e14]
+      - navigation [ref=e17]:
+        - link "Tableau de Bord" [ref=e19] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e20]
+          - generic [ref=e25]: Tableau de Bord
+        - generic [ref=e26]:
+          - link "Commandes" [ref=e27] [cursor=pointer]:
+            - /url: /admin/commercial/commandes
+            - img [ref=e29]
+            - generic [ref=e32]: Commandes
+          - link "Bons de Commande" [ref=e33] [cursor=pointer]:
+            - /url: /admin/achats/bon-commandes
+            - img [ref=e34]
+            - generic [ref=e38]: Bons de Commande
+          - link "Mes Ventes" [ref=e39] [cursor=pointer]:
+            - /url: /admin/commercial/ventes
+            - img [ref=e40]
+            - generic [ref=e43]: Mes Ventes
+          - link "Clients" [ref=e44] [cursor=pointer]:
+            - /url: /admin/commercial/clients
+            - img [ref=e45]
+            - generic [ref=e50]: Clients
+          - link "Accréditif" [ref=e51] [cursor=pointer]:
+            - /url: /admin/commercial/accreditif
+            - img [ref=e52]
+            - generic [ref=e54]: Accréditif
+          - link "SAV" [ref=e55] [cursor=pointer]:
+            - /url: /admin/commercial/sav
+            - img [ref=e56]
+            - generic [ref=e58]: SAV
+          - link "Comptabilité" [ref=e59] [cursor=pointer]:
+            - /url: /admin/commercial/compta
+            - img [ref=e60]
+            - generic [ref=e63]: Comptabilité
+          - link "Rapports" [ref=e64] [cursor=pointer]:
+            - /url: /admin/commercial/rapports
+            - img [ref=e65]
+            - generic [ref=e67]: Rapports
+      - generic [ref=e68]:
+        - link "Retour au site" [ref=e69] [cursor=pointer]:
+          - /url: /
+          - img [ref=e70]
+          - generic [ref=e73]: Retour au site
+        - button "Déconnexion" [ref=e74] [cursor=pointer]:
+          - img [ref=e75]
+          - generic [ref=e78]: Déconnexion
+    - generic [ref=e79]:
+      - banner [ref=e80]:
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - heading "2SI.Sarl" [level=1] [ref=e83]
+            - paragraph [ref=e84]: Commercial • 4 modules actifs
+          - button "Aissatou Camara" [ref=e86] [cursor=pointer]:
+            - img
+            - generic [ref=e87]: Aissatou Camara
+      - main [ref=e88]:
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - heading "Commandes à traiter" [level=1] [ref=e92]:
+                - img [ref=e93]
+                - text: Commandes à traiter
+              - paragraph [ref=e96]: Réception, assignation agence et création des bons de commande
+            - button "Actualiser" [ref=e97] [cursor=pointer]:
+              - img
+              - text: Actualiser
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - generic [ref=e100]:
+                - img [ref=e101]
+                - generic [ref=e105]:
+                  - paragraph [ref=e106]: "77"
+                  - paragraph [ref=e107]: Commandes reçues
+              - img [ref=e108]
+            - generic [ref=e110]:
+              - generic [ref=e111]:
+                - img [ref=e112]
+                - generic [ref=e115]:
+                  - paragraph [ref=e116]: "16"
+                  - paragraph [ref=e117]: Bons de commande
+              - img [ref=e118]
+            - generic [ref=e120]:
+              - generic [ref=e121]:
+                - img [ref=e122]
+                - generic [ref=e125]:
+                  - paragraph [ref=e126]: "5"
+                  - paragraph [ref=e127]: Cmd. fournisseurs
+              - img [ref=e128]
+            - generic [ref=e131]:
+              - img [ref=e132]
+              - generic [ref=e137]:
+                - paragraph [ref=e138]: "0"
+                - paragraph [ref=e139]: Livraisons
+          - generic [ref=e140]:
+            - generic [ref=e141]:
+              - generic [ref=e142]: "77"
+              - generic [ref=e143]: Total commandes
+            - generic [ref=e144]:
+              - generic [ref=e145]: "0"
+              - generic [ref=e146]: Non assignées
+            - generic [ref=e147]:
+              - generic [ref=e148]: "0"
+              - generic [ref=e149]: Validées
+            - generic [ref=e150]:
+              - generic [ref=e151]: 208 869 000 FCFA
+              - generic [ref=e152]: Montant total
+          - generic [ref=e153]:
+            - generic [ref=e154]:
+              - button "Toutes77" [ref=e155] [cursor=pointer]
+              - button "Non assignées" [ref=e156] [cursor=pointer]
+              - button "Validées" [ref=e157] [cursor=pointer]
+            - generic [ref=e158]:
+              - generic [ref=e159]:
+                - img [ref=e160]
+                - textbox "Référence, client…" [ref=e163]
+              - generic [ref=e164]:
+                - button "Toutes sources" [ref=e165] [cursor=pointer]
+                - button "Terrain" [ref=e166] [cursor=pointer]
+                - button "Marketplace" [ref=e167] [cursor=pointer]
+              - combobox [ref=e168]:
+                - option "Toutes agences" [selected]
+                - option "CBAO - OUROSSOGUI ()"
+                - option "CBAO - DIOURBEL ()"
+                - option "CBAO - TIVAOUANE ()"
+                - option "CBAO - RICHARD TOLL ()"
+                - option "CBAO - TOUBA - GOUYE MBINDE ()"
+                - option "CBAO - TOUBA - KHAYRA ()"
+                - option "CBAO - TOUBA - DAROU MOUSTY ()"
+                - option "CBAO - KAOLACK - ROUTE GOSSAS ()"
+                - option "CBAO - KAOLACK - MEDINA BAYE ()"
+                - option "CBAO - KAOLACK - PRINCIPALE ()"
+                - option "CBAO - BIGNONA ()"
+                - option "CBAO - CAP SKIRING ()"
+                - option "CBAO - ZIGUINCHOR - ESCALE ()"
+                - option "CBAO - ZIGUINCHOR - BOUCOTTE ()"
+                - option "CBAO - ZIGUINCHOR - BELALI ()"
+                - option "CBAO - VELINGARA ()"
+                - option "CBAO - KEDOUGOU ()"
+                - option "CBAO - TAMBA ()"
+                - option "CBAO - NDIOUM ()"
+                - option "CBAO - GALOYA ()"
+                - option "CBAO - KIDIRA ()"
+                - option "CBAO - THILOGNE ()"
+                - option "CBAO - BAKEL ()"
+                - option "CBAO - SAINT LOUIS - ILE ()"
+                - option "CBAO - SAINT LOUIS - SOR ()"
+                - option "CBAO - SAINT LOUIS - UGB ()"
+                - option "CBAO - LOUGA 1 ()"
+                - option "CBAO - LOUGA 2 ()"
+                - option "CBAO - THIES - PROMENADE ()"
+                - option "CBAO - THIES - SOUSSE ()"
+                - option "CBAO - THIES - CONCORDE ()"
+                - option "CBAO - DAKAR - PIKINE ()"
+                - option "CBAO - DAKAR - GUEDIAWAYE ()"
+                - option "CBAO - DAKAR - BENE BARACK ()"
+                - option "CBAO - DAKAR - COLOBANE ()"
+                - option "CBAO - DAKAR - SIPRES ()"
+                - option "CBAO - DAKAR - KEUR MASSAR ()"
+                - option "CBAO - DAKAR - BENE BARACK ()"
+                - option "CBAO - DAKAR - THIAROYE ()"
+                - option "CBAO - TOUBA - MADIYANA ()"
+                - option "CBAO - TOUBA - DAROU MARNANE ()"
+                - option "CBAO - DAKAR VILLE - JEAN JAURES ()"
+                - option "EMC - LIBRE ()"
+                - option "CBAO - DAKAR VILLE - KERMEL ()"
+                - option "CBAO - DAKAR VILLE - MEDINA ()"
+                - option "CBAO - DAKAR VILLE - SOUMBEDIOUNE ()"
+                - option "CBAO - DAKAR VILLE - FASS ()"
+                - option "CBAO - DAKAR VILLE - AVENUE CHAD ()"
+                - option "CBAO - DAKAR VILLE - COLOBANE ()"
+                - option "CBAO - DAKAR VILLE - Z.I ()"
+                - option "CBAO - DAKAR VILLE - CD LUNE ()"
+                - option "CBAO - DAKAR VILLE - LAMINE GUEYE ()"
+                - option "CBAO - DAKAR VILLE - IM. KEBE ()"
+                - option "CBAO - DAKAR VILLE - MEDINA ()"
+                - option "CBAO - DAKAR EXTENSION - HLM ()"
+                - option "CBAO - DAKAR EXTENSION - CASTOR ()"
+                - option "CBAO - DAKAR EXTENSION - DERKLE ()"
+                - option "CBAO - DAKAR EXTENSION - JET D'EAU ()"
+                - option "CBAO - DAKAR EXTENSION - SIPRES ()"
+                - option "CBAO - DAKAR EXTENSION - VDN ()"
+                - option "CBAO - DAKAR EXTENSION - YOFF ()"
+                - option "CBAO - DAKAR EXTENSION - P.A. ()"
+                - option "CBAO - DAKAR EXTENSION - CAMBERENE ()"
+                - option "CBAO - DAKAR EXTENSION - FOIRE ()"
+                - option "CBAO - DAKAR BANLIEU - PIKINE ()"
+                - option "CBAO - DAKAR BANLIEU - GUEDIAWAYE ()"
+                - option "CBAO - DAKAR BANLIEU - BENE BARACK ()"
+                - option "CBAO - DAKAR BANLIEU - KEUR MASSAR ()"
+                - option "CBAO - DAKAR BANLIEU - THIAROYE ()"
+                - option "CBAO - DAKAR BANLIEU - RUFISQUE 1 ()"
+                - option "CBAO - DAKAR BANLIEU - RUFISQUE 2 ()"
+                - option "CBAO - DAKAR BANLIEU - PIKINE 2 ()"
+                - option "CBAO - DAKAR BANLIEU - PIKINE 3 ()"
+                - option "CBAO - DAKAR BANLIEU - PARCELLES ()"
+                - option "CBAO - WAOUNDE ()"
+                - option "CBAO - POMPIDOU ()"
+                - option "CBAO - MARISTE ()"
+                - option "CBAO-MPAL ()"
+                - option "CBAO - DIAWARA ()"
+                - option "CBAO - KEBEMER ()"
+                - option "CMS - DAKAR ()"
+                - option "CMS - THIES ()"
+                - option "CMS - DIOURBEL ()"
+                - option "CMS - SAINT-LOUIS ()"
+                - option "CMS - ZIGUINCHOR ()"
+                - option "CMS - LOUGA ()"
+                - option "CMS - TAMBACOUNDA ()"
+                - option "CMS - TOUBA ()"
+                - option "CMS - CAP SKIRING ()"
+                - option "CMS - RICHARD TOLL ()"
+                - option "CMS - OUROSSOGUI ()"
+                - option "CMS - KAOLACK ()"
+                - option "CMS - BAKEL ()"
+                - option "CMS - BIGNONA ()"
+                - option "CMS - NDIOUM ()"
+                - option "CMS - GALOYA ()"
+                - option "CMS - KIDIRA ()"
+                - option "CMS - THILOGNE ()"
+                - option "CMS - VELINGARA ()"
+                - option "CBAO - KOLDA ()"
+              - combobox [ref=e169]:
+                - option "Tous statuts" [selected]
+                - option "Brouillon"
+                - option "Validée"
+                - option "En cours"
+                - option "Livrée"
+                - option "Annulée"
+          - generic [ref=e170]:
+            - generic [ref=e171]: 2 sélectionnée(s)
+            - button "Créer BDC (2)" [ref=e173] [cursor=pointer]:
+              - img
+              - text: Créer BDC (2)
+            - button "Désélectionner" [ref=e174] [cursor=pointer]
+          - generic [ref=e175]:
+            - table [ref=e177]:
+              - rowgroup [ref=e178]:
+                - row "Tout sélectionner Référence Canal Client Région Agence assignée Montant Statut Date Actions" [ref=e179]:
+                  - columnheader "Tout sélectionner" [ref=e180]:
+                    - checkbox "Tout sélectionner" [ref=e181] [cursor=pointer]
+                  - columnheader "Référence" [ref=e182]
+                  - columnheader "Canal" [ref=e183]
+                  - columnheader "Client" [ref=e184]
+                  - columnheader "Région" [ref=e185]
+                  - columnheader "Agence assignée" [ref=e186]
+                  - columnheader "Montant" [ref=e187]
+                  - columnheader "Statut" [ref=e188]
+                  - columnheader "Date" [ref=e189]
+                  - columnheader "Actions" [ref=e190]
+              - rowgroup [ref=e191]:
+                - 'row "1 Terrain Souleymane Thiaw Client #93 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Livrée 1899-11-30" [ref=e192] [cursor=pointer]':
+                  - cell [ref=e193]:
+                    - checkbox [checked] [ref=e194]:
+                      - generic:
+                        - img
+                  - cell "1" [ref=e195]:
+                    - generic [ref=e197]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e198]:
+                    - generic [ref=e199]:
+                      - generic [ref=e200]:
+                        - img [ref=e201]
+                        - text: Terrain
+                      - generic [ref=e205]: Souleymane Thiaw
+                  - 'cell "Client #93" [ref=e206]':
+                    - paragraph [ref=e207]: "Client #93"
+                  - cell "—" [ref=e208]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e209]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e210]:
+                      - img [ref=e211]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e215]
+                  - cell "2 000 000 FCFA" [ref=e218]
+                  - cell "Livrée" [ref=e219]:
+                    - generic [ref=e220]:
+                      - img [ref=e221]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e224]
+                  - cell [ref=e225]:
+                    - generic [ref=e226]:
+                      - button "Voir la commande" [ref=e227]:
+                        - img [ref=e228]
+                      - button "Modifier la commande" [ref=e231]:
+                        - img [ref=e232]
+                - 'row "1 Terrain Souleymane Thiaw Client #91 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Livrée 1899-11-30" [ref=e235] [cursor=pointer]':
+                  - cell [ref=e236]:
+                    - checkbox [checked] [active] [ref=e237]:
+                      - generic:
+                        - img
+                  - cell "1" [ref=e238]:
+                    - generic [ref=e240]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e241]:
+                    - generic [ref=e242]:
+                      - generic [ref=e243]:
+                        - img [ref=e244]
+                        - text: Terrain
+                      - generic [ref=e248]: Souleymane Thiaw
+                  - 'cell "Client #91" [ref=e249]':
+                    - paragraph [ref=e250]: "Client #91"
+                  - cell "—" [ref=e251]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e252]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e253]:
+                      - img [ref=e254]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e258]
+                  - cell "2 000 000 FCFA" [ref=e261]
+                  - cell "Livrée" [ref=e262]:
+                    - generic [ref=e263]:
+                      - img [ref=e264]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e267]
+                  - cell [ref=e268]:
+                    - generic [ref=e269]:
+                      - button "Voir la commande" [ref=e270]:
+                        - img [ref=e271]
+                      - button "Modifier la commande" [ref=e274]:
+                        - img [ref=e275]
+                - 'row "1 Terrain Souleymane Thiaw Client #90 — CBAO - KAOLACK - ROUTE GOSSAS 10 800 000 FCFA Brouillon 1899-11-30" [ref=e278] [cursor=pointer]':
+                  - cell [ref=e279]:
+                    - checkbox [ref=e280]
+                  - cell "1" [ref=e281]:
+                    - generic [ref=e283]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e284]:
+                    - generic [ref=e285]:
+                      - generic [ref=e286]:
+                        - img [ref=e287]
+                        - text: Terrain
+                      - generic [ref=e291]: Souleymane Thiaw
+                  - 'cell "Client #90" [ref=e292]':
+                    - paragraph [ref=e293]: "Client #90"
+                  - cell "—" [ref=e294]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e295]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e296]:
+                      - img [ref=e297]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e301]
+                  - cell "10 800 000 FCFA" [ref=e304]
+                  - cell "Brouillon" [ref=e305]:
+                    - generic [ref=e306]:
+                      - img [ref=e307]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e310]
+                  - cell [ref=e311]:
+                    - generic [ref=e312]:
+                      - button "Voir la commande" [ref=e313]:
+                        - img [ref=e314]
+                      - button "Modifier la commande" [ref=e317]:
+                        - img [ref=e318]
+                - 'row "1 Terrain Ndiole Faye Client #88 — CBAO - TOUBA - DAROU MOUSTY 2 500 000 FCFA Brouillon 1899-11-30" [ref=e321] [cursor=pointer]':
+                  - cell [ref=e322]:
+                    - checkbox [ref=e323]
+                  - cell "1" [ref=e324]:
+                    - generic [ref=e326]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e327]:
+                    - generic [ref=e328]:
+                      - generic [ref=e329]:
+                        - img [ref=e330]
+                        - text: Terrain
+                      - generic [ref=e334]: Ndiole Faye
+                  - 'cell "Client #88" [ref=e335]':
+                    - paragraph [ref=e336]: "Client #88"
+                  - cell "—" [ref=e337]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e338]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e339]:
+                      - img [ref=e340]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e344]
+                  - cell "2 500 000 FCFA" [ref=e347]
+                  - cell "Brouillon" [ref=e348]:
+                    - generic [ref=e349]:
+                      - img [ref=e350]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e353]
+                  - cell [ref=e354]:
+                    - generic [ref=e355]:
+                      - button "Voir la commande" [ref=e356]:
+                        - img [ref=e357]
+                      - button "Modifier la commande" [ref=e360]:
+                        - img [ref=e361]
+                - 'row "1 Terrain Souleymane Thiaw Client #87 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Brouillon 1899-11-30" [ref=e364] [cursor=pointer]':
+                  - cell [ref=e365]:
+                    - checkbox [ref=e366]
+                  - cell "1" [ref=e367]:
+                    - generic [ref=e369]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e370]:
+                    - generic [ref=e371]:
+                      - generic [ref=e372]:
+                        - img [ref=e373]
+                        - text: Terrain
+                      - generic [ref=e377]: Souleymane Thiaw
+                  - 'cell "Client #87" [ref=e378]':
+                    - paragraph [ref=e379]: "Client #87"
+                  - cell "—" [ref=e380]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e381]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e382]:
+                      - img [ref=e383]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e387]
+                  - cell "2 000 000 FCFA" [ref=e390]
+                  - cell "Brouillon" [ref=e391]:
+                    - generic [ref=e392]:
+                      - img [ref=e393]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e396]
+                  - cell [ref=e397]:
+                    - generic [ref=e398]:
+                      - button "Voir la commande" [ref=e399]:
+                        - img [ref=e400]
+                      - button "Modifier la commande" [ref=e403]:
+                        - img [ref=e404]
+                - 'row "1 Terrain Souleymane Thiaw Client #86 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Brouillon 1899-11-30" [ref=e407] [cursor=pointer]':
+                  - cell [ref=e408]:
+                    - checkbox [ref=e409]
+                  - cell "1" [ref=e410]:
+                    - generic [ref=e412]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e413]:
+                    - generic [ref=e414]:
+                      - generic [ref=e415]:
+                        - img [ref=e416]
+                        - text: Terrain
+                      - generic [ref=e420]: Souleymane Thiaw
+                  - 'cell "Client #86" [ref=e421]':
+                    - paragraph [ref=e422]: "Client #86"
+                  - cell "—" [ref=e423]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e424]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e425]:
+                      - img [ref=e426]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e430]
+                  - cell "2 000 000 FCFA" [ref=e433]
+                  - cell "Brouillon" [ref=e434]:
+                    - generic [ref=e435]:
+                      - img [ref=e436]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e439]
+                  - cell [ref=e440]:
+                    - generic [ref=e441]:
+                      - button "Voir la commande" [ref=e442]:
+                        - img [ref=e443]
+                      - button "Modifier la commande" [ref=e446]:
+                        - img [ref=e447]
+                - 'row "1 Terrain Souleymane Thiaw Client #83 — CBAO - KAOLACK - MEDINA BAYE 2 169 000 FCFA Brouillon 1899-11-30" [ref=e450] [cursor=pointer]':
+                  - cell [ref=e451]:
+                    - checkbox [ref=e452]
+                  - cell "1" [ref=e453]:
+                    - generic [ref=e455]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e456]:
+                    - generic [ref=e457]:
+                      - generic [ref=e458]:
+                        - img [ref=e459]
+                        - text: Terrain
+                      - generic [ref=e463]: Souleymane Thiaw
+                  - 'cell "Client #83" [ref=e464]':
+                    - paragraph [ref=e465]: "Client #83"
+                  - cell "—" [ref=e466]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e467]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e468]:
+                      - img [ref=e469]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e473]
+                  - cell "2 169 000 FCFA" [ref=e476]
+                  - cell "Brouillon" [ref=e477]:
+                    - generic [ref=e478]:
+                      - img [ref=e479]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e482]
+                  - cell [ref=e483]:
+                    - generic [ref=e484]:
+                      - button "Voir la commande" [ref=e485]:
+                        - img [ref=e486]
+                      - button "Modifier la commande" [ref=e489]:
+                        - img [ref=e490]
+                - 'row "1 Terrain Ndiole Faye Client #79 — CBAO - KAOLACK - MEDINA BAYE 3 800 000 FCFA Brouillon 1899-11-30" [ref=e493] [cursor=pointer]':
+                  - cell [ref=e494]:
+                    - checkbox [ref=e495]
+                  - cell "1" [ref=e496]:
+                    - generic [ref=e498]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e499]:
+                    - generic [ref=e500]:
+                      - generic [ref=e501]:
+                        - img [ref=e502]
+                        - text: Terrain
+                      - generic [ref=e506]: Ndiole Faye
+                  - 'cell "Client #79" [ref=e507]':
+                    - paragraph [ref=e508]: "Client #79"
+                  - cell "—" [ref=e509]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e510]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e511]:
+                      - img [ref=e512]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e516]
+                  - cell "3 800 000 FCFA" [ref=e519]
+                  - cell "Brouillon" [ref=e520]:
+                    - generic [ref=e521]:
+                      - img [ref=e522]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e525]
+                  - cell [ref=e526]:
+                    - generic [ref=e527]:
+                      - button "Voir la commande" [ref=e528]:
+                        - img [ref=e529]
+                      - button "Modifier la commande" [ref=e532]:
+                        - img [ref=e533]
+                - 'row "1 Terrain Diatou Fall Client #80 — CBAO - KAOLACK - MEDINA BAYE 1 850 000 FCFA Brouillon 1899-11-30" [ref=e536] [cursor=pointer]':
+                  - cell [ref=e537]:
+                    - checkbox [ref=e538]
+                  - cell "1" [ref=e539]:
+                    - generic [ref=e541]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e542]:
+                    - generic [ref=e543]:
+                      - generic [ref=e544]:
+                        - img [ref=e545]
+                        - text: Terrain
+                      - generic [ref=e549]: Diatou Fall
+                  - 'cell "Client #80" [ref=e550]':
+                    - paragraph [ref=e551]: "Client #80"
+                  - cell "—" [ref=e552]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e553]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e554]:
+                      - img [ref=e555]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e559]
+                  - cell "1 850 000 FCFA" [ref=e562]
+                  - cell "Brouillon" [ref=e563]:
+                    - generic [ref=e564]:
+                      - img [ref=e565]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e568]
+                  - cell [ref=e569]:
+                    - generic [ref=e570]:
+                      - button "Voir la commande" [ref=e571]:
+                        - img [ref=e572]
+                      - button "Modifier la commande" [ref=e575]:
+                        - img [ref=e576]
+                - 'row "1 Terrain Diatou Fall Client #77 — CBAO - KAOLACK - MEDINA BAYE 1 850 000 FCFA Brouillon 1899-11-30" [ref=e579] [cursor=pointer]':
+                  - cell [ref=e580]:
+                    - checkbox [ref=e581]
+                  - cell "1" [ref=e582]:
+                    - generic [ref=e584]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e585]:
+                    - generic [ref=e586]:
+                      - generic [ref=e587]:
+                        - img [ref=e588]
+                        - text: Terrain
+                      - generic [ref=e592]: Diatou Fall
+                  - 'cell "Client #77" [ref=e593]':
+                    - paragraph [ref=e594]: "Client #77"
+                  - cell "—" [ref=e595]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e596]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e597]:
+                      - img [ref=e598]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e602]
+                  - cell "1 850 000 FCFA" [ref=e605]
+                  - cell "Brouillon" [ref=e606]:
+                    - generic [ref=e607]:
+                      - img [ref=e608]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e611]
+                  - cell [ref=e612]:
+                    - generic [ref=e613]:
+                      - button "Voir la commande" [ref=e614]:
+                        - img [ref=e615]
+                      - button "Modifier la commande" [ref=e618]:
+                        - img [ref=e619]
+                - 'row "1 Terrain Diatou Fall Client #76 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e622] [cursor=pointer]':
+                  - cell [ref=e623]:
+                    - checkbox [ref=e624]
+                  - cell "1" [ref=e625]:
+                    - generic [ref=e627]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e628]:
+                    - generic [ref=e629]:
+                      - generic [ref=e630]:
+                        - img [ref=e631]
+                        - text: Terrain
+                      - generic [ref=e635]: Diatou Fall
+                  - 'cell "Client #76" [ref=e636]':
+                    - paragraph [ref=e637]: "Client #76"
+                  - cell "—" [ref=e638]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e639]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e640]:
+                      - img [ref=e641]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e645]
+                  - cell "2 300 000 FCFA" [ref=e648]
+                  - cell "Brouillon" [ref=e649]:
+                    - generic [ref=e650]:
+                      - img [ref=e651]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e654]
+                  - cell [ref=e655]:
+                    - generic [ref=e656]:
+                      - button "Voir la commande" [ref=e657]:
+                        - img [ref=e658]
+                      - button "Modifier la commande" [ref=e661]:
+                        - img [ref=e662]
+                - 'row "1 Terrain Ndiole Faye Client #75 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e665] [cursor=pointer]':
+                  - cell [ref=e666]:
+                    - checkbox [ref=e667]
+                  - cell "1" [ref=e668]:
+                    - generic [ref=e670]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e671]:
+                    - generic [ref=e672]:
+                      - generic [ref=e673]:
+                        - img [ref=e674]
+                        - text: Terrain
+                      - generic [ref=e678]: Ndiole Faye
+                  - 'cell "Client #75" [ref=e679]':
+                    - paragraph [ref=e680]: "Client #75"
+                  - cell "—" [ref=e681]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e682]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e683]:
+                      - img [ref=e684]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e688]
+                  - cell "2 300 000 FCFA" [ref=e691]
+                  - cell "Brouillon" [ref=e692]:
+                    - generic [ref=e693]:
+                      - img [ref=e694]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e697]
+                  - cell [ref=e698]:
+                    - generic [ref=e699]:
+                      - button "Voir la commande" [ref=e700]:
+                        - img [ref=e701]
+                      - button "Modifier la commande" [ref=e704]:
+                        - img [ref=e705]
+                - row "1 Terrain Souleymane Thiaw sd test 0778762197 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e708] [cursor=pointer]:
+                  - cell [ref=e709]:
+                    - checkbox [ref=e710]
+                  - cell "1" [ref=e711]:
+                    - generic [ref=e713]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e714]:
+                    - generic [ref=e715]:
+                      - generic [ref=e716]:
+                        - img [ref=e717]
+                        - text: Terrain
+                      - generic [ref=e721]: Souleymane Thiaw
+                  - cell "sd test 0778762197" [ref=e722]:
+                    - paragraph [ref=e723]: sd test
+                    - paragraph [ref=e724]: "0778762197"
+                  - cell "—" [ref=e725]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e726]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e727]:
+                      - img [ref=e728]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e732]
+                  - cell "2 300 000 FCFA" [ref=e735]
+                  - cell "Brouillon" [ref=e736]:
+                    - generic [ref=e737]:
+                      - img [ref=e738]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e741]
+                  - cell [ref=e742]:
+                    - generic [ref=e743]:
+                      - button "Voir la commande" [ref=e744]:
+                        - img [ref=e745]
+                      - button "Modifier la commande" [ref=e748]:
+                        - img [ref=e749]
+                - 'row "1 Terrain Souleymane Thiaw Client #74 — CBAO - KAOLACK - MEDINA BAYE 1 950 000 FCFA Livrée 1899-11-30" [ref=e752] [cursor=pointer]':
+                  - cell [ref=e753]:
+                    - checkbox [ref=e754]
+                  - cell "1" [ref=e755]:
+                    - generic [ref=e757]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e758]:
+                    - generic [ref=e759]:
+                      - generic [ref=e760]:
+                        - img [ref=e761]
+                        - text: Terrain
+                      - generic [ref=e765]: Souleymane Thiaw
+                  - 'cell "Client #74" [ref=e766]':
+                    - paragraph [ref=e767]: "Client #74"
+                  - cell "—" [ref=e768]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e769]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e770]:
+                      - img [ref=e771]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e775]
+                  - cell "1 950 000 FCFA" [ref=e778]
+                  - cell "Livrée" [ref=e779]:
+                    - generic [ref=e780]:
+                      - img [ref=e781]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e784]
+                  - cell [ref=e785]:
+                    - generic [ref=e786]:
+                      - button "Voir la commande" [ref=e787]:
+                        - img [ref=e788]
+                      - button "Modifier la commande" [ref=e791]:
+                        - img [ref=e792]
+                - 'row "1 Terrain Souleymane Thiaw Client #73 — CBAO - KAOLACK - MEDINA BAYE 1 850 000 FCFA Brouillon 1899-11-30" [ref=e795] [cursor=pointer]':
+                  - cell [ref=e796]:
+                    - checkbox [ref=e797]
+                  - cell "1" [ref=e798]:
+                    - generic [ref=e800]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e801]:
+                    - generic [ref=e802]:
+                      - generic [ref=e803]:
+                        - img [ref=e804]
+                        - text: Terrain
+                      - generic [ref=e808]: Souleymane Thiaw
+                  - 'cell "Client #73" [ref=e809]':
+                    - paragraph [ref=e810]: "Client #73"
+                  - cell "—" [ref=e811]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e812]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e813]:
+                      - img [ref=e814]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e818]
+                  - cell "1 850 000 FCFA" [ref=e821]
+                  - cell "Brouillon" [ref=e822]:
+                    - generic [ref=e823]:
+                      - img [ref=e824]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e827]
+                  - cell [ref=e828]:
+                    - generic [ref=e829]:
+                      - button "Voir la commande" [ref=e830]:
+                        - img [ref=e831]
+                      - button "Modifier la commande" [ref=e834]:
+                        - img [ref=e835]
+                - 'row "1 Terrain Diatou Fall Client #72 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e838] [cursor=pointer]':
+                  - cell [ref=e839]:
+                    - checkbox [ref=e840]
+                  - cell "1" [ref=e841]:
+                    - generic [ref=e843]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e844]:
+                    - generic [ref=e845]:
+                      - generic [ref=e846]:
+                        - img [ref=e847]
+                        - text: Terrain
+                      - generic [ref=e851]: Diatou Fall
+                  - 'cell "Client #72" [ref=e852]':
+                    - paragraph [ref=e853]: "Client #72"
+                  - cell "—" [ref=e854]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e855]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e856]:
+                      - img [ref=e857]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e861]
+                  - cell "2 300 000 FCFA" [ref=e864]
+                  - cell "Brouillon" [ref=e865]:
+                    - generic [ref=e866]:
+                      - img [ref=e867]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e870]
+                  - cell [ref=e871]:
+                    - generic [ref=e872]:
+                      - button "Voir la commande" [ref=e873]:
+                        - img [ref=e874]
+                      - button "Modifier la commande" [ref=e877]:
+                        - img [ref=e878]
+                - 'row "1 Terrain Ndiole Faye Client #71 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e881] [cursor=pointer]':
+                  - cell [ref=e882]:
+                    - checkbox [ref=e883]
+                  - cell "1" [ref=e884]:
+                    - generic [ref=e886]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e887]:
+                    - generic [ref=e888]:
+                      - generic [ref=e889]:
+                        - img [ref=e890]
+                        - text: Terrain
+                      - generic [ref=e894]: Ndiole Faye
+                  - 'cell "Client #71" [ref=e895]':
+                    - paragraph [ref=e896]: "Client #71"
+                  - cell "—" [ref=e897]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e898]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e899]:
+                      - img [ref=e900]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e904]
+                  - cell "2 300 000 FCFA" [ref=e907]
+                  - cell "Brouillon" [ref=e908]:
+                    - generic [ref=e909]:
+                      - img [ref=e910]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e913]
+                  - cell [ref=e914]:
+                    - generic [ref=e915]:
+                      - button "Voir la commande" [ref=e916]:
+                        - img [ref=e917]
+                      - button "Modifier la commande" [ref=e920]:
+                        - img [ref=e921]
+                - 'row "1 Terrain Ndiole Faye Client #70 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e924] [cursor=pointer]':
+                  - cell [ref=e925]:
+                    - checkbox [ref=e926]
+                  - cell "1" [ref=e927]:
+                    - generic [ref=e929]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e930]:
+                    - generic [ref=e931]:
+                      - generic [ref=e932]:
+                        - img [ref=e933]
+                        - text: Terrain
+                      - generic [ref=e937]: Ndiole Faye
+                  - 'cell "Client #70" [ref=e938]':
+                    - paragraph [ref=e939]: "Client #70"
+                  - cell "—" [ref=e940]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e941]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e942]:
+                      - img [ref=e943]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e947]
+                  - cell "2 300 000 FCFA" [ref=e950]
+                  - cell "Brouillon" [ref=e951]:
+                    - generic [ref=e952]:
+                      - img [ref=e953]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e956]
+                  - cell [ref=e957]:
+                    - generic [ref=e958]:
+                      - button "Voir la commande" [ref=e959]:
+                        - img [ref=e960]
+                      - button "Modifier la commande" [ref=e963]:
+                        - img [ref=e964]
+                - 'row "1 Terrain Ndiole Faye Client #68 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e967] [cursor=pointer]':
+                  - cell [ref=e968]:
+                    - checkbox [ref=e969]
+                  - cell "1" [ref=e970]:
+                    - generic [ref=e972]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e973]:
+                    - generic [ref=e974]:
+                      - generic [ref=e975]:
+                        - img [ref=e976]
+                        - text: Terrain
+                      - generic [ref=e980]: Ndiole Faye
+                  - 'cell "Client #68" [ref=e981]':
+                    - paragraph [ref=e982]: "Client #68"
+                  - cell "—" [ref=e983]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e984]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e985]:
+                      - img [ref=e986]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e990]
+                  - cell "2 300 000 FCFA" [ref=e993]
+                  - cell "Brouillon" [ref=e994]:
+                    - generic [ref=e995]:
+                      - img [ref=e996]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e999]
+                  - cell [ref=e1000]:
+                    - generic [ref=e1001]:
+                      - button "Voir la commande" [ref=e1002]:
+                        - img [ref=e1003]
+                      - button "Modifier la commande" [ref=e1006]:
+                        - img [ref=e1007]
+                - 'row "1 Terrain Diatou Fall Client #67 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1010] [cursor=pointer]':
+                  - cell [ref=e1011]:
+                    - checkbox [ref=e1012]
+                  - cell "1" [ref=e1013]:
+                    - generic [ref=e1015]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1016]:
+                    - generic [ref=e1017]:
+                      - generic [ref=e1018]:
+                        - img [ref=e1019]
+                        - text: Terrain
+                      - generic [ref=e1023]: Diatou Fall
+                  - 'cell "Client #67" [ref=e1024]':
+                    - paragraph [ref=e1025]: "Client #67"
+                  - cell "—" [ref=e1026]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1027]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1028]:
+                      - img [ref=e1029]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1033]
+                  - cell "2 300 000 FCFA" [ref=e1036]
+                  - cell "Brouillon" [ref=e1037]:
+                    - generic [ref=e1038]:
+                      - img [ref=e1039]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1042]
+                  - cell [ref=e1043]:
+                    - generic [ref=e1044]:
+                      - button "Voir la commande" [ref=e1045]:
+                        - img [ref=e1046]
+                      - button "Modifier la commande" [ref=e1049]:
+                        - img [ref=e1050]
+                - 'row "1 Terrain Ndiole Faye Client #65 — CBAO - KAOLACK - MEDINA BAYE 1 850 000 FCFA Brouillon 1899-11-30" [ref=e1053] [cursor=pointer]':
+                  - cell [ref=e1054]:
+                    - checkbox [ref=e1055]
+                  - cell "1" [ref=e1056]:
+                    - generic [ref=e1058]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1059]:
+                    - generic [ref=e1060]:
+                      - generic [ref=e1061]:
+                        - img [ref=e1062]
+                        - text: Terrain
+                      - generic [ref=e1066]: Ndiole Faye
+                  - 'cell "Client #65" [ref=e1067]':
+                    - paragraph [ref=e1068]: "Client #65"
+                  - cell "—" [ref=e1069]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1070]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1071]:
+                      - img [ref=e1072]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1076]
+                  - cell "1 850 000 FCFA" [ref=e1079]
+                  - cell "Brouillon" [ref=e1080]:
+                    - generic [ref=e1081]:
+                      - img [ref=e1082]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1085]
+                  - cell [ref=e1086]:
+                    - generic [ref=e1087]:
+                      - button "Voir la commande" [ref=e1088]:
+                        - img [ref=e1089]
+                      - button "Modifier la commande" [ref=e1092]:
+                        - img [ref=e1093]
+                - 'row "1 Terrain Diatou Fall Client #63 — CBAO - KAOLACK - MEDINA BAYE 1 900 000 FCFA Livrée 1899-11-30" [ref=e1096] [cursor=pointer]':
+                  - cell [ref=e1097]:
+                    - checkbox [ref=e1098]
+                  - cell "1" [ref=e1099]:
+                    - generic [ref=e1101]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1102]:
+                    - generic [ref=e1103]:
+                      - generic [ref=e1104]:
+                        - img [ref=e1105]
+                        - text: Terrain
+                      - generic [ref=e1109]: Diatou Fall
+                  - 'cell "Client #63" [ref=e1110]':
+                    - paragraph [ref=e1111]: "Client #63"
+                  - cell "—" [ref=e1112]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1113]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1114]:
+                      - img [ref=e1115]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1119]
+                  - cell "1 900 000 FCFA" [ref=e1122]
+                  - cell "Livrée" [ref=e1123]:
+                    - generic [ref=e1124]:
+                      - img [ref=e1125]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e1128]
+                  - cell [ref=e1129]:
+                    - generic [ref=e1130]:
+                      - button "Voir la commande" [ref=e1131]:
+                        - img [ref=e1132]
+                      - button "Modifier la commande" [ref=e1135]:
+                        - img [ref=e1136]
+                - 'row "1 Terrain Souleymane Thiaw Client #62 — CBAO - KAOLACK - MEDINA BAYE 1 850 000 FCFA Brouillon 1899-11-30" [ref=e1139] [cursor=pointer]':
+                  - cell [ref=e1140]:
+                    - checkbox [ref=e1141]
+                  - cell "1" [ref=e1142]:
+                    - generic [ref=e1144]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e1145]:
+                    - generic [ref=e1146]:
+                      - generic [ref=e1147]:
+                        - img [ref=e1148]
+                        - text: Terrain
+                      - generic [ref=e1152]: Souleymane Thiaw
+                  - 'cell "Client #62" [ref=e1153]':
+                    - paragraph [ref=e1154]: "Client #62"
+                  - cell "—" [ref=e1155]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1156]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1157]:
+                      - img [ref=e1158]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1162]
+                  - cell "1 850 000 FCFA" [ref=e1165]
+                  - cell "Brouillon" [ref=e1166]:
+                    - generic [ref=e1167]:
+                      - img [ref=e1168]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1171]
+                  - cell [ref=e1172]:
+                    - generic [ref=e1173]:
+                      - button "Voir la commande" [ref=e1174]:
+                        - img [ref=e1175]
+                      - button "Modifier la commande" [ref=e1178]:
+                        - img [ref=e1179]
+                - 'row "1 Terrain Souleymane Thiaw Client #61 — CBAO - KAOLACK - MEDINA BAYE 2 100 000 FCFA Brouillon 1899-11-30" [ref=e1182] [cursor=pointer]':
+                  - cell [ref=e1183]:
+                    - checkbox [ref=e1184]
+                  - cell "1" [ref=e1185]:
+                    - generic [ref=e1187]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e1188]:
+                    - generic [ref=e1189]:
+                      - generic [ref=e1190]:
+                        - img [ref=e1191]
+                        - text: Terrain
+                      - generic [ref=e1195]: Souleymane Thiaw
+                  - 'cell "Client #61" [ref=e1196]':
+                    - paragraph [ref=e1197]: "Client #61"
+                  - cell "—" [ref=e1198]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1199]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1200]:
+                      - img [ref=e1201]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1205]
+                  - cell "2 100 000 FCFA" [ref=e1208]
+                  - cell "Brouillon" [ref=e1209]:
+                    - generic [ref=e1210]:
+                      - img [ref=e1211]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1214]
+                  - cell [ref=e1215]:
+                    - generic [ref=e1216]:
+                      - button "Voir la commande" [ref=e1217]:
+                        - img [ref=e1218]
+                      - button "Modifier la commande" [ref=e1221]:
+                        - img [ref=e1222]
+                - 'row "1 Terrain Diatou Fall Client #60 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1225] [cursor=pointer]':
+                  - cell [ref=e1226]:
+                    - checkbox [ref=e1227]
+                  - cell "1" [ref=e1228]:
+                    - generic [ref=e1230]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1231]:
+                    - generic [ref=e1232]:
+                      - generic [ref=e1233]:
+                        - img [ref=e1234]
+                        - text: Terrain
+                      - generic [ref=e1238]: Diatou Fall
+                  - 'cell "Client #60" [ref=e1239]':
+                    - paragraph [ref=e1240]: "Client #60"
+                  - cell "—" [ref=e1241]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1242]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1243]:
+                      - img [ref=e1244]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1248]
+                  - cell "2 300 000 FCFA" [ref=e1251]
+                  - cell "Brouillon" [ref=e1252]:
+                    - generic [ref=e1253]:
+                      - img [ref=e1254]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1257]
+                  - cell [ref=e1258]:
+                    - generic [ref=e1259]:
+                      - button "Voir la commande" [ref=e1260]:
+                        - img [ref=e1261]
+                      - button "Modifier la commande" [ref=e1264]:
+                        - img [ref=e1265]
+                - 'row "1 Terrain Diatou Fall Client #59 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Livrée 1899-11-30" [ref=e1268] [cursor=pointer]':
+                  - cell [ref=e1269]:
+                    - checkbox [ref=e1270]
+                  - cell "1" [ref=e1271]:
+                    - generic [ref=e1273]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1274]:
+                    - generic [ref=e1275]:
+                      - generic [ref=e1276]:
+                        - img [ref=e1277]
+                        - text: Terrain
+                      - generic [ref=e1281]: Diatou Fall
+                  - 'cell "Client #59" [ref=e1282]':
+                    - paragraph [ref=e1283]: "Client #59"
+                  - cell "—" [ref=e1284]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1285]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1286]:
+                      - img [ref=e1287]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1291]
+                  - cell "2 300 000 FCFA" [ref=e1294]
+                  - cell "Livrée" [ref=e1295]:
+                    - generic [ref=e1296]:
+                      - img [ref=e1297]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e1300]
+                  - cell [ref=e1301]:
+                    - generic [ref=e1302]:
+                      - button "Voir la commande" [ref=e1303]:
+                        - img [ref=e1304]
+                      - button "Modifier la commande" [ref=e1307]:
+                        - img [ref=e1308]
+                - 'row "1 Terrain Diatou Fall Client #58 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1311] [cursor=pointer]':
+                  - cell [ref=e1312]:
+                    - checkbox [ref=e1313]
+                  - cell "1" [ref=e1314]:
+                    - generic [ref=e1316]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1317]:
+                    - generic [ref=e1318]:
+                      - generic [ref=e1319]:
+                        - img [ref=e1320]
+                        - text: Terrain
+                      - generic [ref=e1324]: Diatou Fall
+                  - 'cell "Client #58" [ref=e1325]':
+                    - paragraph [ref=e1326]: "Client #58"
+                  - cell "—" [ref=e1327]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1328]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1329]:
+                      - img [ref=e1330]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1334]
+                  - cell "2 300 000 FCFA" [ref=e1337]
+                  - cell "Brouillon" [ref=e1338]:
+                    - generic [ref=e1339]:
+                      - img [ref=e1340]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1343]
+                  - cell [ref=e1344]:
+                    - generic [ref=e1345]:
+                      - button "Voir la commande" [ref=e1346]:
+                        - img [ref=e1347]
+                      - button "Modifier la commande" [ref=e1350]:
+                        - img [ref=e1351]
+                - 'row "1 Terrain Diatou Fall Client #57 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1354] [cursor=pointer]':
+                  - cell [ref=e1355]:
+                    - checkbox [ref=e1356]
+                  - cell "1" [ref=e1357]:
+                    - generic [ref=e1359]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1360]:
+                    - generic [ref=e1361]:
+                      - generic [ref=e1362]:
+                        - img [ref=e1363]
+                        - text: Terrain
+                      - generic [ref=e1367]: Diatou Fall
+                  - 'cell "Client #57" [ref=e1368]':
+                    - paragraph [ref=e1369]: "Client #57"
+                  - cell "—" [ref=e1370]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1371]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1372]:
+                      - img [ref=e1373]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1377]
+                  - cell "2 300 000 FCFA" [ref=e1380]
+                  - cell "Brouillon" [ref=e1381]:
+                    - generic [ref=e1382]:
+                      - img [ref=e1383]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1386]
+                  - cell [ref=e1387]:
+                    - generic [ref=e1388]:
+                      - button "Voir la commande" [ref=e1389]:
+                        - img [ref=e1390]
+                      - button "Modifier la commande" [ref=e1393]:
+                        - img [ref=e1394]
+                - 'row "1 Terrain Ndiole Faye Client #56 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1397] [cursor=pointer]':
+                  - cell [ref=e1398]:
+                    - checkbox [ref=e1399]
+                  - cell "1" [ref=e1400]:
+                    - generic [ref=e1402]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1403]:
+                    - generic [ref=e1404]:
+                      - generic [ref=e1405]:
+                        - img [ref=e1406]
+                        - text: Terrain
+                      - generic [ref=e1410]: Ndiole Faye
+                  - 'cell "Client #56" [ref=e1411]':
+                    - paragraph [ref=e1412]: "Client #56"
+                  - cell "—" [ref=e1413]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1414]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1415]:
+                      - img [ref=e1416]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1420]
+                  - cell "2 300 000 FCFA" [ref=e1423]
+                  - cell "Brouillon" [ref=e1424]:
+                    - generic [ref=e1425]:
+                      - img [ref=e1426]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1429]
+                  - cell [ref=e1430]:
+                    - generic [ref=e1431]:
+                      - button "Voir la commande" [ref=e1432]:
+                        - img [ref=e1433]
+                      - button "Modifier la commande" [ref=e1436]:
+                        - img [ref=e1437]
+                - 'row "1 Terrain Diatou Fall Client #55 — CBAO - KAOLACK - MEDINA BAYE 1 500 000 FCFA Brouillon 1899-11-30" [ref=e1440] [cursor=pointer]':
+                  - cell [ref=e1441]:
+                    - checkbox [ref=e1442]
+                  - cell "1" [ref=e1443]:
+                    - generic [ref=e1445]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1446]:
+                    - generic [ref=e1447]:
+                      - generic [ref=e1448]:
+                        - img [ref=e1449]
+                        - text: Terrain
+                      - generic [ref=e1453]: Diatou Fall
+                  - 'cell "Client #55" [ref=e1454]':
+                    - paragraph [ref=e1455]: "Client #55"
+                  - cell "—" [ref=e1456]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1457]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1458]:
+                      - img [ref=e1459]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1463]
+                  - cell "1 500 000 FCFA" [ref=e1466]
+                  - cell "Brouillon" [ref=e1467]:
+                    - generic [ref=e1468]:
+                      - img [ref=e1469]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1472]
+                  - cell [ref=e1473]:
+                    - generic [ref=e1474]:
+                      - button "Voir la commande" [ref=e1475]:
+                        - img [ref=e1476]
+                      - button "Modifier la commande" [ref=e1479]:
+                        - img [ref=e1480]
+                - 'row "1 Terrain Ndiole Faye Client #54 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1483] [cursor=pointer]':
+                  - cell [ref=e1484]:
+                    - checkbox [ref=e1485]
+                  - cell "1" [ref=e1486]:
+                    - generic [ref=e1488]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1489]:
+                    - generic [ref=e1490]:
+                      - generic [ref=e1491]:
+                        - img [ref=e1492]
+                        - text: Terrain
+                      - generic [ref=e1496]: Ndiole Faye
+                  - 'cell "Client #54" [ref=e1497]':
+                    - paragraph [ref=e1498]: "Client #54"
+                  - cell "—" [ref=e1499]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1500]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1501]:
+                      - img [ref=e1502]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1506]
+                  - cell "2 300 000 FCFA" [ref=e1509]
+                  - cell "Brouillon" [ref=e1510]:
+                    - generic [ref=e1511]:
+                      - img [ref=e1512]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1515]
+                  - cell [ref=e1516]:
+                    - generic [ref=e1517]:
+                      - button "Voir la commande" [ref=e1518]:
+                        - img [ref=e1519]
+                      - button "Modifier la commande" [ref=e1522]:
+                        - img [ref=e1523]
+                - 'row "1 Terrain Seyni Sane Client #53 — CBAO - KAOLACK - MEDINA BAYE 4 600 000 FCFA Brouillon 1899-11-30" [ref=e1526] [cursor=pointer]':
+                  - cell [ref=e1527]:
+                    - checkbox [ref=e1528]
+                  - cell "1" [ref=e1529]:
+                    - generic [ref=e1531]: "1"
+                  - cell "Terrain Seyni Sane" [ref=e1532]:
+                    - generic [ref=e1533]:
+                      - generic [ref=e1534]:
+                        - img [ref=e1535]
+                        - text: Terrain
+                      - generic [ref=e1539]: Seyni Sane
+                  - 'cell "Client #53" [ref=e1540]':
+                    - paragraph [ref=e1541]: "Client #53"
+                  - cell "—" [ref=e1542]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1543]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1544]:
+                      - img [ref=e1545]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1549]
+                  - cell "4 600 000 FCFA" [ref=e1552]
+                  - cell "Brouillon" [ref=e1553]:
+                    - generic [ref=e1554]:
+                      - img [ref=e1555]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1558]
+                  - cell [ref=e1559]:
+                    - generic [ref=e1560]:
+                      - button "Voir la commande" [ref=e1561]:
+                        - img [ref=e1562]
+                      - button "Modifier la commande" [ref=e1565]:
+                        - img [ref=e1566]
+                - 'row "1 Terrain Ndiole Faye Client #52 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1569] [cursor=pointer]':
+                  - cell [ref=e1570]:
+                    - checkbox [ref=e1571]
+                  - cell "1" [ref=e1572]:
+                    - generic [ref=e1574]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1575]:
+                    - generic [ref=e1576]:
+                      - generic [ref=e1577]:
+                        - img [ref=e1578]
+                        - text: Terrain
+                      - generic [ref=e1582]: Ndiole Faye
+                  - 'cell "Client #52" [ref=e1583]':
+                    - paragraph [ref=e1584]: "Client #52"
+                  - cell "—" [ref=e1585]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1586]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1587]:
+                      - img [ref=e1588]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1592]
+                  - cell "2 300 000 FCFA" [ref=e1595]
+                  - cell "Brouillon" [ref=e1596]:
+                    - generic [ref=e1597]:
+                      - img [ref=e1598]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1601]
+                  - cell [ref=e1602]:
+                    - generic [ref=e1603]:
+                      - button "Voir la commande" [ref=e1604]:
+                        - img [ref=e1605]
+                      - button "Modifier la commande" [ref=e1608]:
+                        - img [ref=e1609]
+                - 'row "1 Terrain Ndiole Faye Client #51 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1612] [cursor=pointer]':
+                  - cell [ref=e1613]:
+                    - checkbox [ref=e1614]
+                  - cell "1" [ref=e1615]:
+                    - generic [ref=e1617]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1618]:
+                    - generic [ref=e1619]:
+                      - generic [ref=e1620]:
+                        - img [ref=e1621]
+                        - text: Terrain
+                      - generic [ref=e1625]: Ndiole Faye
+                  - 'cell "Client #51" [ref=e1626]':
+                    - paragraph [ref=e1627]: "Client #51"
+                  - cell "—" [ref=e1628]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1629]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1630]:
+                      - img [ref=e1631]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1635]
+                  - cell "2 300 000 FCFA" [ref=e1638]
+                  - cell "Brouillon" [ref=e1639]:
+                    - generic [ref=e1640]:
+                      - img [ref=e1641]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1644]
+                  - cell [ref=e1645]:
+                    - generic [ref=e1646]:
+                      - button "Voir la commande" [ref=e1647]:
+                        - img [ref=e1648]
+                      - button "Modifier la commande" [ref=e1651]:
+                        - img [ref=e1652]
+                - 'row "1 Terrain Souleymane Thiaw Client #50 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1655] [cursor=pointer]':
+                  - cell [ref=e1656]:
+                    - checkbox [ref=e1657]
+                  - cell "1" [ref=e1658]:
+                    - generic [ref=e1660]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e1661]:
+                    - generic [ref=e1662]:
+                      - generic [ref=e1663]:
+                        - img [ref=e1664]
+                        - text: Terrain
+                      - generic [ref=e1668]: Souleymane Thiaw
+                  - 'cell "Client #50" [ref=e1669]':
+                    - paragraph [ref=e1670]: "Client #50"
+                  - cell "—" [ref=e1671]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1672]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1673]:
+                      - img [ref=e1674]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1678]
+                  - cell "2 300 000 FCFA" [ref=e1681]
+                  - cell "Brouillon" [ref=e1682]:
+                    - generic [ref=e1683]:
+                      - img [ref=e1684]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1687]
+                  - cell [ref=e1688]:
+                    - generic [ref=e1689]:
+                      - button "Voir la commande" [ref=e1690]:
+                        - img [ref=e1691]
+                      - button "Modifier la commande" [ref=e1694]:
+                        - img [ref=e1695]
+                - 'row "1 Terrain Ndiole Faye Client #49 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1698] [cursor=pointer]':
+                  - cell [ref=e1699]:
+                    - checkbox [ref=e1700]
+                  - cell "1" [ref=e1701]:
+                    - generic [ref=e1703]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1704]:
+                    - generic [ref=e1705]:
+                      - generic [ref=e1706]:
+                        - img [ref=e1707]
+                        - text: Terrain
+                      - generic [ref=e1711]: Ndiole Faye
+                  - 'cell "Client #49" [ref=e1712]':
+                    - paragraph [ref=e1713]: "Client #49"
+                  - cell "—" [ref=e1714]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1715]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1716]:
+                      - img [ref=e1717]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1721]
+                  - cell "2 300 000 FCFA" [ref=e1724]
+                  - cell "Brouillon" [ref=e1725]:
+                    - generic [ref=e1726]:
+                      - img [ref=e1727]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1730]
+                  - cell [ref=e1731]:
+                    - generic [ref=e1732]:
+                      - button "Voir la commande" [ref=e1733]:
+                        - img [ref=e1734]
+                      - button "Modifier la commande" [ref=e1737]:
+                        - img [ref=e1738]
+                - 'row "1 Terrain Diatou Fall Client #48 — CBAO - TOUBA - DAROU MOUSTY 2 300 000 FCFA Brouillon 1899-11-30" [ref=e1741] [cursor=pointer]':
+                  - cell [ref=e1742]:
+                    - checkbox [ref=e1743]
+                  - cell "1" [ref=e1744]:
+                    - generic [ref=e1746]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1747]:
+                    - generic [ref=e1748]:
+                      - generic [ref=e1749]:
+                        - img [ref=e1750]
+                        - text: Terrain
+                      - generic [ref=e1754]: Diatou Fall
+                  - 'cell "Client #48" [ref=e1755]':
+                    - paragraph [ref=e1756]: "Client #48"
+                  - cell "—" [ref=e1757]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e1758]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e1759]:
+                      - img [ref=e1760]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e1764]
+                  - cell "2 300 000 FCFA" [ref=e1767]
+                  - cell "Brouillon" [ref=e1768]:
+                    - generic [ref=e1769]:
+                      - img [ref=e1770]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1773]
+                  - cell [ref=e1774]:
+                    - generic [ref=e1775]:
+                      - button "Voir la commande" [ref=e1776]:
+                        - img [ref=e1777]
+                      - button "Modifier la commande" [ref=e1780]:
+                        - img [ref=e1781]
+                - 'row "1 Terrain Souleymane Thiaw Client #47 — CBAO - KAOLACK - MEDINA BAYE 2 100 000 FCFA Brouillon 1899-11-30" [ref=e1784] [cursor=pointer]':
+                  - cell [ref=e1785]:
+                    - checkbox [ref=e1786]
+                  - cell "1" [ref=e1787]:
+                    - generic [ref=e1789]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e1790]:
+                    - generic [ref=e1791]:
+                      - generic [ref=e1792]:
+                        - img [ref=e1793]
+                        - text: Terrain
+                      - generic [ref=e1797]: Souleymane Thiaw
+                  - 'cell "Client #47" [ref=e1798]':
+                    - paragraph [ref=e1799]: "Client #47"
+                  - cell "—" [ref=e1800]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1801]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1802]:
+                      - img [ref=e1803]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1807]
+                  - cell "2 100 000 FCFA" [ref=e1810]
+                  - cell "Brouillon" [ref=e1811]:
+                    - generic [ref=e1812]:
+                      - img [ref=e1813]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1816]
+                  - cell [ref=e1817]:
+                    - generic [ref=e1818]:
+                      - button "Voir la commande" [ref=e1819]:
+                        - img [ref=e1820]
+                      - button "Modifier la commande" [ref=e1823]:
+                        - img [ref=e1824]
+                - 'row "1 Terrain Pathé Faye Client #45 — CBAO - KAOLACK - MEDINA BAYE 1 900 000 FCFA Brouillon 1899-11-30" [ref=e1827] [cursor=pointer]':
+                  - cell [ref=e1828]:
+                    - checkbox [ref=e1829]
+                  - cell "1" [ref=e1830]:
+                    - generic [ref=e1832]: "1"
+                  - cell "Terrain Pathé Faye" [ref=e1833]:
+                    - generic [ref=e1834]:
+                      - generic [ref=e1835]:
+                        - img [ref=e1836]
+                        - text: Terrain
+                      - generic [ref=e1840]: Pathé Faye
+                  - 'cell "Client #45" [ref=e1841]':
+                    - paragraph [ref=e1842]: "Client #45"
+                  - cell "—" [ref=e1843]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1844]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1845]:
+                      - img [ref=e1846]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1850]
+                  - cell "1 900 000 FCFA" [ref=e1853]
+                  - cell "Brouillon" [ref=e1854]:
+                    - generic [ref=e1855]:
+                      - img [ref=e1856]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1859]
+                  - cell [ref=e1860]:
+                    - generic [ref=e1861]:
+                      - button "Voir la commande" [ref=e1862]:
+                        - img [ref=e1863]
+                      - button "Modifier la commande" [ref=e1866]:
+                        - img [ref=e1867]
+                - 'row "1 Terrain Souleymane Thiaw Client #46 — CBAO - KAOLACK - MEDINA BAYE 2 100 000 FCFA Brouillon 1899-11-30" [ref=e1870] [cursor=pointer]':
+                  - cell [ref=e1871]:
+                    - checkbox [ref=e1872]
+                  - cell "1" [ref=e1873]:
+                    - generic [ref=e1875]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e1876]:
+                    - generic [ref=e1877]:
+                      - generic [ref=e1878]:
+                        - img [ref=e1879]
+                        - text: Terrain
+                      - generic [ref=e1883]: Souleymane Thiaw
+                  - 'cell "Client #46" [ref=e1884]':
+                    - paragraph [ref=e1885]: "Client #46"
+                  - cell "—" [ref=e1886]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1887]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1888]:
+                      - img [ref=e1889]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1893]
+                  - cell "2 100 000 FCFA" [ref=e1896]
+                  - cell "Brouillon" [ref=e1897]:
+                    - generic [ref=e1898]:
+                      - img [ref=e1899]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1902]
+                  - cell [ref=e1903]:
+                    - generic [ref=e1904]:
+                      - button "Voir la commande" [ref=e1905]:
+                        - img [ref=e1906]
+                      - button "Modifier la commande" [ref=e1909]:
+                        - img [ref=e1910]
+                - 'row "1 Terrain Diatou Fall Client #44 — CBAO - KAOLACK - MEDINA BAYE 1 900 000 FCFA Brouillon 1899-11-30" [ref=e1913] [cursor=pointer]':
+                  - cell [ref=e1914]:
+                    - checkbox [ref=e1915]
+                  - cell "1" [ref=e1916]:
+                    - generic [ref=e1918]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e1919]:
+                    - generic [ref=e1920]:
+                      - generic [ref=e1921]:
+                        - img [ref=e1922]
+                        - text: Terrain
+                      - generic [ref=e1926]: Diatou Fall
+                  - 'cell "Client #44" [ref=e1927]':
+                    - paragraph [ref=e1928]: "Client #44"
+                  - cell "—" [ref=e1929]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1930]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1931]:
+                      - img [ref=e1932]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1936]
+                  - cell "1 900 000 FCFA" [ref=e1939]
+                  - cell "Brouillon" [ref=e1940]:
+                    - generic [ref=e1941]:
+                      - img [ref=e1942]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1945]
+                  - cell [ref=e1946]:
+                    - generic [ref=e1947]:
+                      - button "Voir la commande" [ref=e1948]:
+                        - img [ref=e1949]
+                      - button "Modifier la commande" [ref=e1952]:
+                        - img [ref=e1953]
+                - 'row "1 Terrain Ndiole Faye Client #43 — CBAO - KAOLACK - MEDINA BAYE 1 800 000 FCFA Brouillon 1899-11-30" [ref=e1956] [cursor=pointer]':
+                  - cell [ref=e1957]:
+                    - checkbox [ref=e1958]
+                  - cell "1" [ref=e1959]:
+                    - generic [ref=e1961]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e1962]:
+                    - generic [ref=e1963]:
+                      - generic [ref=e1964]:
+                        - img [ref=e1965]
+                        - text: Terrain
+                      - generic [ref=e1969]: Ndiole Faye
+                  - 'cell "Client #43" [ref=e1970]':
+                    - paragraph [ref=e1971]: "Client #43"
+                  - cell "—" [ref=e1972]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e1973]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e1974]:
+                      - img [ref=e1975]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e1979]
+                  - cell "1 800 000 FCFA" [ref=e1982]
+                  - cell "Brouillon" [ref=e1983]:
+                    - generic [ref=e1984]:
+                      - img [ref=e1985]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e1988]
+                  - cell [ref=e1989]:
+                    - generic [ref=e1990]:
+                      - button "Voir la commande" [ref=e1991]:
+                        - img [ref=e1992]
+                      - button "Modifier la commande" [ref=e1995]:
+                        - img [ref=e1996]
+                - 'row "1 Terrain Diatou Fall Client #41 — CBAO - KAOLACK - MEDINA BAYE 1 900 000 FCFA Brouillon 1899-11-30" [ref=e1999] [cursor=pointer]':
+                  - cell [ref=e2000]:
+                    - checkbox [ref=e2001]
+                  - cell "1" [ref=e2002]:
+                    - generic [ref=e2004]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2005]:
+                    - generic [ref=e2006]:
+                      - generic [ref=e2007]:
+                        - img [ref=e2008]
+                        - text: Terrain
+                      - generic [ref=e2012]: Diatou Fall
+                  - 'cell "Client #41" [ref=e2013]':
+                    - paragraph [ref=e2014]: "Client #41"
+                  - cell "—" [ref=e2015]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2016]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2017]:
+                      - img [ref=e2018]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2022]
+                  - cell "1 900 000 FCFA" [ref=e2025]
+                  - cell "Brouillon" [ref=e2026]:
+                    - generic [ref=e2027]:
+                      - img [ref=e2028]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2031]
+                  - cell [ref=e2032]:
+                    - generic [ref=e2033]:
+                      - button "Voir la commande" [ref=e2034]:
+                        - img [ref=e2035]
+                      - button "Modifier la commande" [ref=e2038]:
+                        - img [ref=e2039]
+                - 'row "1 Terrain Ndiole Faye Client #42 — CBAO - KAOLACK - MEDINA BAYE 4 600 000 FCFA Brouillon 1899-11-30" [ref=e2042] [cursor=pointer]':
+                  - cell [ref=e2043]:
+                    - checkbox [ref=e2044]
+                  - cell "1" [ref=e2045]:
+                    - generic [ref=e2047]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2048]:
+                    - generic [ref=e2049]:
+                      - generic [ref=e2050]:
+                        - img [ref=e2051]
+                        - text: Terrain
+                      - generic [ref=e2055]: Ndiole Faye
+                  - 'cell "Client #42" [ref=e2056]':
+                    - paragraph [ref=e2057]: "Client #42"
+                  - cell "—" [ref=e2058]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2059]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2060]:
+                      - img [ref=e2061]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2065]
+                  - cell "4 600 000 FCFA" [ref=e2068]
+                  - cell "Brouillon" [ref=e2069]:
+                    - generic [ref=e2070]:
+                      - img [ref=e2071]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2074]
+                  - cell [ref=e2075]:
+                    - generic [ref=e2076]:
+                      - button "Voir la commande" [ref=e2077]:
+                        - img [ref=e2078]
+                      - button "Modifier la commande" [ref=e2081]:
+                        - img [ref=e2082]
+                - 'row "1 Terrain Ndiole Faye Client #40 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e2085] [cursor=pointer]':
+                  - cell [ref=e2086]:
+                    - checkbox [ref=e2087]
+                  - cell "1" [ref=e2088]:
+                    - generic [ref=e2090]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2091]:
+                    - generic [ref=e2092]:
+                      - generic [ref=e2093]:
+                        - img [ref=e2094]
+                        - text: Terrain
+                      - generic [ref=e2098]: Ndiole Faye
+                  - 'cell "Client #40" [ref=e2099]':
+                    - paragraph [ref=e2100]: "Client #40"
+                  - cell "—" [ref=e2101]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2102]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2103]:
+                      - img [ref=e2104]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2108]
+                  - cell "2 300 000 FCFA" [ref=e2111]
+                  - cell "Brouillon" [ref=e2112]:
+                    - generic [ref=e2113]:
+                      - img [ref=e2114]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2117]
+                  - cell [ref=e2118]:
+                    - generic [ref=e2119]:
+                      - button "Voir la commande" [ref=e2120]:
+                        - img [ref=e2121]
+                      - button "Modifier la commande" [ref=e2124]:
+                        - img [ref=e2125]
+                - 'row "1 Terrain Diatou Fall Client #39 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e2128] [cursor=pointer]':
+                  - cell [ref=e2129]:
+                    - checkbox [ref=e2130]
+                  - cell "1" [ref=e2131]:
+                    - generic [ref=e2133]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2134]:
+                    - generic [ref=e2135]:
+                      - generic [ref=e2136]:
+                        - img [ref=e2137]
+                        - text: Terrain
+                      - generic [ref=e2141]: Diatou Fall
+                  - 'cell "Client #39" [ref=e2142]':
+                    - paragraph [ref=e2143]: "Client #39"
+                  - cell "—" [ref=e2144]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2145]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2146]:
+                      - img [ref=e2147]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2151]
+                  - cell "2 300 000 FCFA" [ref=e2154]
+                  - cell "Brouillon" [ref=e2155]:
+                    - generic [ref=e2156]:
+                      - img [ref=e2157]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2160]
+                  - cell [ref=e2161]:
+                    - generic [ref=e2162]:
+                      - button "Voir la commande" [ref=e2163]:
+                        - img [ref=e2164]
+                      - button "Modifier la commande" [ref=e2167]:
+                        - img [ref=e2168]
+                - 'row "1 Terrain Diatou Fall Client #37 — CBAO - KAOLACK - MEDINA BAYE 1 850 000 FCFA Brouillon 1899-11-30" [ref=e2171] [cursor=pointer]':
+                  - cell [ref=e2172]:
+                    - checkbox [ref=e2173]
+                  - cell "1" [ref=e2174]:
+                    - generic [ref=e2176]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2177]:
+                    - generic [ref=e2178]:
+                      - generic [ref=e2179]:
+                        - img [ref=e2180]
+                        - text: Terrain
+                      - generic [ref=e2184]: Diatou Fall
+                  - 'cell "Client #37" [ref=e2185]':
+                    - paragraph [ref=e2186]: "Client #37"
+                  - cell "—" [ref=e2187]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2188]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2189]:
+                      - img [ref=e2190]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2194]
+                  - cell "1 850 000 FCFA" [ref=e2197]
+                  - cell "Brouillon" [ref=e2198]:
+                    - generic [ref=e2199]:
+                      - img [ref=e2200]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2203]
+                  - cell [ref=e2204]:
+                    - generic [ref=e2205]:
+                      - button "Voir la commande" [ref=e2206]:
+                        - img [ref=e2207]
+                      - button "Modifier la commande" [ref=e2210]:
+                        - img [ref=e2211]
+                - 'row "1 Terrain Diatou Fall Client #38 — CBAO - KAOLACK - MEDINA BAYE 1 900 000 FCFA Brouillon 1899-11-30" [ref=e2214] [cursor=pointer]':
+                  - cell [ref=e2215]:
+                    - checkbox [ref=e2216]
+                  - cell "1" [ref=e2217]:
+                    - generic [ref=e2219]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2220]:
+                    - generic [ref=e2221]:
+                      - generic [ref=e2222]:
+                        - img [ref=e2223]
+                        - text: Terrain
+                      - generic [ref=e2227]: Diatou Fall
+                  - 'cell "Client #38" [ref=e2228]':
+                    - paragraph [ref=e2229]: "Client #38"
+                  - cell "—" [ref=e2230]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2231]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2232]:
+                      - img [ref=e2233]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2237]
+                  - cell "1 900 000 FCFA" [ref=e2240]
+                  - cell "Brouillon" [ref=e2241]:
+                    - generic [ref=e2242]:
+                      - img [ref=e2243]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2246]
+                  - cell [ref=e2247]:
+                    - generic [ref=e2248]:
+                      - button "Voir la commande" [ref=e2249]:
+                        - img [ref=e2250]
+                      - button "Modifier la commande" [ref=e2253]:
+                        - img [ref=e2254]
+                - 'row "1 Terrain Ndiole Faye Client #36 — CBAO - KAOLACK - MEDINA BAYE 2 300 000 FCFA Brouillon 1899-11-30" [ref=e2257] [cursor=pointer]':
+                  - cell [ref=e2258]:
+                    - checkbox [ref=e2259]
+                  - cell "1" [ref=e2260]:
+                    - generic [ref=e2262]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2263]:
+                    - generic [ref=e2264]:
+                      - generic [ref=e2265]:
+                        - img [ref=e2266]
+                        - text: Terrain
+                      - generic [ref=e2270]: Ndiole Faye
+                  - 'cell "Client #36" [ref=e2271]':
+                    - paragraph [ref=e2272]: "Client #36"
+                  - cell "—" [ref=e2273]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2274]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2275]:
+                      - img [ref=e2276]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2280]
+                  - cell "2 300 000 FCFA" [ref=e2283]
+                  - cell "Brouillon" [ref=e2284]:
+                    - generic [ref=e2285]:
+                      - img [ref=e2286]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2289]
+                  - cell [ref=e2290]:
+                    - generic [ref=e2291]:
+                      - button "Voir la commande" [ref=e2292]:
+                        - img [ref=e2293]
+                      - button "Modifier la commande" [ref=e2296]:
+                        - img [ref=e2297]
+                - 'row "1 Terrain Ndiole Faye Client #35 — CBAO - KAOLACK - MEDINA BAYE 2 100 000 FCFA Brouillon 1899-11-30" [ref=e2300] [cursor=pointer]':
+                  - cell [ref=e2301]:
+                    - checkbox [ref=e2302]
+                  - cell "1" [ref=e2303]:
+                    - generic [ref=e2305]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2306]:
+                    - generic [ref=e2307]:
+                      - generic [ref=e2308]:
+                        - img [ref=e2309]
+                        - text: Terrain
+                      - generic [ref=e2313]: Ndiole Faye
+                  - 'cell "Client #35" [ref=e2314]':
+                    - paragraph [ref=e2315]: "Client #35"
+                  - cell "—" [ref=e2316]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2317]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2318]:
+                      - img [ref=e2319]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2323]
+                  - cell "2 100 000 FCFA" [ref=e2326]
+                  - cell "Brouillon" [ref=e2327]:
+                    - generic [ref=e2328]:
+                      - img [ref=e2329]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2332]
+                  - cell [ref=e2333]:
+                    - generic [ref=e2334]:
+                      - button "Voir la commande" [ref=e2335]:
+                        - img [ref=e2336]
+                      - button "Modifier la commande" [ref=e2339]:
+                        - img [ref=e2340]
+                - 'row "1 Terrain Seyni Sane Client #33 — CBAO - KAOLACK - MEDINA BAYE 4 600 000 FCFA Brouillon 1899-11-30" [ref=e2343] [cursor=pointer]':
+                  - cell [ref=e2344]:
+                    - checkbox [ref=e2345]
+                  - cell "1" [ref=e2346]:
+                    - generic [ref=e2348]: "1"
+                  - cell "Terrain Seyni Sane" [ref=e2349]:
+                    - generic [ref=e2350]:
+                      - generic [ref=e2351]:
+                        - img [ref=e2352]
+                        - text: Terrain
+                      - generic [ref=e2356]: Seyni Sane
+                  - 'cell "Client #33" [ref=e2357]':
+                    - paragraph [ref=e2358]: "Client #33"
+                  - cell "—" [ref=e2359]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e2360]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e2361]:
+                      - img [ref=e2362]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e2366]
+                  - cell "4 600 000 FCFA" [ref=e2369]
+                  - cell "Brouillon" [ref=e2370]:
+                    - generic [ref=e2371]:
+                      - img [ref=e2372]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2375]
+                  - cell [ref=e2376]:
+                    - generic [ref=e2377]:
+                      - button "Voir la commande" [ref=e2378]:
+                        - img [ref=e2379]
+                      - button "Modifier la commande" [ref=e2382]:
+                        - img [ref=e2383]
+                - row "1 Terrain Souleymane Thiaw Faye Faye 775337137 — CBAO - TOUBA - DAROU MOUSTY 2 300 000 FCFA Brouillon" [ref=e2386] [cursor=pointer]:
+                  - cell [ref=e2387]:
+                    - checkbox [ref=e2388]
+                  - cell "1" [ref=e2389]:
+                    - generic [ref=e2391]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e2392]:
+                    - generic [ref=e2393]:
+                      - generic [ref=e2394]:
+                        - img [ref=e2395]
+                        - text: Terrain
+                      - generic [ref=e2399]: Souleymane Thiaw
+                  - cell "Faye Faye 775337137" [ref=e2400]:
+                    - paragraph [ref=e2401]: Faye Faye
+                    - paragraph [ref=e2402]: "775337137"
+                  - cell "—" [ref=e2403]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2404]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2405]:
+                      - img [ref=e2406]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2410]
+                  - cell "2 300 000 FCFA" [ref=e2413]
+                  - cell "Brouillon" [ref=e2414]:
+                    - generic [ref=e2415]:
+                      - img [ref=e2416]
+                      - text: Brouillon
+                  - cell [ref=e2419]
+                  - cell [ref=e2420]:
+                    - generic [ref=e2421]:
+                      - button "Voir la commande" [ref=e2422]:
+                        - img [ref=e2423]
+                      - button "Modifier la commande" [ref=e2426]:
+                        - img [ref=e2427]
+                - row "1 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 300 000 FCFA Brouillon" [ref=e2430] [cursor=pointer]:
+                  - cell [ref=e2431]:
+                    - checkbox [ref=e2432]
+                  - cell "1" [ref=e2433]:
+                    - generic [ref=e2435]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2436]:
+                    - generic [ref=e2437]:
+                      - generic [ref=e2438]:
+                        - img [ref=e2439]
+                        - text: Terrain
+                      - generic [ref=e2443]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e2444]:
+                    - paragraph [ref=e2445]: sd test
+                    - paragraph [ref=e2446]: "0778762197"
+                  - cell "—" [ref=e2447]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2448]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2449]:
+                      - img [ref=e2450]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2454]
+                  - cell "2 300 000 FCFA" [ref=e2457]
+                  - cell "Brouillon" [ref=e2458]:
+                    - generic [ref=e2459]:
+                      - img [ref=e2460]
+                      - text: Brouillon
+                  - cell [ref=e2463]
+                  - cell [ref=e2464]:
+                    - generic [ref=e2465]:
+                      - button "Voir la commande" [ref=e2466]:
+                        - img [ref=e2467]
+                      - button "Modifier la commande" [ref=e2470]:
+                        - img [ref=e2471]
+                - row "1 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 1 850 000 FCFA Brouillon" [ref=e2474] [cursor=pointer]:
+                  - cell [ref=e2475]:
+                    - checkbox [ref=e2476]
+                  - cell "1" [ref=e2477]:
+                    - generic [ref=e2479]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2480]:
+                    - generic [ref=e2481]:
+                      - generic [ref=e2482]:
+                        - img [ref=e2483]
+                        - text: Terrain
+                      - generic [ref=e2487]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e2488]:
+                    - paragraph [ref=e2489]: sd test
+                    - paragraph [ref=e2490]: "0778762197"
+                  - cell "—" [ref=e2491]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2492]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2493]:
+                      - img [ref=e2494]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2498]
+                  - cell "1 850 000 FCFA" [ref=e2501]
+                  - cell "Brouillon" [ref=e2502]:
+                    - generic [ref=e2503]:
+                      - img [ref=e2504]
+                      - text: Brouillon
+                  - cell [ref=e2507]
+                  - cell [ref=e2508]:
+                    - generic [ref=e2509]:
+                      - button "Voir la commande" [ref=e2510]:
+                        - img [ref=e2511]
+                      - button "Modifier la commande" [ref=e2514]:
+                        - img [ref=e2515]
+                - row "1 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 300 000 FCFA Brouillon" [ref=e2518] [cursor=pointer]:
+                  - cell [ref=e2519]:
+                    - checkbox [ref=e2520]
+                  - cell "1" [ref=e2521]:
+                    - generic [ref=e2523]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e2524]:
+                    - generic [ref=e2525]:
+                      - generic [ref=e2526]:
+                        - img [ref=e2527]
+                        - text: Terrain
+                      - generic [ref=e2531]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e2532]:
+                    - paragraph [ref=e2533]: sd test
+                    - paragraph [ref=e2534]: "0778762197"
+                  - cell "—" [ref=e2535]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2536]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2537]:
+                      - img [ref=e2538]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2542]
+                  - cell "2 300 000 FCFA" [ref=e2545]
+                  - cell "Brouillon" [ref=e2546]:
+                    - generic [ref=e2547]:
+                      - img [ref=e2548]
+                      - text: Brouillon
+                  - cell [ref=e2551]
+                  - cell [ref=e2552]:
+                    - generic [ref=e2553]:
+                      - button "Voir la commande" [ref=e2554]:
+                        - img [ref=e2555]
+                      - button "Modifier la commande" [ref=e2558]:
+                        - img [ref=e2559]
+                - row "1 Terrain Ndiole Faye sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 300 000 FCFA Brouillon" [ref=e2562] [cursor=pointer]:
+                  - cell [ref=e2563]:
+                    - checkbox [ref=e2564]
+                  - cell "1" [ref=e2565]:
+                    - generic [ref=e2567]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2568]:
+                    - generic [ref=e2569]:
+                      - generic [ref=e2570]:
+                        - img [ref=e2571]
+                        - text: Terrain
+                      - generic [ref=e2575]: Ndiole Faye
+                  - cell "sd test 0778762197" [ref=e2576]:
+                    - paragraph [ref=e2577]: sd test
+                    - paragraph [ref=e2578]: "0778762197"
+                  - cell "—" [ref=e2579]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2580]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2581]:
+                      - img [ref=e2582]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2586]
+                  - cell "2 300 000 FCFA" [ref=e2589]
+                  - cell "Brouillon" [ref=e2590]:
+                    - generic [ref=e2591]:
+                      - img [ref=e2592]
+                      - text: Brouillon
+                  - cell [ref=e2595]
+                  - cell [ref=e2596]:
+                    - generic [ref=e2597]:
+                      - button "Voir la commande" [ref=e2598]:
+                        - img [ref=e2599]
+                      - button "Modifier la commande" [ref=e2602]:
+                        - img [ref=e2603]
+                - row "oN0021 Terrain Ndiole Faye sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 300 000 FCFA Brouillon" [ref=e2606] [cursor=pointer]:
+                  - cell [ref=e2607]:
+                    - checkbox [ref=e2608]
+                  - cell "oN0021" [ref=e2609]:
+                    - generic [ref=e2611]: oN0021
+                  - cell "Terrain Ndiole Faye" [ref=e2612]:
+                    - generic [ref=e2613]:
+                      - generic [ref=e2614]:
+                        - img [ref=e2615]
+                        - text: Terrain
+                      - generic [ref=e2619]: Ndiole Faye
+                  - cell "sd test 0778762197" [ref=e2620]:
+                    - paragraph [ref=e2621]: sd test
+                    - paragraph [ref=e2622]: "0778762197"
+                  - cell "—" [ref=e2623]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2624]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2625]:
+                      - img [ref=e2626]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2630]
+                  - cell "2 300 000 FCFA" [ref=e2633]
+                  - cell "Brouillon" [ref=e2634]:
+                    - generic [ref=e2635]:
+                      - img [ref=e2636]
+                      - text: Brouillon
+                  - cell [ref=e2639]
+                  - cell [ref=e2640]:
+                    - generic [ref=e2641]:
+                      - button "Voir la commande" [ref=e2642]:
+                        - img [ref=e2643]
+                      - button "Modifier la commande" [ref=e2646]:
+                        - img [ref=e2647]
+                - row "1 Terrain Souleymane Thiaw sd test 0778762197 — CBAO - KAOLACK - ROUTE GOSSAS 4 000 000 FCFA Brouillon 1899-11-30" [ref=e2650] [cursor=pointer]:
+                  - cell [ref=e2651]:
+                    - checkbox [ref=e2652]
+                  - cell "1" [ref=e2653]:
+                    - generic [ref=e2655]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e2656]:
+                    - generic [ref=e2657]:
+                      - generic [ref=e2658]:
+                        - img [ref=e2659]
+                        - text: Terrain
+                      - generic [ref=e2663]: Souleymane Thiaw
+                  - cell "sd test 0778762197" [ref=e2664]:
+                    - paragraph [ref=e2665]: sd test
+                    - paragraph [ref=e2666]: "0778762197"
+                  - cell "—" [ref=e2667]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2668]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2669]:
+                      - img [ref=e2670]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2674]
+                  - cell "4 000 000 FCFA" [ref=e2677]
+                  - cell "Brouillon" [ref=e2678]:
+                    - generic [ref=e2679]:
+                      - img [ref=e2680]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2683]
+                  - cell [ref=e2684]:
+                    - generic [ref=e2685]:
+                      - button "Voir la commande" [ref=e2686]:
+                        - img [ref=e2687]
+                      - button "Modifier la commande" [ref=e2690]:
+                        - img [ref=e2691]
+                - row "1 Terrain Souleymane Thiaw sd test 0778762197 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Brouillon 1899-11-30" [ref=e2694] [cursor=pointer]:
+                  - cell [ref=e2695]:
+                    - checkbox [ref=e2696]
+                  - cell "1" [ref=e2697]:
+                    - generic [ref=e2699]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e2700]:
+                    - generic [ref=e2701]:
+                      - generic [ref=e2702]:
+                        - img [ref=e2703]
+                        - text: Terrain
+                      - generic [ref=e2707]: Souleymane Thiaw
+                  - cell "sd test 0778762197" [ref=e2708]:
+                    - paragraph [ref=e2709]: sd test
+                    - paragraph [ref=e2710]: "0778762197"
+                  - cell "—" [ref=e2711]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2712]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2713]:
+                      - img [ref=e2714]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2718]
+                  - cell "2 000 000 FCFA" [ref=e2721]
+                  - cell "Brouillon" [ref=e2722]:
+                    - generic [ref=e2723]:
+                      - img [ref=e2724]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2727]
+                  - cell [ref=e2728]:
+                    - generic [ref=e2729]:
+                      - button "Voir la commande" [ref=e2730]:
+                        - img [ref=e2731]
+                      - button "Modifier la commande" [ref=e2734]:
+                        - img [ref=e2735]
+                - row "1 Terrain Hamidou Sow sd test 0778762197 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Livrée 1899-11-30" [ref=e2738] [cursor=pointer]:
+                  - cell [ref=e2739]:
+                    - checkbox [ref=e2740]
+                  - cell "1" [ref=e2741]:
+                    - generic [ref=e2743]: "1"
+                  - cell "Terrain Hamidou Sow" [ref=e2744]:
+                    - generic [ref=e2745]:
+                      - generic [ref=e2746]:
+                        - img [ref=e2747]
+                        - text: Terrain
+                      - generic [ref=e2751]: Hamidou Sow
+                  - cell "sd test 0778762197" [ref=e2752]:
+                    - paragraph [ref=e2753]: sd test
+                    - paragraph [ref=e2754]: "0778762197"
+                  - cell "—" [ref=e2755]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2756]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2757]:
+                      - img [ref=e2758]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2762]
+                  - cell "2 000 000 FCFA" [ref=e2765]
+                  - cell "Livrée" [ref=e2766]:
+                    - generic [ref=e2767]:
+                      - img [ref=e2768]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e2771]
+                  - cell [ref=e2772]:
+                    - generic [ref=e2773]:
+                      - button "Voir la commande" [ref=e2774]:
+                        - img [ref=e2775]
+                      - button "Modifier la commande" [ref=e2778]:
+                        - img [ref=e2779]
+                - row "1 Terrain Ndiole Faye sd test 0778762197 — CBAO - KAOLACK - ROUTE GOSSAS 2 000 000 FCFA Brouillon 1899-11-30" [ref=e2782] [cursor=pointer]:
+                  - cell [ref=e2783]:
+                    - checkbox [ref=e2784]
+                  - cell "1" [ref=e2785]:
+                    - generic [ref=e2787]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2788]:
+                    - generic [ref=e2789]:
+                      - generic [ref=e2790]:
+                        - img [ref=e2791]
+                        - text: Terrain
+                      - generic [ref=e2795]: Ndiole Faye
+                  - cell "sd test 0778762197" [ref=e2796]:
+                    - paragraph [ref=e2797]: sd test
+                    - paragraph [ref=e2798]: "0778762197"
+                  - cell "—" [ref=e2799]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2800]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2801]:
+                      - img [ref=e2802]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2806]
+                  - cell "2 000 000 FCFA" [ref=e2809]
+                  - cell "Brouillon" [ref=e2810]:
+                    - generic [ref=e2811]:
+                      - img [ref=e2812]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2815]
+                  - cell [ref=e2816]:
+                    - generic [ref=e2817]:
+                      - button "Voir la commande" [ref=e2818]:
+                        - img [ref=e2819]
+                      - button "Modifier la commande" [ref=e2822]:
+                        - img [ref=e2823]
+                - row "1 Terrain Souleymane Thiaw pape Papi 77 876 21 97 — CBAO - KAOLACK - ROUTE GOSSAS 2 100 000 FCFA Brouillon 1899-11-30" [ref=e2826] [cursor=pointer]:
+                  - cell [ref=e2827]:
+                    - checkbox [ref=e2828]
+                  - cell "1" [ref=e2829]:
+                    - generic [ref=e2831]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e2832]:
+                    - generic [ref=e2833]:
+                      - generic [ref=e2834]:
+                        - img [ref=e2835]
+                        - text: Terrain
+                      - generic [ref=e2839]: Souleymane Thiaw
+                  - cell "pape Papi 77 876 21 97" [ref=e2840]:
+                    - paragraph [ref=e2841]: pape Papi
+                    - paragraph [ref=e2842]: 77 876 21 97
+                  - cell "—" [ref=e2843]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2844]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2845]:
+                      - img [ref=e2846]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2850]
+                  - cell "2 100 000 FCFA" [ref=e2853]
+                  - cell "Brouillon" [ref=e2854]:
+                    - generic [ref=e2855]:
+                      - img [ref=e2856]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2859]
+                  - cell [ref=e2860]:
+                    - generic [ref=e2861]:
+                      - button "Voir la commande" [ref=e2862]:
+                        - img [ref=e2863]
+                      - button "Modifier la commande" [ref=e2866]:
+                        - img [ref=e2867]
+                - row "1 Terrain Ndiole Faye sd test 0778762197 — CBAO - KAOLACK - ROUTE GOSSAS 4 000 000 FCFA Brouillon 1899-11-30" [ref=e2870] [cursor=pointer]:
+                  - cell [ref=e2871]:
+                    - checkbox [ref=e2872]
+                  - cell "1" [ref=e2873]:
+                    - generic [ref=e2875]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e2876]:
+                    - generic [ref=e2877]:
+                      - generic [ref=e2878]:
+                        - img [ref=e2879]
+                        - text: Terrain
+                      - generic [ref=e2883]: Ndiole Faye
+                  - cell "sd test 0778762197" [ref=e2884]:
+                    - paragraph [ref=e2885]: sd test
+                    - paragraph [ref=e2886]: "0778762197"
+                  - cell "—" [ref=e2887]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2888]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2889]:
+                      - img [ref=e2890]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2894]
+                  - cell "4 000 000 FCFA" [ref=e2897]
+                  - cell "Brouillon" [ref=e2898]:
+                    - generic [ref=e2899]:
+                      - img [ref=e2900]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2903]
+                  - cell [ref=e2904]:
+                    - generic [ref=e2905]:
+                      - button "Voir la commande" [ref=e2906]:
+                        - img [ref=e2907]
+                      - button "Modifier la commande" [ref=e2910]:
+                        - img [ref=e2911]
+                - row "1 Terrain Souleymane Thiaw sd test 0778762197 — CBAO - KAOLACK - ROUTE GOSSAS 0 FCFA Brouillon 1899-11-30" [ref=e2914] [cursor=pointer]:
+                  - cell [ref=e2915]:
+                    - checkbox [ref=e2916]
+                  - cell "1" [ref=e2917]:
+                    - generic [ref=e2919]: "1"
+                  - cell "Terrain Souleymane Thiaw" [ref=e2920]:
+                    - generic [ref=e2921]:
+                      - generic [ref=e2922]:
+                        - img [ref=e2923]
+                        - text: Terrain
+                      - generic [ref=e2927]: Souleymane Thiaw
+                  - cell "sd test 0778762197" [ref=e2928]:
+                    - paragraph [ref=e2929]: sd test
+                    - paragraph [ref=e2930]: "0778762197"
+                  - cell "—" [ref=e2931]
+                  - cell "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2932]:
+                    - button "CBAO - KAOLACK - ROUTE GOSSAS" [ref=e2933]:
+                      - img [ref=e2934]
+                      - text: CBAO - KAOLACK - ROUTE GOSSAS
+                      - img [ref=e2938]
+                  - cell "0 FCFA" [ref=e2941]
+                  - cell "Brouillon" [ref=e2942]:
+                    - generic [ref=e2943]:
+                      - img [ref=e2944]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e2947]
+                  - cell [ref=e2948]:
+                    - generic [ref=e2949]:
+                      - button "Voir la commande" [ref=e2950]:
+                        - img [ref=e2951]
+                      - button "Modifier la commande" [ref=e2954]:
+                        - img [ref=e2955]
+                - row "AS0013 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 500 000 FCFA Brouillon" [ref=e2958] [cursor=pointer]:
+                  - cell [ref=e2959]:
+                    - checkbox [ref=e2960]
+                  - cell "AS0013" [ref=e2961]:
+                    - generic [ref=e2963]: AS0013
+                  - cell "Terrain Diatou Fall" [ref=e2964]:
+                    - generic [ref=e2965]:
+                      - generic [ref=e2966]:
+                        - img [ref=e2967]
+                        - text: Terrain
+                      - generic [ref=e2971]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e2972]:
+                    - paragraph [ref=e2973]: sd test
+                    - paragraph [ref=e2974]: "0778762197"
+                  - cell "—" [ref=e2975]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e2976]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e2977]:
+                      - img [ref=e2978]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e2982]
+                  - cell "2 500 000 FCFA" [ref=e2985]
+                  - cell "Brouillon" [ref=e2986]:
+                    - generic [ref=e2987]:
+                      - img [ref=e2988]
+                      - text: Brouillon
+                  - cell [ref=e2991]
+                  - cell [ref=e2992]:
+                    - generic [ref=e2993]:
+                      - button "Voir la commande" [ref=e2994]:
+                        - img [ref=e2995]
+                      - button "Modifier la commande" [ref=e2998]:
+                        - img [ref=e2999]
+                - row "CS0012 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 500 000 FCFA Livrée" [ref=e3002] [cursor=pointer]:
+                  - cell [ref=e3003]:
+                    - checkbox [ref=e3004]
+                  - cell "CS0012" [ref=e3005]:
+                    - generic [ref=e3007]: CS0012
+                  - cell "Terrain Diatou Fall" [ref=e3008]:
+                    - generic [ref=e3009]:
+                      - generic [ref=e3010]:
+                        - img [ref=e3011]
+                        - text: Terrain
+                      - generic [ref=e3015]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e3016]:
+                    - paragraph [ref=e3017]: sd test
+                    - paragraph [ref=e3018]: "0778762197"
+                  - cell "—" [ref=e3019]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3020]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3021]:
+                      - img [ref=e3022]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3026]
+                  - cell "2 500 000 FCFA" [ref=e3029]
+                  - cell "Livrée" [ref=e3030]:
+                    - generic [ref=e3031]:
+                      - img [ref=e3032]
+                      - text: Livrée
+                  - cell [ref=e3035]
+                  - cell [ref=e3036]:
+                    - generic [ref=e3037]:
+                      - button "Voir la commande" [ref=e3038]:
+                        - img [ref=e3039]
+                      - button "Modifier la commande" [ref=e3042]:
+                        - img [ref=e3043]
+                - row "MS0011 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 500 000 FCFA Brouillon" [ref=e3046] [cursor=pointer]:
+                  - cell [ref=e3047]:
+                    - checkbox [ref=e3048]
+                  - cell "MS0011" [ref=e3049]:
+                    - generic [ref=e3051]: MS0011
+                  - cell "Terrain Diatou Fall" [ref=e3052]:
+                    - generic [ref=e3053]:
+                      - generic [ref=e3054]:
+                        - img [ref=e3055]
+                        - text: Terrain
+                      - generic [ref=e3059]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e3060]:
+                    - paragraph [ref=e3061]: sd test
+                    - paragraph [ref=e3062]: "0778762197"
+                  - cell "—" [ref=e3063]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3064]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3065]:
+                      - img [ref=e3066]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3070]
+                  - cell "2 500 000 FCFA" [ref=e3073]
+                  - cell "Brouillon" [ref=e3074]:
+                    - generic [ref=e3075]:
+                      - img [ref=e3076]
+                      - text: Brouillon
+                  - cell [ref=e3079]
+                  - cell [ref=e3080]:
+                    - generic [ref=e3081]:
+                      - button "Voir la commande" [ref=e3082]:
+                        - img [ref=e3083]
+                      - button "Modifier la commande" [ref=e3086]:
+                        - img [ref=e3087]
+                - row "1 Terrain Ndiole Faye sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 12 000 000 FCFA Brouillon 1899-11-30" [ref=e3090] [cursor=pointer]:
+                  - cell [ref=e3091]:
+                    - checkbox [ref=e3092]
+                  - cell "1" [ref=e3093]:
+                    - generic [ref=e3095]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e3096]:
+                    - generic [ref=e3097]:
+                      - generic [ref=e3098]:
+                        - img [ref=e3099]
+                        - text: Terrain
+                      - generic [ref=e3103]: Ndiole Faye
+                  - cell "sd test 0778762197" [ref=e3104]:
+                    - paragraph [ref=e3105]: sd test
+                    - paragraph [ref=e3106]: "0778762197"
+                  - cell "—" [ref=e3107]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3108]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3109]:
+                      - img [ref=e3110]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3114]
+                  - cell "12 000 000 FCFA" [ref=e3117]
+                  - cell "Brouillon" [ref=e3118]:
+                    - generic [ref=e3119]:
+                      - img [ref=e3120]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e3123]
+                  - cell [ref=e3124]:
+                    - generic [ref=e3125]:
+                      - button "Voir la commande" [ref=e3126]:
+                        - img [ref=e3127]
+                      - button "Modifier la commande" [ref=e3130]:
+                        - img [ref=e3131]
+                - row "FF009 Terrain Ndiole Faye sd sd 0778762197 — CBAO - TOUBA - DAROU MOUSTY 12 000 000 FCFA Brouillon" [ref=e3134] [cursor=pointer]:
+                  - cell [ref=e3135]:
+                    - checkbox [ref=e3136]
+                  - cell "FF009" [ref=e3137]:
+                    - generic [ref=e3139]: FF009
+                  - cell "Terrain Ndiole Faye" [ref=e3140]:
+                    - generic [ref=e3141]:
+                      - generic [ref=e3142]:
+                        - img [ref=e3143]
+                        - text: Terrain
+                      - generic [ref=e3147]: Ndiole Faye
+                  - cell "sd sd 0778762197" [ref=e3148]:
+                    - paragraph [ref=e3149]: sd sd
+                    - paragraph [ref=e3150]: "0778762197"
+                  - cell "—" [ref=e3151]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3152]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3153]:
+                      - img [ref=e3154]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3158]
+                  - cell "12 000 000 FCFA" [ref=e3161]
+                  - cell "Brouillon" [ref=e3162]:
+                    - generic [ref=e3163]:
+                      - img [ref=e3164]
+                      - text: Brouillon
+                  - cell [ref=e3167]
+                  - cell [ref=e3168]:
+                    - generic [ref=e3169]:
+                      - button "Voir la commande" [ref=e3170]:
+                        - img [ref=e3171]
+                      - button "Modifier la commande" [ref=e3174]:
+                        - img [ref=e3175]
+                - row "MD008 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 500 000 FCFA Livrée" [ref=e3178] [cursor=pointer]:
+                  - cell [ref=e3179]:
+                    - checkbox [ref=e3180]
+                  - cell "MD008" [ref=e3181]:
+                    - generic [ref=e3183]: MD008
+                  - cell "Terrain Diatou Fall" [ref=e3184]:
+                    - generic [ref=e3185]:
+                      - generic [ref=e3186]:
+                        - img [ref=e3187]
+                        - text: Terrain
+                      - generic [ref=e3191]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e3192]:
+                    - paragraph [ref=e3193]: sd test
+                    - paragraph [ref=e3194]: "0778762197"
+                  - cell "—" [ref=e3195]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3196]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3197]:
+                      - img [ref=e3198]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3202]
+                  - cell "2 500 000 FCFA" [ref=e3205]
+                  - cell "Livrée" [ref=e3206]:
+                    - generic [ref=e3207]:
+                      - img [ref=e3208]
+                      - text: Livrée
+                  - cell [ref=e3211]
+                  - cell [ref=e3212]:
+                    - generic [ref=e3213]:
+                      - button "Voir la commande" [ref=e3214]:
+                        - img [ref=e3215]
+                      - button "Modifier la commande" [ref=e3218]:
+                        - img [ref=e3219]
+                - row "1 Terrain Diatou Fall sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 4 000 000 FCFA Brouillon 1899-11-30" [ref=e3222] [cursor=pointer]:
+                  - cell [ref=e3223]:
+                    - checkbox [ref=e3224]
+                  - cell "1" [ref=e3225]:
+                    - generic [ref=e3227]: "1"
+                  - cell "Terrain Diatou Fall" [ref=e3228]:
+                    - generic [ref=e3229]:
+                      - generic [ref=e3230]:
+                        - img [ref=e3231]
+                        - text: Terrain
+                      - generic [ref=e3235]: Diatou Fall
+                  - cell "sd test 0778762197" [ref=e3236]:
+                    - paragraph [ref=e3237]: sd test
+                    - paragraph [ref=e3238]: "0778762197"
+                  - cell "—" [ref=e3239]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3240]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3241]:
+                      - img [ref=e3242]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3246]
+                  - cell "4 000 000 FCFA" [ref=e3249]
+                  - cell "Brouillon" [ref=e3250]:
+                    - generic [ref=e3251]:
+                      - img [ref=e3252]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e3255]
+                  - cell [ref=e3256]:
+                    - generic [ref=e3257]:
+                      - button "Voir la commande" [ref=e3258]:
+                        - img [ref=e3259]
+                      - button "Modifier la commande" [ref=e3262]:
+                        - img [ref=e3263]
+                - row "MD006 Terrain Diatou Fall sd sd 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 600 000 FCFA Brouillon" [ref=e3266] [cursor=pointer]:
+                  - cell [ref=e3267]:
+                    - checkbox [ref=e3268]
+                  - cell "MD006" [ref=e3269]:
+                    - generic [ref=e3271]: MD006
+                  - cell "Terrain Diatou Fall" [ref=e3272]:
+                    - generic [ref=e3273]:
+                      - generic [ref=e3274]:
+                        - img [ref=e3275]
+                        - text: Terrain
+                      - generic [ref=e3279]: Diatou Fall
+                  - cell "sd sd 0778762197" [ref=e3280]:
+                    - paragraph [ref=e3281]: sd sd
+                    - paragraph [ref=e3282]: "0778762197"
+                  - cell "—" [ref=e3283]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3284]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3285]:
+                      - img [ref=e3286]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3290]
+                  - cell "2 600 000 FCFA" [ref=e3293]
+                  - cell "Brouillon" [ref=e3294]:
+                    - generic [ref=e3295]:
+                      - img [ref=e3296]
+                      - text: Brouillon
+                  - cell [ref=e3299]
+                  - cell [ref=e3300]:
+                    - generic [ref=e3301]:
+                      - button "Voir la commande" [ref=e3302]:
+                        - img [ref=e3303]
+                      - button "Modifier la commande" [ref=e3306]:
+                        - img [ref=e3307]
+                - row "LS005 Terrain Ndiole Faye sd test 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 500 000 FCFA Brouillon" [ref=e3310] [cursor=pointer]:
+                  - cell [ref=e3311]:
+                    - checkbox [ref=e3312]
+                  - cell "LS005" [ref=e3313]:
+                    - generic [ref=e3315]: LS005
+                  - cell "Terrain Ndiole Faye" [ref=e3316]:
+                    - generic [ref=e3317]:
+                      - generic [ref=e3318]:
+                        - img [ref=e3319]
+                        - text: Terrain
+                      - generic [ref=e3323]: Ndiole Faye
+                  - cell "sd test 0778762197" [ref=e3324]:
+                    - paragraph [ref=e3325]: sd test
+                    - paragraph [ref=e3326]: "0778762197"
+                  - cell "—" [ref=e3327]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3328]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3329]:
+                      - img [ref=e3330]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3334]
+                  - cell "2 500 000 FCFA" [ref=e3337]
+                  - cell "Brouillon" [ref=e3338]:
+                    - generic [ref=e3339]:
+                      - img [ref=e3340]
+                      - text: Brouillon
+                  - cell [ref=e3343]
+                  - cell [ref=e3344]:
+                    - generic [ref=e3345]:
+                      - button "Voir la commande" [ref=e3346]:
+                        - img [ref=e3347]
+                      - button "Modifier la commande" [ref=e3350]:
+                        - img [ref=e3351]
+                - row "1 Terrain Ndiole Faye pape LO 77 876 21 97 — CBAO - TOUBA - KHAYRA 2 600 000 FCFA Brouillon 1899-11-30" [ref=e3354] [cursor=pointer]:
+                  - cell [ref=e3355]:
+                    - checkbox [ref=e3356]
+                  - cell "1" [ref=e3357]:
+                    - generic [ref=e3359]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e3360]:
+                    - generic [ref=e3361]:
+                      - generic [ref=e3362]:
+                        - img [ref=e3363]
+                        - text: Terrain
+                      - generic [ref=e3367]: Ndiole Faye
+                  - cell "pape LO 77 876 21 97" [ref=e3368]:
+                    - paragraph [ref=e3369]: pape LO
+                    - paragraph [ref=e3370]: 77 876 21 97
+                  - cell "—" [ref=e3371]
+                  - cell "CBAO - TOUBA - KHAYRA" [ref=e3372]:
+                    - button "CBAO - TOUBA - KHAYRA" [ref=e3373]:
+                      - img [ref=e3374]
+                      - text: CBAO - TOUBA - KHAYRA
+                      - img [ref=e3378]
+                  - cell "2 600 000 FCFA" [ref=e3381]
+                  - cell "Brouillon" [ref=e3382]:
+                    - generic [ref=e3383]:
+                      - img [ref=e3384]
+                      - text: Brouillon
+                  - cell "1899-11-30" [ref=e3387]
+                  - cell [ref=e3388]:
+                    - generic [ref=e3389]:
+                      - button "Voir la commande" [ref=e3390]:
+                        - img [ref=e3391]
+                      - button "Modifier la commande" [ref=e3394]:
+                        - img [ref=e3395]
+                - row "1 Terrain Ndiole Faye sd test 778762197 — CBAO - KAOLACK - MEDINA BAYE 2 600 000 FCFA Livrée 1899-11-30" [ref=e3398] [cursor=pointer]:
+                  - cell [ref=e3399]:
+                    - checkbox [ref=e3400]
+                  - cell "1" [ref=e3401]:
+                    - generic [ref=e3403]: "1"
+                  - cell "Terrain Ndiole Faye" [ref=e3404]:
+                    - generic [ref=e3405]:
+                      - generic [ref=e3406]:
+                        - img [ref=e3407]
+                        - text: Terrain
+                      - generic [ref=e3411]: Ndiole Faye
+                  - cell "sd test 778762197" [ref=e3412]:
+                    - paragraph [ref=e3413]: sd test
+                    - paragraph [ref=e3414]: "778762197"
+                  - cell "—" [ref=e3415]
+                  - cell "CBAO - KAOLACK - MEDINA BAYE" [ref=e3416]:
+                    - button "CBAO - KAOLACK - MEDINA BAYE" [ref=e3417]:
+                      - img [ref=e3418]
+                      - text: CBAO - KAOLACK - MEDINA BAYE
+                      - img [ref=e3422]
+                  - cell "2 600 000 FCFA" [ref=e3425]
+                  - cell "Livrée" [ref=e3426]:
+                    - generic [ref=e3427]:
+                      - img [ref=e3428]
+                      - text: Livrée
+                  - cell "1899-11-30" [ref=e3431]
+                  - cell [ref=e3432]:
+                    - generic [ref=e3433]:
+                      - button "Voir la commande" [ref=e3434]:
+                        - img [ref=e3435]
+                      - button "Modifier la commande" [ref=e3438]:
+                        - img [ref=e3439]
+                - row "FF002 Terrain Diatou Fall sd sd 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 600 000 FCFA Brouillon" [ref=e3442] [cursor=pointer]:
+                  - cell [ref=e3443]:
+                    - checkbox [ref=e3444]
+                  - cell "FF002" [ref=e3445]:
+                    - generic [ref=e3447]: FF002
+                  - cell "Terrain Diatou Fall" [ref=e3448]:
+                    - generic [ref=e3449]:
+                      - generic [ref=e3450]:
+                        - img [ref=e3451]
+                        - text: Terrain
+                      - generic [ref=e3455]: Diatou Fall
+                  - cell "sd sd 0778762197" [ref=e3456]:
+                    - paragraph [ref=e3457]: sd sd
+                    - paragraph [ref=e3458]: "0778762197"
+                  - cell "—" [ref=e3459]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3460]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3461]:
+                      - img [ref=e3462]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3466]
+                  - cell "2 600 000 FCFA" [ref=e3469]
+                  - cell "Brouillon" [ref=e3470]:
+                    - generic [ref=e3471]:
+                      - img [ref=e3472]
+                      - text: Brouillon
+                  - cell [ref=e3475]
+                  - cell [ref=e3476]:
+                    - generic [ref=e3477]:
+                      - button "Voir la commande" [ref=e3478]:
+                        - img [ref=e3479]
+                      - button "Modifier la commande" [ref=e3482]:
+                        - img [ref=e3483]
+                - row "AN001 Terrain Ndiole Faye sd sd 0778762197 — CBAO - TOUBA - DAROU MOUSTY 2 600 000 FCFA Brouillon" [ref=e3486] [cursor=pointer]:
+                  - cell [ref=e3487]:
+                    - checkbox [ref=e3488]
+                  - cell "AN001" [ref=e3489]:
+                    - generic [ref=e3491]: AN001
+                  - cell "Terrain Ndiole Faye" [ref=e3492]:
+                    - generic [ref=e3493]:
+                      - generic [ref=e3494]:
+                        - img [ref=e3495]
+                        - text: Terrain
+                      - generic [ref=e3499]: Ndiole Faye
+                  - cell "sd sd 0778762197" [ref=e3500]:
+                    - paragraph [ref=e3501]: sd sd
+                    - paragraph [ref=e3502]: "0778762197"
+                  - cell "—" [ref=e3503]
+                  - cell "CBAO - TOUBA - DAROU MOUSTY" [ref=e3504]:
+                    - button "CBAO - TOUBA - DAROU MOUSTY" [ref=e3505]:
+                      - img [ref=e3506]
+                      - text: CBAO - TOUBA - DAROU MOUSTY
+                      - img [ref=e3510]
+                  - cell "2 600 000 FCFA" [ref=e3513]
+                  - cell "Brouillon" [ref=e3514]:
+                    - generic [ref=e3515]:
+                      - img [ref=e3516]
+                      - text: Brouillon
+                  - cell [ref=e3519]
+                  - cell [ref=e3520]:
+                    - generic [ref=e3521]:
+                      - button "Voir la commande" [ref=e3522]:
+                        - img [ref=e3523]
+                      - button "Modifier la commande" [ref=e3526]:
+                        - img [ref=e3527]
+            - generic [ref=e3530]:
+              - generic [ref=e3531]: 77 commande(s) affichée(s) sur 77
+              - generic [ref=e3532]: 2 sélectionnée(s) — 4 000 000 FCFA
+```
+
+# Test source
+
+```ts
+  23  | 
+  24  |     // Tab "Non assignées"
+  25  |     await page.getByRole("button", { name: /non assignées/i }).click();
+  26  |     const lignes = page.locator("tbody tr");
+  27  |     const count = await lignes.count();
+  28  |     if (count > 0) {
+  29  |       // Vérifier que le badge "Non assignée" est présent dans chaque ligne
+  30  |       const premiereLigne = lignes.first();
+  31  |       await expect(premiereLigne.getByText(/non assignée/i)).toBeVisible();
+  32  |     }
+  33  |   });
+  34  | 
+  35  |   test("filtre par source (terrain / marketplace)", async ({ page }) => {
+  36  |     await navigateTo(page, "/admin/commercial/commandes");
+  37  |     await waitForLoaded(page);
+  38  | 
+  39  |     // Clic sur "Terrain"
+  40  |     await page.getByRole("button", { name: /^terrain$/i }).click();
+  41  |     await waitForLoaded(page);
+  42  | 
+  43  |     const lignes = page.locator("tbody tr");
+  44  |     const count = await lignes.count();
+  45  |     if (count > 0) {
+  46  |       await expect(lignes.first().getByText(/terrain/i)).toBeVisible();
+  47  |     }
+  48  | 
+  49  |     // Clic sur "Marketplace"
+  50  |     await page.getByRole("button", { name: /^marketplace$/i }).click();
+  51  |     await waitForLoaded(page);
+  52  |   });
+  53  | 
+  54  |   test("recherche par nom client filtre la table", async ({ page }) => {
+  55  |     await navigateTo(page, "/admin/commercial/commandes");
+  56  |     await waitForLoaded(page);
+  57  | 
+  58  |     const lignesAvant = await page.locator("tbody tr").count();
+  59  |     if (lignesAvant === 0) test.skip();
+  60  | 
+  61  |     // Récupérer le nom du premier client
+  62  |     const premierClient = await page.locator("tbody tr").first()
+  63  |       .locator("td").nth(3)
+  64  |       .locator("p").first()
+  65  |       .textContent();
+  66  | 
+  67  |     if (!premierClient) test.skip();
+  68  | 
+  69  |     // Saisir les 3 premiers caractères dans la recherche
+  70  |     await page.getByPlaceholder(/référence, client/i).fill(premierClient.slice(0, 3));
+  71  |     await page.waitForTimeout(500);
+  72  | 
+  73  |     const lignesApres = await page.locator("tbody tr").count();
+  74  |     expect(lignesApres).toBeGreaterThanOrEqual(1);
+  75  |     expect(lignesApres).toBeLessThanOrEqual(lignesAvant);
+  76  |   });
+  77  | 
+  78  |   test("assigne une agence via le sélecteur inline", async ({ page }) => {
+  79  |     await navigateTo(page, "/admin/commercial/commandes");
+  80  |     await waitForLoaded(page);
+  81  | 
+  82  |     // Cherche une ligne avec "Non assignée" (singulier exact — pas le tab "Non assignées")
+  83  |     const btnNonAssignee = page.getByRole("button", { name: "Non assignée", exact: true }).first();
+  84  |     const visible = await btnNonAssignee.isVisible({ timeout: 2000 }).catch(() => false);
+  85  |     if (!visible) {
+  86  |       test.skip();
+  87  |       return;
+  88  |     }
+  89  | 
+  90  |     // Ouvrir le sélecteur d'agence
+  91  |     await btnNonAssignee.click();
+  92  | 
+  93  |     // Le popover de sélection d'agence doit s'ouvrir
+  94  |     const popover = page.locator("[cmdk-root]").first();
+  95  |     await expect(popover).toBeVisible({ timeout: 5_000 });
+  96  | 
+  97  |     // Sélectionner la première agence disponible
+  98  |     const premiereAgence = page.locator("[cmdk-item]").first();
+  99  |     const agenceNom = await premiereAgence.textContent();
+  100 |     await premiereAgence.click();
+  101 | 
+  102 |     // Attendre la mise à jour
+  103 |     await waitForLoaded(page);
+  104 | 
+  105 |     console.log(`Agence assignée : ${agenceNom}`);
+  106 |   });
+  107 | 
+  108 |   test("sélection multiple et barre d'actions groupées", async ({ page }) => {
+  109 |     await navigateTo(page, "/admin/commercial/commandes");
+  110 |     await waitForLoaded(page);
+  111 | 
+  112 |     const lignes = page.locator("tbody tr");
+  113 |     const count = await lignes.count();
+  114 |     if (count < 2) test.skip();
+  115 | 
+  116 |     // Cocher les 2 premières lignes — shadcn Checkbox = role="checkbox"
+  117 |     await lignes.nth(0).locator('[role="checkbox"]').first().click();
+  118 |     await lignes.nth(1).locator('[role="checkbox"]').first().click();
+  119 | 
+  120 |     // La barre d'action groupée doit apparaître
+  121 |     await expect(page.getByText(/sélectionnée\(s\)/i).first()).toBeVisible();
+  122 |     await expect(page.getByRole("button", { name: /créer bdc/i })).toBeVisible();
+> 123 |     await expect(page.getByRole("button", { name: /assigner agence/i })).toBeVisible();
+      |                                                                          ^ Error: expect(locator).toBeVisible() failed
+  124 |   });
+  125 | 
+  126 |   test("tout sélectionner via la checkbox d'en-tête", async ({ page }) => {
+  127 |     await navigateTo(page, "/admin/commercial/commandes");
+  128 |     await waitForLoaded(page);
+  129 | 
+  130 |     const lignes = page.locator("tbody tr");
+  131 |     if (await lignes.count() === 0) test.skip();
+  132 | 
+  133 |     // Clic sur la checkbox du header — shadcn Checkbox = role="checkbox"
+  134 |     await page.locator("thead [role='checkbox']").click();
+  135 | 
+  136 |     // Toutes les lignes doivent être cochées
+  137 |     const total = await lignes.count();
+  138 |     const cochees = await page.locator("tbody [role='checkbox'][data-state='checked']").count();
+  139 |     expect(cochees).toBe(total);
+  140 |   });
+  141 | 
+  142 |   test("accès à la comptabilité depuis le sidebar", async ({ page }) => {
+  143 |     await navigateTo(page, "/admin/commercial/commandes");
+  144 | 
+  145 |     // Le lien "Comptabilité" doit être dans le sidebar
+  146 |     const lienCompta = page.getByRole("link", { name: /comptabilité/i });
+  147 |     await expect(lienCompta).toBeVisible();
+  148 |     await lienCompta.click();
+  149 | 
+  150 |     await expect(page).toHaveURL(/\/admin\/commercial\/compta/);
+  151 |     await expect(page.getByRole("heading", { name: /comptabilité/i })).toBeVisible();
+  152 |   });
+  153 | });
+  154 | 
+```

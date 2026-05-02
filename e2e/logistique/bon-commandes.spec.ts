@@ -11,7 +11,7 @@ test.describe("Logistique — Bons de Commande", () => {
 
     // KPI cards
     await expect(page.getByText(/total bdc/i)).toBeVisible();
-    await expect(page.getByText(/en cours/i)).toBeVisible();
+    await expect(page.getByText("Brouillons")).toBeVisible();   // KPI exact — pas "En cours"
     await expect(page.getByText(/transmis/i).first()).toBeVisible();
     await expect(page.getByText(/terminés/i)).toBeVisible();
   });
@@ -30,10 +30,10 @@ test.describe("Logistique — Bons de Commande", () => {
     await premierBDC.locator(".cursor-pointer").first().click();
     await page.waitForTimeout(500);
 
-    // Le tableau de lignes doit apparaître avec les colonnes attendues
-    await expect(premierBDC.getByText(/client/i)).toBeVisible();
-    await expect(premierBDC.getByText(/produit/i)).toBeVisible();
-    await expect(premierBDC.getByText(/fournisseur/i).first()).toBeVisible();
+    // Le tableau de lignes doit apparaître — cibler le columnheader pour éviter l'ambiguïté
+    await expect(premierBDC.getByRole("columnheader", { name: /client/i })).toBeVisible();
+    await expect(premierBDC.getByRole("columnheader", { name: /produit/i })).toBeVisible();
+    await expect(premierBDC.getByRole("columnheader", { name: /fournisseur/i })).toBeVisible();
   });
 
   test("assigner un fournisseur à une ligne BDC", async ({ page }) => {

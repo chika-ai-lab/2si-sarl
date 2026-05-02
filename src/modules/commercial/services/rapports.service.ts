@@ -77,10 +77,10 @@ export interface RapportEvolutionCA {
 // ============================================
 
 function mapChiffreAffaire(item: any): ChiffreAffaire {
-  const montant = Number(item.montant || item.ca) || 0;
-  const nombreCommandes = Number(item.nombre_commandes || item.nb_commandes) || 0;
+  const montant = Number(item.ca || item.montant || item.chiffre_affaire) || 0;
+  const nombreCommandes = Number(item.nb_commandes || item.nombre_commandes) || 0;
   return {
-    periode: item.periode || item.mois || '',
+    periode: item.mois || item.periode || item.semaine || '',
     montant,
     nombreCommandes,
     montantMoyen: nombreCommandes > 0 ? Math.round(montant / nombreCommandes) : 0,
@@ -137,34 +137,80 @@ function mapStatistiquesGlobales(res: any): StatistiquesGlobales {
 // API FUNCTIONS
 // ============================================
 
+// ── Unwrap helper ─────────────────────────────────────────────────────────
+// Backend renvoie soit un tableau directement, soit { data: [...] }
+function unwrapList(res: any): any[] {
+  if (Array.isArray(res)) return res;
+  if (res && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
 export async function getRapportEvolutionCA(
   filters: RapportFilters = {}
 ): Promise<ApiResponse<RapportEvolutionCA>> {
-  const params: Record<string, string | number | undefined> = {
+  const dateParams: Record<string, string | undefined> = {
     date_debut: filters.dateDebut,
-    date_fin: filters.dateFin,
-    client_id: filters.clientId,
-    banque: filters.banque,
-    limit: 10,
+    date_fin:   filters.dateFin,
+    banque:     filters.banque,
   };
 
-  const res = await apiClient.get<any>(API_ENDPOINTS.rapports.rapport, params);
+  // Appels parallèles vers les 4 endpoints
+  const [evolutionRes, topProduitsRes, topClientsRes, banquesRes] = await Promise.all([
+    apiClient.get<any>(API_ENDPOINTS.rapports.evolutionCA,       dateParams).catch(() => []),
+    apiClient.get<any>(API_ENDPOINTS.rapports.topProduits,       { ...dateParams, limit: 10 }).catch(() => []),
+    apiClient.get<any>(API_ENDPOINTS.rapports.topClients,        { ...dateParams, limit: 10 }).catch(() => []),
+    apiClient.get<any>(API_ENDPOINTS.rapports.repartitionBanques, dateParams).catch(() => []),
+  ]);
 
-  const evolutionItems: any[] = res.evolution || [];
-  const topProduitsItems: any[] = res.top_produits || [];
-  const topClientsItems: any[] = res.top_clients || [];
-  const banquesItems: any[] = res.banques || [];
-  const statsRaw: any = res.statistiques || {};
+  const evolutionItems  = unwrapList(evolutionRes);
+  const topProduitsItems = unwrapList(topProduitsRes);
+  const topClientsItems  = unwrapList(topClientsRes);
+  const banquesItems     = unwrapList(banquesRes);
+
+  // ── Calcul des KPIs à partir des données d'évolution ─────────────────
+  const caTotal     = evolutionItems.reduce((s, x) => s + (Number(x.ca)           || 0), 0);
+  const cmdTotal    = evolutionItems.reduce((s, x) => s + (Number(x.nb_commandes) || 0), 0);
+
+  // Trier du plus récent au plus ancien
+  const sorted = [...evolutionItems].sort((a, b) =>
+    (b.mois || b.periode || '').localeCompare(a.mois || a.periode || '')
+  );
+  const dernierMois     = sorted[0] ?? {};
+  const avantDernierMois = sorted[1] ?? {};
+
+  const caMois      = Number(dernierMois.ca)           || 0;
+  const caPrecedent = Number(avantDernierMois.ca)      || 0;
+  const cmdMois     = Number(dernierMois.nb_commandes) || 0;
+  const cmdPrecedent = Number(avantDernierMois.nb_commandes) || 0;
+
+  const evolutionCA        = caPrecedent > 0 ? ((caMois - caPrecedent) / caPrecedent) * 100 : 0;
+  const evolutionCommandes = cmdPrecedent > 0 ? ((cmdMois - cmdPrecedent) / cmdPrecedent) * 100 : 0;
+  const panierMoyen        = cmdTotal > 0 ? Math.round(caTotal / cmdTotal) : 0;
+
+  const computedStats: StatistiquesGlobales = {
+    chiffreAffaireTotal:     caTotal,
+    chiffreAffaireMois:      caMois,
+    evolutionCA:             Math.round(evolutionCA * 10) / 10,
+    nombreCommandesTotal:    cmdTotal,
+    nombreCommandesMois:     cmdMois,
+    evolutionCommandes:      Math.round(evolutionCommandes * 10) / 10,
+    panierMoyen,
+    evolutionPanierMoyen:    0,
+    nombreClientsActifs:     topClientsItems.length,
+    tauxConversion:          0,
+    nombreAccreditifsActifs: 0,
+    montantAccreditifsActifs: 0,
+  };
 
   return {
     success: true,
     data: {
-      evolutionMensuelle: evolutionItems.map(mapChiffreAffaire),
+      evolutionMensuelle:   evolutionItems.map(mapChiffreAffaire),
       evolutionHebdomadaire: [],
-      topProduits: topProduitsItems.map(mapVenteParProduit),
-      topClients: topClientsItems.map(mapVenteParClient),
-      repartitionBanques: banquesItems.map(mapVenteParBanque),
-      statistiques: mapStatistiquesGlobales(statsRaw),
+      topProduits:          topProduitsItems.map(mapVenteParProduit),
+      topClients:           topClientsItems.map(mapVenteParClient),
+      repartitionBanques:   banquesItems.map(mapVenteParBanque),
+      statistiques:         computedStats,
     },
     message: 'Rapport récupéré avec succès',
   };

@@ -31,12 +31,14 @@ function getEnvNumber(key: string, defaultValue = 0): number {
 /**
  * Configuration de l'application
  */
+const _env = getEnvString('VITE_APP_ENV', 'development');
+
 export const appConfig = {
   name: getEnvString('VITE_APP_NAME', 'Sen Service International'),
   version: getEnvString('VITE_APP_VERSION', '2.0.0'),
-  env: getEnvString('VITE_APP_ENV', 'development'),
-  isDevelopment: getEnvString('VITE_APP_ENV', 'development') === 'development',
-  isProduction: getEnvString('VITE_APP_ENV', 'development') === 'production',
+  env: _env,
+  isDevelopment: _env === 'development',
+  isProduction:  _env === 'production',
 };
 
 /**
@@ -90,7 +92,7 @@ export const commercialFeatures = {
   accreditif: getEnvBoolean('VITE_COMMERCIAL_ACCREDITIF_ENABLED', true),
   simulation: getEnvBoolean('VITE_COMMERCIAL_SIMULATION_ENABLED', true),
   sav: getEnvBoolean('VITE_COMMERCIAL_SAV_ENABLED', true),
-  rapports: getEnvBoolean('VITE_COMMERCIAL_RAPPORTS_ENABLED', false),
+  rapports: getEnvBoolean('VITE_COMMERCIAL_RAPPORTS_ENABLED', true),
   promotions: getEnvBoolean('VITE_COMMERCIAL_PROMOTIONS_ENABLED', true),
   leads: getEnvBoolean('VITE_COMMERCIAL_LEADS_ENABLED', true),
 };

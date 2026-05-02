@@ -119,8 +119,8 @@ test.describe("Mme Barro — Page commandes à traiter", () => {
 
     // La barre d'action groupée doit apparaître
     await expect(page.getByText(/sélectionnée\(s\)/i).first()).toBeVisible();
+    // La barre groupée ne contient que "Créer BDC" — pas de bouton "Assigner agence" à ce niveau
     await expect(page.getByRole("button", { name: /créer bdc/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /assigner agence/i })).toBeVisible();
   });
 
   test("tout sélectionner via la checkbox d'en-tête", async ({ page }) => {
