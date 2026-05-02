@@ -285,9 +285,10 @@ function BDCResultDialog({
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 const TABS = [
-  { key: "tous",          label: "Toutes" },
-  { key: "non_assignees", label: "Non assignées" },
-  { key: "validees",      label: "Validées" },
+  { key: "a_traiter", label: "À traiter" },
+  { key: "en_bdc",    label: "En BDC / Logistique" },
+  { key: "livrees",   label: "Livrées" },
+  { key: "tous",      label: "Toutes" },
 ] as const;
 type TabKey = typeof TABS[number]["key"];
 
@@ -304,7 +305,7 @@ export default function CommandesReceptionPage() {
   const navigate = useNavigate();
 
   // ── State ────────────────────────────────────────────────────────────────
-  const [tab, setTab]               = useState<TabKey>("tous");
+  const [tab, setTab]               = useState<TabKey>("a_traiter");
   const [search, setSearch]         = useState("");
   const [filterSource, setFilterSource] = useState<"tous" | "terrain" | "marketplace">("tous");
   const [filterAgence, setFilterAgence] = useState<number | "tous">("tous");
@@ -333,11 +334,16 @@ export default function CommandesReceptionPage() {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Les commandes marquées est_assigne=true sont déjà dans un BDC
-  const alreadyInBdc = useMemo<Set<number>>(
-    () => new Set(raw.filter((c: any) => c.est_assigne || c.estAssigne).map((c: any) => c.id)),
-    [raw],
-  );
+  // Commandes déjà en traitement — protège contre le double traitement
+  // Couvre les nouvelles données (est_assigne) ET les anciennes (etat en_cours/livree/annulee)
+  const alreadyInBdc = useMemo<Set<number>>(() => {
+    const ETATS_TRAITES = new Set(["en_cours", "livree", "annulee"]);
+    return new Set(
+      raw
+        .filter((c: any) => c.est_assigne || c.estAssigne || ETATS_TRAITES.has(c.etat))
+        .map((c: any) => c.id),
+    );
+  }, [raw]);
 
   const { data: cfList = [] } = useQuery({
     queryKey: ["commandes-fournisseurs-count"],
@@ -428,25 +434,27 @@ export default function CommandesReceptionPage() {
 
   // ── Stats pipeline ────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
-    total:        commandes.length,
-    nonAssignees: commandes.filter((c) => !c.agenceId).length,
-    validees:     commandes.filter((c) => mapCmdStatut(c.etat) === "validee").length,
+    total:      commandes.length,
+    aTraiter:   commandes.filter((c) => !alreadyInBdc.has(c.id)).length,
+    enBdc:      commandes.filter((c) => alreadyInBdc.has(c.id) && mapCmdStatut(c.etat) !== "livree").length,
+    livrees:    commandes.filter((c) => mapCmdStatut(c.etat) === "livree").length,
     montantTotal: commandes.reduce((s, c) => s + c.montant, 0),
-  }), [commandes]);
+  }), [commandes, alreadyInBdc]);
 
   // ── Filtres ───────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return commandes.filter((c) => {
-      if (tab === "non_assignees" && c.agenceId) return false;
-      if (tab === "validees" && mapCmdStatut(c.etat) !== "validee") return false;
+      if (tab === "a_traiter" && alreadyInBdc.has(c.id)) return false;
+      if (tab === "en_bdc" && (!alreadyInBdc.has(c.id) || mapCmdStatut(c.etat) === "livree")) return false;
+      if (tab === "livrees" && mapCmdStatut(c.etat) !== "livree") return false;
       if (filterSource !== "tous" && c.source !== filterSource) return false;
       if (filterAgence !== "tous" && c.agenceId !== filterAgence) return false;
       if (filterEtat !== "tous" && mapCmdStatut(c.etat) !== filterEtat) return false;
       if (q && !c.reference.toLowerCase().includes(q) && !c.clientNom.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [commandes, tab, filterSource, filterAgence, filterEtat, search]);
+  }, [commandes, tab, filterSource, filterAgence, filterEtat, search, alreadyInBdc]);
 
   // Remettre à la page 1 quand les filtres changent
   useEffect(() => { setPage(1); }, [tab, search, filterSource, filterAgence, filterEtat]);
@@ -592,10 +600,10 @@ export default function CommandesReceptionPage() {
       {/* Stats rapides */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total commandes",  value: stats.total,        color: "text-gray-700",  bg: "bg-gray-50",   border: "border-gray-200" },
-          { label: "Non assignées",    value: stats.nonAssignees, color: "text-amber-700", bg: "bg-amber-50",  border: "border-amber-200", alert: stats.nonAssignees > 0 },
-          { label: "Validées",         value: stats.validees,     color: "text-blue-700",  bg: "bg-blue-50",   border: "border-blue-200" },
-          { label: "Montant total",    value: formatCurrency(stats.montantTotal), color: "text-green-700", bg: "bg-green-50", border: "border-green-200", isText: true },
+          { label: "À traiter",   value: stats.aTraiter,   color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200", alert: stats.aTraiter > 0 },
+          { label: "En BDC / Logistique", value: stats.enBdc, color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200" },
+          { label: "Livrées",     value: stats.livrees,    color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200" },
+          { label: "Montant total", value: formatCurrency(stats.montantTotal), color: "text-gray-700", bg: "bg-gray-50", border: "border-gray-200", isText: true },
         ].map(({ label, value, color, bg, border, alert, isText }) => (
           <div key={label} className={`rounded-lg border ${border} ${bg} px-3 py-2.5 flex flex-col gap-0.5`}>
             <span className={`text-xl font-bold ${color} ${alert ? "animate-pulse" : ""}`}>
@@ -611,10 +619,9 @@ export default function CommandesReceptionPage() {
         {/* Tabs */}
         <div className="flex gap-1 border-b">
           {TABS.map(({ key, label }) => {
-            const count = key === "non_assignees"
-              ? stats.nonAssignees
-              : key === "validees"
-              ? stats.validees
+            const count = key === "a_traiter" ? stats.aTraiter
+              : key === "en_bdc"   ? stats.enBdc
+              : key === "livrees"  ? stats.livrees
               : stats.total;
             return (
               <button
