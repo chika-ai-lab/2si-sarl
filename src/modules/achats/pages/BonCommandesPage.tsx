@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/core/auth/providers/AuthProviderV2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +18,11 @@ import {
 import {
   ClipboardList, RefreshCcw, ChevronDown, ChevronRight,
   Zap, CheckCircle2, Clock, Truck, AlertCircle, Loader2, ChevronsUpDown, Check,
-  Send, Trash2,
+  Send, Trash2, Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
+const BDC_PAGE_SIZE = 15;
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 import { BonCommandesService, BonCommande } from "../services/bon-commandes.service";
@@ -111,6 +114,9 @@ export default function BonCommandesPage() {
   const [deleting, setDeleting]     = useState<number | null>(null);
   const [generating, setGenerating] = useState<number | null>(null);
   const [genResult, setGenResult]   = useState<Record<number, any>>({});
+  const [search, setSearch]         = useState("");
+  const [filterStatut, setFilterStatut] = useState<string>("tous");
+  const [page, setPage]             = useState(1);
 
   // ── Données ────────────────────────────────────────────────────────────
   const { data: bdcRes, isLoading, refetch } = useQuery({
@@ -195,13 +201,26 @@ export default function BonCommandesPage() {
     return map;
   }, [commandesRaw]);
 
-  // Liste filtrée : logistique ne voit que les BDC transmis (pas les brouillons)
-  const bdcsVisible = useMemo(() => {
-    if (isLogistique && !isAdmin) {
-      return bdcs.filter((b) => b.statut !== "brouillon");
-    }
+  // Filtre + recherche + pagination
+  const bdcsBase = useMemo(() => {
+    // Logistique ne voit que les BDC transmis+
+    if (isLogistique && !isAdmin) return bdcs.filter((b) => b.statut !== "brouillon");
     return bdcs;
   }, [bdcs, isLogistique, isAdmin]);
+
+  const bdcsFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return bdcsBase.filter((b) => {
+      if (filterStatut !== "tous" && b.statut !== filterStatut) return false;
+      if (q && !(b.numero || `BDC-${b.id}`).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [bdcsBase, filterStatut, search]);
+
+  useEffect(() => { setPage(1); }, [filterStatut, search]);
+
+  const totalPages  = Math.max(1, Math.ceil(bdcsFiltered.length / BDC_PAGE_SIZE));
+  const bdcsVisible = bdcsFiltered.slice((page - 1) * BDC_PAGE_SIZE, page * BDC_PAGE_SIZE);
 
   // ── Ouvrir/fermer un BDC ───────────────────────────────────────────────
   const toggleBdc = (bdc: BonCommande) => {
@@ -297,14 +316,14 @@ export default function BonCommandesPage() {
     }
   };
 
-  // ── Stats rapides ──────────────────────────────────────────────────────
-  const stats = {
-    total:      bdcsVisible.length,
-    brouillons: bdcsVisible.filter((b) => b.statut === "brouillon").length,
-    transmis:   bdcsVisible.filter((b) => b.statut === "transmis").length,
-    enCours:    bdcsVisible.filter((b) => b.statut === "en_cours").length,
-    termine:    bdcsVisible.filter((b) => b.statut === "termine").length,
-  };
+  // ── Stats rapides (sur toute la base, pas la page courante) ───────────
+  const stats = useMemo(() => ({
+    total:      bdcsBase.length,
+    brouillons: bdcsBase.filter((b) => b.statut === "brouillon").length,
+    transmis:   bdcsBase.filter((b) => b.statut === "transmis").length,
+    enCours:    bdcsBase.filter((b) => b.statut === "en_cours").length,
+    termine:    bdcsBase.filter((b) => b.statut === "termine").length,
+  }), [bdcsBase]);
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
@@ -343,6 +362,56 @@ export default function BonCommandesPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Filtres — onglets statut + recherche */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Onglets statut — cliquables, filtrent la liste */}
+          <div className="flex gap-1 border-b flex-1">
+            {[
+              { key: "tous",      label: "Tous",       count: stats.total },
+              ...(!(isLogistique && !isAdmin) ? [{ key: "brouillon", label: "Brouillons", count: stats.brouillons }] : []),
+              { key: "transmis",  label: "Transmis",   count: stats.transmis },
+              { key: "en_cours",  label: "En cours",   count: stats.enCours },
+              { key: "termine",   label: "Terminés",   count: stats.termine },
+            ].map(({ key, label, count }) => (
+              <button
+                key={key}
+                onClick={() => setFilterStatut(key)}
+                className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
+                  filterStatut === key
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+                {count > 0 && (
+                  <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                    filterStatut === key ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                  }`}>{count}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Recherche par numéro */}
+          <div className="relative w-52">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Numéro BDC…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
+        </div>
+
+        {bdcsFiltered.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {bdcsFiltered.length} bon{bdcsFiltered.length > 1 ? "s" : ""} — page {page}/{totalPages}
+          </p>
+        )}
       </div>
 
       {/* Liste des BDC */}
@@ -596,6 +665,52 @@ export default function BonCommandesPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 pt-2">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(1)}
+            className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+          >«</button>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+          >‹ Préc.</button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            .reduce<(number | "…")[]>((acc, p, i, arr) => {
+              if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+              acc.push(p);
+              return acc;
+            }, [])
+            .map((p, i) =>
+              p === "…" ? (
+                <span key={`d-${i}`} className="px-1 text-xs">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p as number)}
+                  className={`w-7 py-1 rounded border text-xs transition-colors ${
+                    page === p ? "bg-primary text-white border-primary font-semibold" : "hover:bg-muted"
+                  }`}
+                >{p}</button>
+              )
+            )}
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+          >Suiv. ›</button>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(totalPages)}
+            className="px-2 py-1 rounded border text-xs disabled:opacity-30 hover:bg-muted transition-colors"
+          >»</button>
         </div>
       )}
     </div>
