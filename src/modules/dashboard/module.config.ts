@@ -26,6 +26,11 @@ export const dashboardModuleConfig: ModuleConfig = {
       path: "/",
       component: lazy(() => import("./pages/DashboardPage")),
       exact: true
+    },
+    {
+      path: "/dashboard",
+      component: lazy(() => import("./pages/DashboardPage")),
+      exact: true
     }
   ],
 
@@ -33,7 +38,7 @@ export const dashboardModuleConfig: ModuleConfig = {
   navigation: [
     {
       label: "Tableau de Bord",
-      path: "/admin",
+      path: "/admin/dashboard",
       icon: "LayoutDashboard",
       section: "general",
       order: 1

@@ -310,7 +310,7 @@ export default function CommercialDashboard() {
           {[
             { label: "Commandes",     path: "/admin/commercial/commandes",  icon: ClipboardList, color: "from-primary to-primary/80",   desc: "Réception & assignation" },
             { label: "Bons Commande", path: "/admin/achats/bon-commandes",  icon: CheckCircle2,  color: "from-green-500 to-green-600",   desc: "Transmis à logistique" },
-            { label: "Comptabilité",  path: "/admin/commercial/compta",     icon: Receipt,       color: "from-indigo-500 to-indigo-600", desc: "Factures & créances" },
+            { label: "Factures",       path: "/admin/commercial/factures",   icon: Receipt,       color: "from-indigo-500 to-indigo-600", desc: "Factures & créances" },
             { label: "Clients",       path: "/admin/commercial/clients",    icon: Building2,     color: "from-blue-500 to-blue-600",    desc: "Gestion clients" },
           ].map(({ label, path, icon: Icon, color, desc }) => (
             <Link key={path} to={path}>

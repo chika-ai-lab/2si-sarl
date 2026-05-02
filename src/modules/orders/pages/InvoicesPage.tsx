@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -29,6 +30,24 @@ const STATUT_TO_BACKEND: Record<string, string> = {
   brouillon: "brouillon",
   en_retard: "en_retard",
   annulee:   "annulee",
+};
+
+interface FactureFournisseur {
+  id: number;
+  numero: string | null;
+  fournisseurId: number | null;
+  commandeFournisseurId: number | null;
+  montant: number;
+  date: string | null;
+  statut: string;
+  note: string | null;
+  createdAt: string;
+}
+
+const STATUT_FOURN: Record<string, { label: string; color: string }> = {
+  en_attente: { label: "En attente", color: "bg-gray-100 text-gray-600"   },
+  payee:      { label: "Payée",      color: "bg-green-100 text-green-700" },
+  rejetee:    { label: "Rejetée",    color: "bg-red-100 text-red-700"     },
 };
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
@@ -94,6 +113,7 @@ function mapFactureItem(item: any): Facture {
 export function InvoicesPage() {
   const qc = useQueryClient();
 
+  const [activeTab, setActiveTab]         = useState<"clients" | "fournisseurs">("clients");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch]           = useState("");
   const [statutFilter, setStatutFilter] = useState<FactureStatut | "all">("all");
@@ -140,8 +160,24 @@ export function InvoicesPage() {
   const totalPages  = data?.totalPages  ?? 1;
   const serverTotal = data?.serverTotal ?? 0;
   const error       = queryError instanceof Error ? queryError.message : null;
-  // Skeleton uniquement sur le PREMIER chargement (jamais de données en cache)
-  // placeholderData conserve les données précédentes → data est défini dès le 2e rendu
+
+  const { data: ffRaw = [], isLoading: ffLoading, refetch: refetchFf } = useQuery({
+    queryKey: ["factures-fournisseurs"],
+    queryFn: async () => {
+      const r = await apiClient.get<any>("/facture-fournisseurs", { per_page: 500 });
+      const list = Array.isArray(r) ? r : Array.isArray(r?.data) ? r.data : Array.isArray(r?.data?.data) ? r.data.data : [];
+      return list as FactureFournisseur[];
+    },
+    staleTime: 1000 * 60,
+  });
+
+  const filteredFf = ffRaw.filter((f) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (f.numero ?? "").toLowerCase().includes(q)
+      || String(f.fournisseurId ?? "").includes(q)
+      || String(f.id).includes(q);
+  });
 
   const handleStatutFilter = (v: string) => {
     setStatutFilter(v as FactureStatut | "all");
@@ -310,232 +346,319 @@ export function InvoicesPage() {
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
               <Receipt className="h-6 w-6 sm:h-7 sm:w-7" /> Factures
             </h2>
-            <p className="text-muted-foreground text-sm">Gestion et suivi des factures clients</p>
+            <p className="text-muted-foreground text-sm">Factures clients et fournisseurs</p>
           </div>
-          <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ['invoices'] })}>
+          <Button variant="outline" onClick={() => { qc.invalidateQueries({ queryKey: ['invoices'] }); refetchFf(); }}>
             <RefreshCw className="h-4 w-4 mr-2" />Actualiser
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+        {/* Tabs clients / fournisseurs */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "fournisseurs")}>
+          <TabsList>
+            <TabsTrigger value="clients">
+              Factures clients
+              {serverTotal > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">{serverTotal}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="fournisseurs">
+              Factures fournisseurs
+              {ffRaw.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">{ffRaw.length}</span>}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* ── Onglet Factures clients ── */}
+        {activeTab === "clients" && (<>
+          {/* Stats */}
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+            <Card>
+              <CardContent className="pt-5">
+                <p className="text-xs sm:text-sm text-muted-foreground">Total factures</p>
+                <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-5">
+                <p className="text-xs sm:text-sm text-muted-foreground">Montant total</p>
+                <p className="text-sm sm:text-xl font-bold">{formatCurrency(stats.totalTTC)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-5">
+                <p className="text-xs sm:text-sm text-muted-foreground text-green-700">Encaissé</p>
+                <p className="text-sm sm:text-xl font-bold text-green-600">{formatCurrency(stats.paye)}</p>
+              </CardContent>
+            </Card>
+            <Card className={stats.retard > 0 ? "border-red-200" : ""}>
+              <CardContent className="pt-5">
+                <p className="text-xs sm:text-sm text-muted-foreground">Impayé / En retard</p>
+                <p className={`text-sm sm:text-xl font-bold ${stats.impaye > 0 ? "text-red-600" : ""}`}>
+                  {formatCurrency(stats.impaye)}
+                </p>
+                {stats.retard > 0 && (
+                  <Badge variant="destructive" className="mt-1 text-xs">{stats.retard} en retard</Badge>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filtres */}
           <Card>
             <CardContent className="pt-5">
-              <p className="text-xs sm:text-sm text-muted-foreground">Total factures</p>
-              <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
+              <div className="flex gap-3 flex-wrap">
+                <div className="relative flex-1 min-w-44">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Numéro ou client..."
+                    className="pl-9"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                  />
+                </div>
+                <Select value={statutFilter} onValueChange={handleStatutFilter}>
+                  <SelectTrigger className="w-40 sm:w-44"><SelectValue placeholder="Tous" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    <SelectItem value="brouillon">Brouillon</SelectItem>
+                    <SelectItem value="envoyee">Envoyée</SelectItem>
+                    <SelectItem value="payee">Payée</SelectItem>
+                    <SelectItem value="en_retard">En retard</SelectItem>
+                    <SelectItem value="annulee">Annulée</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
+
+          {/* List */}
           <Card>
-            <CardContent className="pt-5">
-              <p className="text-xs sm:text-sm text-muted-foreground">Montant total</p>
-              <p className="text-sm sm:text-xl font-bold">{formatCurrency(stats.totalTTC)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-5">
-              <p className="text-xs sm:text-sm text-muted-foreground text-green-700">Encaissé</p>
-              <p className="text-sm sm:text-xl font-bold text-green-600">{formatCurrency(stats.paye)}</p>
-            </CardContent>
-          </Card>
-          <Card className={stats.retard > 0 ? "border-red-200" : ""}>
-            <CardContent className="pt-5">
-              <p className="text-xs sm:text-sm text-muted-foreground">Impayé / En retard</p>
-              <p className={`text-sm sm:text-xl font-bold ${stats.impaye > 0 ? "text-red-600" : ""}`}>
-                {formatCurrency(stats.impaye)}
-              </p>
-              {stats.retard > 0 && (
-                <Badge variant="destructive" className="mt-1 text-xs">{stats.retard} en retard</Badge>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base sm:text-lg">{serverTotal} facture(s)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {factures.length === 0 && !loading && (
+                <div className="py-16 text-center text-muted-foreground">
+                  <Receipt className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">Aucune facture</p>
+                  <p className="text-sm mt-1">Les factures générées depuis les commandes apparaîtront ici.</p>
+                </div>
+              )}
+
+              {/* ── Mobile card list (< md) ── */}
+              <div className="md:hidden space-y-3">
+                {factures.map((f) => {
+                  const cfg = STATUT_CONFIG[f.statut];
+                  const Icon = cfg.icon;
+                  return (
+                    <div key={f.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <p className="font-mono text-xs text-muted-foreground">{f.numero}</p>
+                          <p className="font-semibold truncate">{f.client}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {new Date(f.dateEmission).toLocaleDateString("fr-FR")}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-sm">{formatCurrency(f.montantTTC)}</p>
+                          <Badge variant="outline" className={`${cfg.color} mt-1 text-xs`}>
+                            <Icon className="mr-1 h-3 w-3" />{cfg.label}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleSelect(f)}>
+                          <Eye className="mr-1 h-3 w-3" />Voir
+                        </Button>
+                        <Button
+                          size="sm" variant="outline" className="flex-1"
+                          onClick={() => handleDownload(f)}
+                          disabled={downloading === f.id}
+                        >
+                          {downloading === f.id
+                            ? <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            : <Download className="mr-1 h-3 w-3" />}
+                          PDF
+                        </Button>
+                        {(f.statut === "envoyee" || f.statut === "en_retard") && (
+                          <Button size="sm" className="flex-1" onClick={() => handleMarquerPayee(f)}>
+                            <CheckCircle className="mr-1 h-3 w-3" />Payée
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* ── Desktop table (≥ md) ── */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Numéro</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Émission</TableHead>
+                      <TableHead className="text-right">Montant TTC</TableHead>
+                      <TableHead className="text-right">Payé</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {factures.map((f) => {
+                      const cfg = STATUT_CONFIG[f.statut];
+                      const Icon = cfg.icon;
+                      return (
+                        <TableRow key={f.id}>
+                          <TableCell className="font-mono font-medium">{f.numero}</TableCell>
+                          <TableCell className="font-medium">{f.client}</TableCell>
+                          <TableCell className="text-sm">{new Date(f.dateEmission).toLocaleDateString("fr-FR")}</TableCell>
+                          <TableCell className="text-right font-semibold">{formatCurrency(f.montantTTC)}</TableCell>
+                          <TableCell className="text-right">
+                            <span className={f.montantPaye >= f.montantTTC ? "text-green-600 font-semibold" : "text-orange-600"}>
+                              {formatCurrency(f.montantPaye)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={cfg.color}>
+                              <Icon className="mr-1 h-3 w-3" />{cfg.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => handleSelect(f)}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost" size="icon"
+                                onClick={() => handleDownload(f)}
+                                disabled={downloading === f.id}
+                                title="Télécharger PDF"
+                              >
+                                {downloading === f.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Download className="h-4 w-4" />}
+                              </Button>
+                              {(f.statut === "envoyee" || f.statut === "en_retard") && (
+                                <Button variant="outline" size="sm" onClick={() => handleMarquerPayee(f)}>
+                                  <CheckCircle className="mr-1 h-3 w-3" />Payée
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Page {page} sur {totalPages} · {serverTotal} facture(s)
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline" size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1 || loading}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />Précédent
+                    </Button>
+                    <Button
+                      variant="outline" size="sm"
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages || loading}
+                    >
+                      Suivant<ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
-        </div>
+        </>)}
 
-        {/* Filtres */}
-        <Card>
-          <CardContent className="pt-5">
-            <div className="flex gap-3 flex-wrap">
-              <div className="relative flex-1 min-w-44">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Numéro ou client..."
-                  className="pl-9"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
-              </div>
-              <Select value={statutFilter} onValueChange={handleStatutFilter}>
-                <SelectTrigger className="w-40 sm:w-44"><SelectValue placeholder="Tous" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="brouillon">Brouillon</SelectItem>
-                  <SelectItem value="envoyee">Envoyée</SelectItem>
-                  <SelectItem value="payee">Payée</SelectItem>
-                  <SelectItem value="en_retard">En retard</SelectItem>
-                  <SelectItem value="annulee">Annulée</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* List */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base sm:text-lg">{serverTotal} facture(s)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {factures.length === 0 && !loading && (
-              <div className="py-16 text-center text-muted-foreground">
-                <Receipt className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">Aucune facture</p>
-                <p className="text-sm mt-1">Les factures générées depuis les commandes apparaîtront ici.</p>
-              </div>
-            )}
-
-            {/* ── Mobile card list (< md) ── */}
-            <div className="md:hidden space-y-3">
-              {factures.map((f) => {
-                const cfg = STATUT_CONFIG[f.statut];
-                const Icon = cfg.icon;
-                return (
-                  <div key={f.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="min-w-0">
-                        <p className="font-mono text-xs text-muted-foreground">{f.numero}</p>
-                        <p className="font-semibold truncate">{f.client}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {new Date(f.dateEmission).toLocaleDateString("fr-FR")}
-                          {" → "}
-                          <span className={f.statut === "en_retard" ? "text-red-600 font-semibold" : ""}>
-                            {new Date(f.dateEcheance).toLocaleDateString("fr-FR")}
-                          </span>
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-sm">{formatCurrency(f.montantTTC)}</p>
-                        <Badge variant="outline" className={`${cfg.color} mt-1 text-xs`}>
-                          <Icon className="mr-1 h-3 w-3" />{cfg.label}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleSelect(f)}>
-                        <Eye className="mr-1 h-3 w-3" />Voir
-                      </Button>
-                      <Button
-                        size="sm" variant="outline" className="flex-1"
-                        onClick={() => handleDownload(f)}
-                        disabled={downloading === f.id}
-                      >
-                        {downloading === f.id
-                          ? <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                          : <Download className="mr-1 h-3 w-3" />}
-                        PDF
-                      </Button>
-                      {(f.statut === "envoyee" || f.statut === "en_retard") && (
-                        <Button size="sm" className="flex-1" onClick={() => handleMarquerPayee(f)}>
-                          <CheckCircle className="mr-1 h-3 w-3" />Payée
-                        </Button>
-                      )}
-                    </div>
+        {/* ── Onglet Factures fournisseurs ── */}
+        {activeTab === "fournisseurs" && (
+          ffLoading ? (
+            <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
+          ) : (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-base sm:text-lg">{filteredFf.length} facture(s) fournisseur</CardTitle>
+                  <div className="relative w-52">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Référence ou N°..."
+                      className="pl-9 h-8 text-sm"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                    />
                   </div>
-                );
-              })}
-            </div>
-
-            {/* ── Desktop table (≥ md) ── */}
-            <div className="hidden md:block overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Numéro</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Émission</TableHead>
-                    <TableHead>Échéance</TableHead>
-                    <TableHead className="text-right">Montant TTC</TableHead>
-                    <TableHead className="text-right">Payé</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {factures.map((f) => {
-                    const cfg = STATUT_CONFIG[f.statut];
-                    const Icon = cfg.icon;
-                    return (
-                      <TableRow key={f.id}>
-                        <TableCell className="font-mono font-medium">{f.numero}</TableCell>
-                        <TableCell className="font-medium">{f.client}</TableCell>
-                        <TableCell className="text-sm">{new Date(f.dateEmission).toLocaleDateString("fr-FR")}</TableCell>
-                        <TableCell className={`text-sm ${f.statut === "en_retard" ? "text-red-600 font-semibold" : ""}`}>
-                          {new Date(f.dateEcheance).toLocaleDateString("fr-FR")}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(f.montantTTC)}</TableCell>
-                        <TableCell className="text-right">
-                          <span className={f.montantPaye >= f.montantTTC ? "text-green-600 font-semibold" : "text-orange-600"}>
-                            {formatCurrency(f.montantPaye)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cfg.color}>
-                            <Icon className="mr-1 h-3 w-3" />{cfg.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => handleSelect(f)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost" size="icon"
-                              onClick={() => handleDownload(f)}
-                              disabled={downloading === f.id}
-                              title="Télécharger PDF"
-                            >
-                              {downloading === f.id
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <Download className="h-4 w-4" />}
-                            </Button>
-                            {(f.statut === "envoyee" || f.statut === "en_retard") && (
-                              <Button variant="outline" size="sm" onClick={() => handleMarquerPayee(f)}>
-                                <CheckCircle className="mr-1 h-3 w-3" />Payée
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {page} sur {totalPages} · {serverTotal} facture(s)
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline" size="sm"
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1 || loading}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />Précédent
-                  </Button>
-                  <Button
-                    variant="outline" size="sm"
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages || loading}
-                  >
-                    Suivant<ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardHeader>
+              <CardContent className="p-0">
+                {filteredFf.length === 0 ? (
+                  <div className="py-16 text-center text-muted-foreground">
+                    <Receipt className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">Aucune facture fournisseur</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>N°</TableHead>
+                          <TableHead>Référence</TableHead>
+                          <TableHead>Fournisseur</TableHead>
+                          <TableHead>Commande CF</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Montant</TableHead>
+                          <TableHead>Statut</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredFf.map((f) => {
+                          const cfg = STATUT_FOURN[f.statut] ?? STATUT_FOURN.en_attente;
+                          return (
+                            <TableRow key={f.id}>
+                              <TableCell className="font-mono text-xs font-semibold text-muted-foreground">
+                                FF-{String(f.id).padStart(4, "0")}
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">{f.numero ?? "—"}</TableCell>
+                              <TableCell className="text-sm">
+                                {f.fournisseurId ? `Fournisseur #${f.fournisseurId}` : "—"}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {f.commandeFournisseurId ? `CF-${String(f.commandeFournisseurId).padStart(4, "0")}` : "—"}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                {f.date ?? (f.createdAt ? f.createdAt.split("T")[0] : "—")}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold whitespace-nowrap">
+                                {formatCurrency(Number(f.montant))}
+                              </TableCell>
+                              <TableCell>
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${cfg.color}`}>
+                                  {cfg.label}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )
+        )}
       </div>
     </>
   );

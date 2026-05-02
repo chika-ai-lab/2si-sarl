@@ -105,11 +105,15 @@ function AdminDashboard() {
 
   const loading = statsLoading || recentLoading;
 
+  const enAttente = (rawStats?.commandes_par_etat ?? [])
+    .filter((e: any) => e.etat === "en_attente" || e.etat === "brouillon")
+    .reduce((s: number, e: any) => s + Number(e.count || 0), 0);
+
   const stats: DashboardStats = {
-    totalOrders:   Number(rawStats?.commandes?.total    ?? rawStats?.total_commandes ?? rawStats?.total)   || 0,
-    pendingOrders: Number(rawStats?.commandes?.en_attente ?? rawStats?.en_attente)     || 0,
-    revenue:       Number(rawStats?.commandes?.ca_total  ?? rawStats?.ca_total        ?? rawStats?.revenue) || 0,
-    customers:     Number(rawStats?.clients?.total       ?? rawStats?.total_clients   ?? rawStats?.clients) || 0,
+    totalOrders:   Number(rawStats?.total_commandes ?? rawStats?.commandes?.total   ?? rawStats?.total)             || 0,
+    pendingOrders: enAttente,
+    revenue:       Number(rawStats?.chiffre_affaires ?? rawStats?.ca_total          ?? rawStats?.revenue)            || 0,
+    customers:     Number(rawStats?.total_clients    ?? rawStats?.clients?.total    ?? rawStats?.clients)            || 0,
   };
 
   const recentOrders: RecentOrder[] = (recentRaw ?? []).map((c: any) => ({

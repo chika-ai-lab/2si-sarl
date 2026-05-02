@@ -7,7 +7,7 @@ const AUTH_STORAGE_KEY = "2si-auth-user";
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
-const PERMISSIONS_VERSION = 4; // v4: achats ajouté au rôle commercial
+const PERMISSIONS_VERSION = 5; // v5: COMMERCIAL:ORDERS:READ ajouté au comptable
 
 // ─── Liste exhaustive des modules de l'application ───────────────────────────
 const ALL_MODULE_IDS = [
@@ -46,6 +46,7 @@ const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] 
     permissions: [
       "DASHBOARD:*:READ",
       "ORDERS:ORDER:READ",
+      "COMMERCIAL:ORDERS:READ",
       "REPORTS:*:*",
       "ACHATS:*:*",
       "COMMERCIAL:CLIENTS:READ",
@@ -104,7 +105,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (telephone: string, password: string) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
   isAdmin: () => boolean;
@@ -174,19 +175,19 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (telephone: string, password: string): Promise<void> => {
     setLoading(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
       const response = await fetch(`${API_URL}/auth/login`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ email, password }),
+        body:    JSON.stringify({ telephone, password }),
       });
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || "Email ou mot de passe incorrect");
+        throw new Error(err.message || "Téléphone ou mot de passe incorrect");
       }
 
       const data        = await response.json();

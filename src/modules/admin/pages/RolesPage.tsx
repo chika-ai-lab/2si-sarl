@@ -39,7 +39,17 @@ import {
   Loader2,
   CheckSquare,
   Square,
-  MoreVertical,
+  LayoutDashboard,
+  Settings2,
+  FileText,
+  Users,
+  ShoppingCart,
+  PackageSearch,
+  DollarSign,
+  Eye,
+  PencilLine,
+  Trash,
+  Key,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -75,7 +85,40 @@ const EMPTY_FORM = {
   permissionIds: [] as number[],
 };
 
-/** Extrait le préfixe d'une permission (ex: "user_create" → "user") */
+/** Labels lisibles pour chaque permission connue */
+const PERM_LABELS: Record<string, { label: string; description?: string; icon: React.ElementType }> = {
+  view_dashboard:         { label: "Voir le tableau de bord",     description: "Accès aux statistiques globales",                    icon: LayoutDashboard },
+  manage_clients:         { label: "Gérer les clients",           description: "Créer, modifier et archiver des clients",            icon: Users },
+  manage_commandes:       { label: "Gérer les commandes",         description: "Saisir et suivre les commandes clients",             icon: ShoppingCart },
+  manage_achats:          { label: "Gérer les achats",            description: "Passer et suivre les commandes fournisseurs",        icon: PackageSearch },
+  manage_finance:         { label: "Gérer les finances",          description: "Accès aux transactions et à la comptabilité",        icon: DollarSign },
+  manage_users:           { label: "Gérer les utilisateurs",      description: "Créer des comptes et attribuer des rôles",           icon: Users },
+  facture_client_access:  { label: "Accéder aux factures",        description: "Voir la liste des factures clients",                 icon: FileText },
+  facture_client_show:    { label: "Voir le détail d'une facture",description: "Ouvrir et lire une facture individuelle",            icon: Eye },
+  facture_client_create:  { label: "Créer une facture",           description: "Générer une nouvelle facture client",               icon: PencilLine },
+  facture_client_edit:    { label: "Modifier une facture",        description: "Corriger ou mettre à jour une facture",             icon: PencilLine },
+  facture_client_delete:  { label: "Supprimer une facture",       description: "Supprimer définitivement une facture",              icon: Trash },
+};
+
+/** Métadonnées des groupes de permissions */
+const GROUP_META: Record<string, { label: string; icon: React.ElementType; bg: string; text: string }> = {
+  view:    { label: "Tableaux de bord", icon: LayoutDashboard, bg: "bg-blue-50",   text: "text-blue-700" },
+  manage:  { label: "Gestion",          icon: Settings2,        bg: "bg-orange-50", text: "text-orange-700" },
+  facture: { label: "Factures clients", icon: FileText,         bg: "bg-purple-50", text: "text-purple-700" },
+};
+
+/** Label lisible pour une permission */
+function permLabel(title: string): string {
+  return PERM_LABELS[title]?.label ?? title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/** Icône d'une permission */
+function PermIcon({ title, className }: { title: string; className?: string }) {
+  const Icon = PERM_LABELS[title]?.icon ?? Key;
+  return <Icon className={className ?? "h-3.5 w-3.5"} />;
+}
+
+/** Extrait le préfixe d'une permission (ex: "facture_client_access" → "facture") */
 function getPrefix(title: string): string {
   const idx = title.indexOf("_");
   return idx > -1 ? title.slice(0, idx) : title;
@@ -107,11 +150,11 @@ export default function RolesPage() {
     setLoading(true);
     try {
       const [rolesRes, permsRes] = await Promise.all([
-        apiClient.get<RolesResponse>("/roles"),
-        apiClient.get<PermissionsResponse>("/permissions"),
+        apiClient.get<Role[]>("/roles"),
+        apiClient.get<Permission[]>("/permissions"),
       ]);
-      setRoles(rolesRes.data ?? []);
-      setAllPermissions(permsRes.data ?? []);
+      setRoles(rolesRes ?? []);
+      setAllPermissions(permsRes ?? []);
     } catch (err) {
       console.error(err);
       toast({
@@ -281,13 +324,18 @@ export default function RolesPage() {
                     const allSelected = perms.every((p) =>
                       form.permissionIds.includes(p.id)
                     );
+                    const meta = GROUP_META[prefix];
+                    const GroupIcon = meta?.icon ?? Shield;
                     return (
                       <div key={prefix} className="p-3 space-y-2">
                         {/* Group header */}
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {prefix}
-                          </span>
+                          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md ${meta?.bg ?? "bg-gray-50"}`}>
+                            <GroupIcon className={`h-3.5 w-3.5 ${meta?.text ?? "text-gray-600"}`} />
+                            <span className={`text-xs font-semibold uppercase tracking-wide ${meta?.text ?? "text-gray-600"}`}>
+                              {meta?.label ?? prefix}
+                            </span>
+                          </div>
                           <button
                             type="button"
                             className="text-xs text-primary hover:underline"
@@ -297,22 +345,34 @@ export default function RolesPage() {
                           </button>
                         </div>
                         {/* Permission checkboxes */}
-                        <div className="grid grid-cols-1 gap-1.5">
+                        <div className="grid grid-cols-1 gap-1">
                           {perms.map((perm) => {
                             const checked = form.permissionIds.includes(perm.id);
+                            const desc = PERM_LABELS[perm.title]?.description;
                             return (
                               <button
                                 key={perm.id}
                                 type="button"
-                                className="flex items-center gap-2 text-sm text-left hover:text-primary transition-colors"
+                                className={`flex items-start gap-2.5 text-left p-2 rounded-lg border transition-colors ${
+                                  checked
+                                    ? "border-primary/30 bg-primary/5"
+                                    : "border-transparent hover:bg-muted/50"
+                                }`}
                                 onClick={() => togglePermission(perm.id)}
                               >
                                 {checked ? (
-                                  <CheckSquare className="h-4 w-4 text-primary shrink-0" />
+                                  <CheckSquare className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                                 ) : (
-                                  <Square className="h-4 w-4 text-muted-foreground shrink-0" />
+                                  <Square className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                                 )}
-                                {perm.title}
+                                <div>
+                                  <p className="text-sm font-medium leading-tight">
+                                    {permLabel(perm.title)}
+                                  </p>
+                                  {desc && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                                  )}
+                                </div>
                               </button>
                             );
                           })}
@@ -467,9 +527,10 @@ export default function RolesPage() {
                                     <Badge
                                       key={p.id}
                                       variant="secondary"
-                                      className="text-xs"
+                                      className="text-xs flex items-center gap-1"
                                     >
-                                      {p.title}
+                                      <PermIcon title={p.title} className="h-3 w-3" />
+                                      {permLabel(p.title)}
                                     </Badge>
                                   ))}
                                   {!isExpanded && overflow > 0 && (

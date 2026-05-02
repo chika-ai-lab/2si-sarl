@@ -86,10 +86,15 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ORDERS:WRITE"],
       enabled: true,
     },
-    // Comptabilité — consultation minimale pour Mme Barro
+    {
+      path: "/factures",
+      component: lazy(() => import("../orders/pages/InvoicesPage")),
+      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
+      enabled: true,
+    },
     {
       path: "/compta",
-      component: lazy(() => import("./pages/ComptaPage")),
+      component: lazy(() => import("../orders/pages/InvoicesPage")),
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       enabled: true,
     },
@@ -127,21 +132,12 @@ function filterNavigationByFeatureFlags() {
       enabled: true,
     },
     {
-      label: "Comptabilité",
-      path: "/admin/commercial/compta",
+      label: "Factures",
+      path: "/admin/commercial/factures",
       icon: "Receipt",
       section: "sales",
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       order: 16,
-      enabled: true,
-    },
-    {
-      label: "Mes Ventes",
-      path: "/admin/commercial/ventes",
-      icon: "TrendingUp",
-      section: "sales",
-      requiresPermission: ["COMMERCIAL:ORDERS:READ"],
-      order: 7,
       enabled: true,
     },
     {

@@ -39,6 +39,7 @@ import {
   Loader2,
   UserPlus,
   Key,
+  Phone,
   CheckSquare,
   Square,
   MoreVertical,
@@ -57,8 +58,9 @@ interface BackendUser {
   id: number;
   name: string;
   email: string;
+  telephone?: string;
   photo?: string;
-  created_at: string;
+  createdAt: string;
   roles: { id: number; title: string }[];
 }
 
@@ -78,6 +80,7 @@ interface RolesResponse {
 const EMPTY_FORM = {
   name: "",
   email: "",
+  telephone: "",
   password: "",
   roleIds: [] as number[],
 };
@@ -136,6 +139,7 @@ export default function UsersPage() {
     setForm({
       name: user.name,
       email: user.email,
+      telephone: user.telephone ?? "",
       password: "",
       roleIds: user.roles.map((r) => r.id),
     });
@@ -166,6 +170,7 @@ export default function UsersPage() {
         await apiClient.put(`/users/${editId}`, {
           name: form.name,
           email: form.email,
+          telephone: form.telephone,
           roles: form.roleIds,
         });
         toast({ title: "Utilisateur modifié avec succès" });
@@ -208,7 +213,7 @@ export default function UsersPage() {
   const lastInscription =
     users.length > 0
       ? users.reduce((latest, u) =>
-          new Date(u.created_at) > new Date(latest.created_at) ? u : latest
+          new Date(u.createdAt) > new Date(latest.created_at) ? u : latest
         ).created_at
       : null;
 
@@ -276,6 +281,21 @@ export default function UsersPage() {
                 value={form.email}
                 onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                 placeholder="email@exemple.com"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="u-tel">
+                <Phone className="inline h-3.5 w-3.5 mr-1" />
+                Téléphone
+              </Label>
+              <Input
+                id="u-tel"
+                type="tel"
+                value={form.telephone}
+                onChange={(e) => setForm((p) => ({ ...p, telephone: e.target.value }))}
+                placeholder="77 000 00 00"
                 className="mt-1"
               />
             </div>
@@ -427,6 +447,7 @@ export default function UsersPage() {
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Nom / Email</TableHead>
+                    <TableHead>Téléphone</TableHead>
                     <TableHead>Rôles</TableHead>
                     <TableHead>Inscription</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -454,6 +475,15 @@ export default function UsersPage() {
                           <p className="font-medium">{user.name}</p>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {user.telephone ? (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />{user.telephone}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/50">—</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {user.roles.length > 0 ? (
@@ -468,7 +498,7 @@ export default function UsersPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString("fr-FR")}
+                          {new Date(user.createdAt).toLocaleDateString("fr-FR")}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>

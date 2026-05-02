@@ -12,19 +12,19 @@ import {
 } from "@/components/ui/form";
 import { SEO } from "@/components/SEO";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Loader2, Lock, Phone, Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
-  email:    z.string().email("Email invalide"),
-  password: z.string().min(6, "Au moins 6 caractères"),
+  telephone: z.string().min(6, "Numéro invalide"),
+  password:  z.string().min(6, "Au moins 6 caractères"),
 });
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const TEST_USERS = [
-  { role: "Admin",       email: "admin@2si.sn",    name: "Moussa Diallo",   color: "red"    },
-  { role: "Commercial",  email: "aissatou@2si.sn", name: "Aïssatou Camara", color: "green"  },
-  { role: "Logistique",  email: "fatou@2si.sn",    name: "Fatou Sarr",      color: "orange" },
-  { role: "Comptable",   email: "cheikh@2si.sn",   name: "Cheikh Ndiaye",   color: "blue"   },
+  { role: "Admin",       telephone: "admin@2si.sn",    name: "Moussa Diallo",   color: "red"    },
+  { role: "Commercial",  telephone: "aissatou@2si.sn", name: "Aïssatou Camara", color: "green"  },
+  { role: "Logistique",  telephone: "fatou@2si.sn",    name: "Fatou Sarr",      color: "orange" },
+  { role: "Comptable",   telephone: "cheikh@2si.sn",   name: "Cheikh Ndiaye",   color: "blue"   },
 ] as const;
 
 const COLOR_MAP = {
@@ -45,13 +45,13 @@ export function LoginPage() {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { telephone: "", password: "" },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      await login(data.telephone, data.password);
       navigate(from, { replace: true });
     } catch (err: any) {
       toast({ title: "Identifiants incorrects", description: err.message, variant: "destructive" });
@@ -60,8 +60,8 @@ export function LoginPage() {
     }
   };
 
-  const fill = (email: string, name: string) => {
-    form.setValue("email", email);
+  const fill = (telephone: string, name: string) => {
+    form.setValue("telephone", telephone);
     form.setValue("password", "Admin@2024");
     toast({ title: `Connecté en tant que ${name}` });
   };
@@ -96,14 +96,14 @@ export function LoginPage() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                   <FormField
                     control={form.control}
-                    name="email"
+                    name="telephone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Email</FormLabel>
+                        <FormLabel className="text-xs">Téléphone</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input {...field} type="email" placeholder="email@2si.sn" className="pl-9 h-9 text-sm" disabled={isLoading} />
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input {...field} type="tel" placeholder="77 000 00 00" className="pl-9 h-9 text-sm" disabled={isLoading} autoComplete="tel" />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
@@ -162,11 +162,11 @@ export function LoginPage() {
                   <div className="h-px bg-border flex-1" />
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {TEST_USERS.map(({ role, email, name, color }) => (
+                  {TEST_USERS.map(({ role, telephone, name, color }) => (
                     <button
-                      key={email}
+                      key={telephone}
                       type="button"
-                      onClick={() => fill(email, name)}
+                      onClick={() => fill(telephone, name)}
                       disabled={isLoading}
                       className={`px-3 py-2 rounded-md border text-left transition-all disabled:opacity-50 ${COLOR_MAP[color]}`}
                     >

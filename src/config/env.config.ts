@@ -61,19 +61,19 @@ export const modulesConfig = {
 
   // Business modules
   crm: {
-    enabled: getEnvBoolean('VITE_MODULE_CRM_ENABLED', false),
+    enabled: getEnvBoolean('VITE_MODULE_CRM_ENABLED', true),
     isCore: false,
   },
   orders: {
-    enabled: getEnvBoolean('VITE_MODULE_ORDERS_ENABLED', false),
+    enabled: getEnvBoolean('VITE_MODULE_ORDERS_ENABLED', true),
     isCore: false,
   },
   products: {
-    enabled: getEnvBoolean('VITE_MODULE_PRODUCTS_ENABLED', false),
+    enabled: getEnvBoolean('VITE_MODULE_PRODUCTS_ENABLED', true),
     isCore: false,
   },
   reports: {
-    enabled: getEnvBoolean('VITE_MODULE_REPORTS_ENABLED', false),
+    enabled: getEnvBoolean('VITE_MODULE_REPORTS_ENABLED', true),
     isCore: false,
   },
   commercial: {
