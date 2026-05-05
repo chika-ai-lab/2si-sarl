@@ -88,8 +88,8 @@ function mapFactureItem(item: any): Facture {
     item.etat === "partielle" ? "envoyee"   :
     "envoyee";
   const montantTTC = Number(item.montant) || 0;
-  const cmd = item.commande_client?.data ?? item.commande_client;
-  const clientObj = cmd?.client?.data ?? cmd?.client;
+  const cmd = item.commandeClient;
+  const clientObj = item.client ?? cmd?.client;
   const clientNom = clientObj?.nom_complet
     ?? [clientObj?.nom, clientObj?.prenom].filter(Boolean).join(" ")
     ?? clientObj?.raison_sociale
@@ -106,7 +106,7 @@ function mapFactureItem(item: any): Facture {
     montantPaye: Number(item.recu) || 0,
     statut,
     lignes: [],
-    commandeClientId: item.commande_client_id ?? cmd?.id,
+    commandeClientId: item.commandeClientId ?? cmd?.id,
   };
 }
 
@@ -193,14 +193,51 @@ export function InvoicesPage() {
     retard:   factures.filter((f) => f.statut === "en_retard").length,
   };
 
+  const buildFactureData = (f: Facture, detail: any): FactureData => {
+    const clientObj = detail.client;
+    const cmd = detail.commandeClient;
+    const lignes: any[] = detail.lignes ?? [];
+    const articles = lignes.map((l: any) => ({
+      libelle: l.libelle ?? `Article #${l.article_id}`,
+      quantite: Number(l.quantite) || 1,
+      prix: Number(l.prix) || 0,
+      montant: Number(l.montant) || 0,
+    }));
+    const sous_total = articles.reduce((s, a) => s + a.montant, 0) || Number(detail.montant) || 0;
+    return {
+      facture_id: detail.id,
+      reference: f.numero,
+      date: detail.date ?? detail.createdAt?.toString().split('T')[0] ?? new Date().toISOString().split('T')[0],
+      commande: {
+        reference: cmd?.reference ?? `CMD-${detail.commandeClientId ?? '?'}`,
+        etat: cmd?.etat ?? 'livree',
+        mode_paiement: cmd?.modePaiement,
+        duree_paiement: cmd?.dureePaiement,
+        frais_expedition: 0,
+        autres_charges: 0,
+        remise: 0,
+        created_at: cmd?.createdAt?.toString() ?? detail.createdAt?.toString() ?? new Date().toISOString(),
+      },
+      client: clientObj ? {
+        nom: clientObj.nom_complet ?? [clientObj.nom, clientObj.prenom].filter(Boolean).join(' ') ?? clientObj.raison_sociale ?? '',
+        email: clientObj.email,
+        telephone: clientObj.telephone,
+        adresse: clientObj.adresse,
+      } : null,
+      commercial: null,
+      articles,
+      sous_total,
+      total_ttc: Number(detail.montant) || sous_total,
+    };
+  };
+
   const handleSelect = async (f: Facture) => {
     setSelected(f);
     setSelectedData(null);
-    if (!f.commandeClientId) return;
     setPreviewLoading(true);
     try {
-      const data = await apiClient.post<FactureData>(`/leads/${f.commandeClientId}/facture`);
-      setSelectedData(data);
+      const detail = await apiClient.get<any>(`/facture-clients/${f.id}`);
+      setSelectedData(buildFactureData(f, detail));
     } catch {
       // affiche le dialog sans preview si erreur
     } finally {
@@ -209,7 +246,6 @@ export function InvoicesPage() {
   };
 
   const handleMarquerPayee = async (f: Facture) => {
-    if (!f.commandeClientId) return;
     const snapshot = qc.getQueryData(queryKey);
     qc.setQueryData(queryKey, (old: typeof data) => old ? ({
       ...old,
@@ -218,8 +254,8 @@ export function InvoicesPage() {
       ),
     }) : old);
     try {
-      await apiClient.patch(`/leads/${f.commandeClientId}/paiement`, {
-        statut_paiement: "paye",
+      await apiClient.put(`/facture-clients/${f.id}`, {
+        etat: "payee",
         recu: f.montantTTC,
       });
       toast({ title: "Facture marquée comme payée" });
@@ -230,16 +266,11 @@ export function InvoicesPage() {
   };
 
   const handleDownload = async (f: Facture) => {
-    if (!f.commandeClientId) {
-      toast({ title: "Données manquantes pour générer le PDF", variant: "destructive" });
-      return;
-    }
     setDownloading(f.id);
     try {
-      const res = await apiClient.post<FactureData & { created: boolean }>(
-        `/leads/${f.commandeClientId}/facture`
-      );
-      const blob = await pdf(<FactureDocument data={res} />).toBlob();
+      const detail = await apiClient.get<any>(`/facture-clients/${f.id}`);
+      const factureData = buildFactureData(f, detail);
+      const blob = await pdf(<FactureDocument data={factureData} />).toBlob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
       a.href     = url;
