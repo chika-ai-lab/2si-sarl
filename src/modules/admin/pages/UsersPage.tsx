@@ -141,17 +141,18 @@ export default function UsersPage() {
       email: user.email,
       telephone: user.telephone ?? "",
       password: "",
-      roleIds: user.roles.map((r) => r.id),
+      roleIds: user.roles.map((r) => Number(r.id)),
     });
     setIsDialogOpen(true);
   };
 
   const toggleRole = (roleId: number) => {
+    const id = Number(roleId);
     setForm((prev) => ({
       ...prev,
-      roleIds: prev.roleIds.includes(roleId)
-        ? prev.roleIds.filter((id) => id !== roleId)
-        : [...prev.roleIds, roleId],
+      roleIds: prev.roleIds.includes(id)
+        ? prev.roleIds.filter((r) => r !== id)
+        : [...prev.roleIds, id],
     }));
   };
 
@@ -169,9 +170,8 @@ export default function UsersPage() {
       if (editId) {
         await apiClient.put(`/users/${editId}`, {
           name: form.name,
-          email: form.email,
           telephone: form.telephone,
-          roles: form.roleIds,
+          roles: form.roleIds.map(Number),
         });
         toast({ title: "Utilisateur modifié avec succès" });
       } else {
@@ -324,13 +324,14 @@ export default function UsersPage() {
                   <p className="text-sm text-muted-foreground">Aucun rôle disponible</p>
                 ) : (
                   roles.map((role) => {
-                    const checked = form.roleIds.includes(role.id);
+                    const rid = Number(role.id);
+                    const checked = form.roleIds.includes(rid);
                     return (
                       <button
                         key={role.id}
                         type="button"
                         className="flex items-center gap-2 w-full text-left text-sm hover:text-primary transition-colors"
-                        onClick={() => toggleRole(role.id)}
+                        onClick={() => toggleRole(rid)}
                       >
                         {checked ? (
                           <CheckSquare className="h-4 w-4 text-primary shrink-0" />
