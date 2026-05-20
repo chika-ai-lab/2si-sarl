@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Building2, Search, Plus, RefreshCcw, MoreVertical, Edit, Trash2, Phone, Mail, MapPin,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { apiClient } from "@/modules/commercial/services/apiClient";
@@ -32,30 +33,38 @@ interface Fournisseur {
 }
 
 const EMPTY: Partial<Fournisseur> = { nomComplet: "", telephone: "", email: "", adresse: "" };
+const PAGE_SIZE = 10;
 
 export default function FournisseursPage() {
   const qc = useQueryClient();
   const [search, setSearch]         = useState("");
+  const [page, setPage]             = useState(1);
   const [open, setOpen]             = useState(false);
   const [editItem, setEditItem]     = useState<Fournisseur | null>(null);
   const [form, setForm]             = useState<Partial<Fournisseur>>(EMPTY);
   const [saving, setSaving]         = useState(false);
   const [deleteTarget, setDelete]   = useState<Fournisseur | null>(null);
 
-  const { data = [], isLoading, refetch } = useQuery<Fournisseur[]>({
-    queryKey: ["fournisseurs"],
+  // Reset to page 1 when search changes
+  useEffect(() => { setPage(1); }, [search]);
+
+  const { data: response, isLoading, refetch } = useQuery<{ data: Fournisseur[]; meta: any }>({
+    queryKey: ["fournisseurs", page, search],
     queryFn: async () => {
-      const r = await apiClient.get<any>("/fournisseurs", { per_page: 200 });
-      return r.data ?? r ?? [];
+      const r = await apiClient.get<any>("/fournisseurs", {
+        page,
+        per_page: PAGE_SIZE,
+        search: search || undefined,
+      });
+      return r;
     },
     staleTime: 0,
   });
 
-  const filtered = data.filter((f) =>
-    (f.nomComplet || "").toLowerCase().includes(search.toLowerCase()) ||
-    (f.telephone || "").includes(search) ||
-    (f.email || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = response?.data ?? [];
+  const meta = response?.meta;
+  const total = meta?.total ?? 0;
+  const totalPages = meta?.last_page ?? 1;
 
   const openCreate = () => { setEditItem(null); setForm(EMPTY); setOpen(true); };
   const openEdit   = (f: Fournisseur) => { setEditItem(f); setForm({ ...f }); setOpen(true); };
@@ -73,7 +82,6 @@ export default function FournisseursPage() {
       }
       toast({ title: editItem ? "Fournisseur modifié" : "Fournisseur créé" });
       qc.invalidateQueries({ queryKey: ["fournisseurs"] });
-      qc.invalidateQueries({ queryKey: ["fournisseurs-list"] });
       setOpen(false);
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
@@ -88,7 +96,6 @@ export default function FournisseursPage() {
       await apiClient.delete(`/fournisseurs/${deleteTarget.id}`);
       toast({ title: "Fournisseur supprimé" });
       qc.invalidateQueries({ queryKey: ["fournisseurs"] });
-      qc.invalidateQueries({ queryKey: ["fournisseurs-list"] });
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
     } finally {
@@ -156,7 +163,7 @@ export default function FournisseursPage() {
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
               <Building2 className="h-8 w-8 text-blue-500" /> Fournisseurs
             </h1>
-            <p className="text-muted-foreground mt-1">Annuaire des fournisseurs ({data.length})</p>
+            <p className="text-muted-foreground mt-1">Annuaire des fournisseurs ({total})</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
@@ -230,6 +237,43 @@ export default function FournisseursPage() {
                 ))}
               </TableBody>
             </Table>
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-muted-foreground">
+                {total} fournisseur(s) — page <span className="font-medium">{meta?.current_page ?? 1}</span> sur <span className="font-medium">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page <= 1 || isLoading}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                    if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "…" ? (
+                      <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <Button
+                        key={p}
+                        variant={p === page ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setPage(p)}
+                        disabled={isLoading}
+                      >
+                        {p}
+                      </Button>
+                    )
+                  )}
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages || isLoading}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

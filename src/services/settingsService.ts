@@ -46,8 +46,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     name: "2SI",
     legalName: "Sen Services International",
     email: "contact@sen-services.com",
-    phone: "+221 33 864 48 48",
-    address: "En face Auto Pont BRT Liberté 5 Villa N°5492, Dakar, Sénégal",
+    phone: "+221 33 864 48 48 / 77 225 83 83 / 77 420 90 03",
+    address: "Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar, Sénégal",
     ninea: "007835162",
   },
   payment: {

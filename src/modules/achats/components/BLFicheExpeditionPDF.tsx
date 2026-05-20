@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  Document, Page, Text, View, StyleSheet, PDFViewer, PDFDownloadLink, Line, Svg,
+  Document, Page, Text, View, StyleSheet, PDFViewer, PDFDownloadLink,
 } from "@react-pdf/renderer";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,13 @@ const S = StyleSheet.create({
   partyLine:  { fontSize: 8, color: "#374151", marginTop: 1 },
 
   // Adresse livraison
-  addrBox:    { backgroundColor: "#f9fafb", border: "1px solid #d1d5db", borderRadius: 4, padding: "8 10", marginBottom: 12, flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  addrPin:    { fontSize: 10, marginTop: 1 },
+  addrBox:    { backgroundColor: "#f9fafb", border: "1px solid #d1d5db", borderRadius: 4, padding: "8 10", marginBottom: 12 },
+
   addrLabel:  { fontSize: 7, fontFamily: "Helvetica-Bold", color: "#6b7280", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 },
   addrText:   { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#111" },
 
   // Table
-  thead:      { flexDirection: "row", backgroundColor: "#111", padding: "5 8", borderRadius: "2 2 0 0" },
+  thead:      { flexDirection: "row", backgroundColor: "#111", padding: "5 8", borderTopLeftRadius: 2, borderTopRightRadius: 2 },
   thText:     { color: "#fff", fontFamily: "Helvetica-Bold", fontSize: 8, textTransform: "uppercase" },
   trow:       { flexDirection: "row", borderBottom: "1px solid #f3f4f6", padding: "6 8", minHeight: 22 },
   trowAlt:    { backgroundColor: "#f9fafb" },
@@ -92,9 +92,9 @@ function BLDoc({ data }: { data: any }) {
         {/* ── Header ── */}
         <View style={S.header}>
           <View>
-            <Text style={S.companyName}>2SI SARL</Text>
-            <Text style={S.companyLine}>Équipements Professionnels & Électriques</Text>
-            <Text style={S.companyLine}>Dakar, Sénégal  ·  contact@2si.sn</Text>
+            <Text style={S.companyName}>Sen Services International</Text>
+            <Text style={S.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
+            <Text style={S.companyLine}>Sicap Amitié villa n 4337, Dakar  ·  contact@sen-services.com</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <View style={S.docBadge}>
@@ -114,9 +114,9 @@ function BLDoc({ data }: { data: any }) {
         <View style={S.parties}>
           <View style={S.partyBox}>
             <Text style={S.partyLabel}>Expéditeur</Text>
-            <Text style={S.partyName}>2SI SARL</Text>
-            <Text style={S.partyLine}>Zone Industrielle, Dakar</Text>
-            <Text style={S.partyLine}>Tel : +221 77 000 00 00</Text>
+            <Text style={S.partyName}>Sen Services International</Text>
+            <Text style={S.partyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337</Text>
+            <Text style={S.partyLine}>Tel : +221 33 864 48 48 / 77 225 83 83</Text>
           </View>
           <View style={S.partyBox}>
             <Text style={S.partyLabel}>Destinataire</Text>
@@ -129,7 +129,6 @@ function BLDoc({ data }: { data: any }) {
 
         {/* ── Adresse de livraison ── */}
         <View style={S.addrBox}>
-          <Text style={S.addrPin}>📍</Text>
           <View style={{ flex: 1 }}>
             <Text style={S.addrLabel}>Adresse de livraison</Text>
             <Text style={S.addrText}>{adresse}</Text>

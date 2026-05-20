@@ -8,6 +8,7 @@ export interface CompanyConfig {
   description: string;
   email: string;
   phone: string;
+  website?: string;
   address: {
     street: string;
     city: string;
@@ -33,9 +34,10 @@ export const companyConfig: CompanyConfig = {
   tagline: "Équipement à Moindre Coût",
   description: "Votre partenaire pour l'achat d'équipements professionnels avec paiement échelonné adapté à vos besoins.",
   email: "contact@sen-services.com",
-  phone: "+221 33 864 48 48",
+  phone: "+221 33 864 48 48 · +221 77 225 83 83 · +221 77 420 90 03",
+  website: "https://www.sen-services.com",
   address: {
-    street: "En face Auto Pont BRT Liberté 5 Villa N°5492",
+    street: "Avenue Bourguiba, Sicap Amitié villa n 4337",
     city: "Dakar",
     postalCode: "",
     country: "Sénégal",

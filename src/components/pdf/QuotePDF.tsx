@@ -8,6 +8,7 @@ export interface QuotePDFData {
   sousTotal: number;
   remiseTotale: number;
   tva: number;
+  tvaActive?: boolean;
   total: number;
   statut: string;
   statutLabel: string;
@@ -121,16 +122,16 @@ export function QuotePDF({ data }: { data: QuotePDFData }) {
   const statusColor = STATUS_COLOR[data.statut] ?? BLUE;
 
   return (
-    <Document title={data.numero} author="2SI.Sarl">
+    <Document title={data.numero} author="Sen Services International">
       <Page size="A4" style={s.page}>
 
         {/* ── Header ── */}
         <View style={s.header}>
           <View>
-            <Text style={s.companyName}>2SI.Sarl</Text>
-            <Text style={s.companyLine}>Solutions Informatiques &amp; Services Intégrés</Text>
-            <Text style={s.companyLine}>BP 1234, Dakar — Sénégal</Text>
-            <Text style={s.companyLine}>contact@2si.sn · +221 33 XXX XX XX</Text>
+            <Text style={s.companyName}>Sen Services International</Text>
+            <Text style={s.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
+            <Text style={s.companyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar</Text>
+            <Text style={s.companyLine}>contact@sen-services.com · +221 33 864 48 48</Text>
           </View>
           <View>
             <Text style={s.docTitle}>DEVIS</Text>
@@ -190,12 +191,14 @@ export function QuotePDF({ data }: { data: QuotePDFData }) {
                 <Text style={[s.tValue, { color: ORANGE }]}>-{fmt(data.remiseTotale)}</Text>
               </View>
             )}
-            <View style={s.tLine}>
-              <Text style={s.tLabel}>TVA (18%)</Text>
-              <Text style={s.tValue}>{fmt(data.tva)}</Text>
-            </View>
+            {data.tvaActive !== false && data.tva > 0 && (
+              <View style={s.tLine}>
+                <Text style={s.tLabel}>TVA (18%)</Text>
+                <Text style={s.tValue}>{fmt(data.tva)}</Text>
+              </View>
+            )}
             <View style={s.tFinalBox}>
-              <Text style={s.tFinalText}>TOTAL TTC</Text>
+              <Text style={s.tFinalText}>{data.tvaActive !== false && data.tva > 0 ? 'TOTAL TTC' : 'TOTAL HT'}</Text>
               <Text style={s.tFinalText}>{fmt(data.total)}</Text>
             </View>
           </View>
@@ -218,7 +221,7 @@ export function QuotePDF({ data }: { data: QuotePDFData }) {
 
         {/* ── Footer ── */}
         <Text style={s.footer}>
-          2SI.Sarl — NINEA : XXXXXXXX — RC : SN.DKR.XXXX — Ce devis est valable jusqu'au {new Date(data.dateValidite).toLocaleDateString('fr-FR')}.
+          Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar — Ce devis est valable jusqu'au {new Date(data.dateValidite).toLocaleDateString('fr-FR')}.
         </Text>
       </Page>
     </Document>

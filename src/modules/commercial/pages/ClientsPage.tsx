@@ -56,6 +56,8 @@ import {
   Edit,
   Trash2,
   Plus,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import {
@@ -703,27 +705,49 @@ export function ClientsPage() {
                 </Table>
 
                 {/* Pagination */}
-                {pagination && pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="text-sm text-muted-foreground">
-                      Page {pagination.page} sur {pagination.totalPages}
-                    </div>
-                    <div className="flex gap-2">
+                {pagination && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      {pagination.total} client(s) — page <span className="font-medium">{pagination.page}</span> sur <span className="font-medium">{Math.max(1, pagination.totalPages)}</span>
+                    </p>
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPage(page - 1)}
-                        disabled={page === 1}
+                        disabled={page <= 1}
                       >
-                        Précédent
+                        <ChevronLeft className="h-4 w-4" />
                       </Button>
+                      {Array.from({ length: Math.max(1, pagination.totalPages) }, (_, i) => i + 1)
+                        .filter((p) => p === 1 || p === pagination.totalPages || Math.abs(p - page) <= 1)
+                        .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                          if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                          acc.push(p);
+                          return acc;
+                        }, [])
+                        .map((p, i) =>
+                          p === "…" ? (
+                            <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground text-sm">…</span>
+                          ) : (
+                            <Button
+                              key={p}
+                              variant={p === page ? "default" : "outline"}
+                              size="sm"
+                              className="w-8 h-8 p-0"
+                              onClick={() => setPage(p)}
+                            >
+                              {p}
+                            </Button>
+                          )
+                        )}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setPage(page + 1)}
-                        disabled={page === pagination.totalPages}
+                        disabled={page >= Math.max(1, pagination.totalPages)}
                       >
-                        Suivant
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

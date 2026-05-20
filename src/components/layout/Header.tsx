@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/providers/CartProvider";
 import { useWishlist } from "@/providers/WishlistProvider";
-import { useCompany, useFeatures } from "@/providers/ConfigProvider";
+import {
+  useCompany,
+  //  useFeatures
+} from "@/providers/ConfigProvider";
 import { useI18n } from "@/providers/I18nProvider";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -25,7 +28,7 @@ export function Header() {
   const { getItemCount } = useCart();
   const { wishlistCount } = useWishlist();
   const company = useCompany();
-  const features = useFeatures();
+  // const features = useFeatures();
   const { t, locale, setLocale, supportedLocales, localeNames } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -34,14 +37,14 @@ export function Header() {
 
   // Real API category names (must match product.category from backend)
   const navCategories = [
-    { name: "Informatique & Bureautique",  label: "Informatique" },
-    { name: "Mobilier de Bureau",          label: "Mobilier" },
-    { name: "Équipement Professionnel",    label: "Équipement" },
-    { name: "Outillage Industriel",        label: "Outillage" },
-    { name: "Véhicules & Engins",          label: "Véhicules" },
-    { name: "Énergie & Solaire",           label: "Énergie" },
-    { name: "Sécurité & Surveillance",     label: "Sécurité" },
-    { name: "Électronique Grand Public",   label: "Électronique" },
+    { name: "Informatique & Bureautique", label: "Informatique" },
+    { name: "Mobilier de Bureau", label: "Mobilier" },
+    { name: "Équipement Professionnel", label: "Équipement" },
+    { name: "Outillage Industriel", label: "Outillage" },
+    { name: "Véhicules & Engins", label: "Véhicules" },
+    { name: "Énergie & Solaire", label: "Énergie" },
+    { name: "Sécurité & Surveillance", label: "Sécurité" },
+    { name: "Électronique Grand Public", label: "Électronique" },
   ];
 
   const activeCategoryParam = searchParams.get("categories");
@@ -142,10 +145,10 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <div className="h-4 w-px bg-primary-foreground/30" />
+              {/* <div className="h-4 w-px bg-primary-foreground/30" /> */}
 
               {/* Auth Links - Disabled */}
-              <span
+              {/* <span
                 className="flex items-center gap-1.5 text-xs text-primary-foreground/40 cursor-not-allowed select-none"
                 title="Fonctionnalité bientôt disponible"
               >
@@ -159,7 +162,7 @@ export function Header() {
               >
                 <UserPlus className="h-3.5 w-3.5" />
                 <span>{t("header.register")}</span>
-              </span>
+              </span> */}
             </div>
           </div>
         </div>

@@ -310,12 +310,12 @@ export function ReportPDF({ period, stats, topProducts, salesByCategory }: Repor
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Sen Services International (2SI.Sarl) - Rapport confidentiel</Text>
+          <Text>Sen Services International (2SI) - Rapport confidentiel</Text>
           <Text style={{ marginTop: 3 }}>
-            En face Auto Pont BRT Liberté 5 Villa N°5492 - Dakar, Sénégal
+            Avenue Bourguiba, Sicap Amitié villa n 4337 - Dakar, Sénégal
           </Text>
           <Text style={{ marginTop: 3 }}>
-            Tél: +221 33 864 48 48 • NINEA: 007835162
+            Tél: 33 864 48 48 / 77 225 83 83 / 77 420 90 03 • contact@sen-services.com
           </Text>
         </View>
       </Page>

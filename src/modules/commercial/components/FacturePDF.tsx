@@ -107,15 +107,15 @@ export function FactureDocument({ data }: { data: FactureData }) {
   const etatLabel = data.commande.etat === "confirmee" ? "Confirmée" : "Livrée";
 
   return (
-    <Document title={`Facture ${data.reference}`} author="2SI Sarl">
+    <Document title={`Facture ${data.reference}`} author="Sen Services International">
       <Page size="A4" style={s.page}>
 
         {/* Header */}
         <View style={s.header}>
           <View>
-            <Text style={s.companyName}>Sen Service International</Text>
-            <Text style={s.companySub}>2SI — Dakar, Sénégal</Text>
-            <Text style={s.companySub}>Dakar, Sénégal  ·  contact@2si-sarl.com</Text>
+            <Text style={s.companyName}>Sen Services International</Text>
+            <Text style={s.companySub}>Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar, Sénégal</Text>
+            <Text style={s.companySub}>contact@sen-services.com  ·  +221 33 864 48 48</Text>
           </View>
           <View>
             <Text style={s.factureLabel}>FACTURE</Text>
@@ -223,7 +223,7 @@ export function FactureDocument({ data }: { data: FactureData }) {
         {/* Footer */}
         <View style={s.footer}>
           <Text style={s.footerThank}>Merci de votre confiance !</Text>
-          <Text style={s.footerText}>2SI Sarl — NINEA : XXXXXXXX — RC : XXXXXXXX</Text>
+          <Text style={s.footerText}>Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar — www.sen-services.com</Text>
           <Text style={s.footerText}>Cette facture a été générée électroniquement et est valide sans signature.</Text>
         </View>
 

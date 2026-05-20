@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/providers/I18nProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -22,26 +23,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   Calculator,
-  Plus,
+  Package,
   Trash2,
   Save,
-  Send,
   FileDown,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
-import { useProduits } from "../hooks/useProduits";
-import { useCreateSimulation, useGenererPDFDevis, useEnvoyerDevisEmail } from "../hooks/useSimulations";
+import { apiClient } from "../services/apiClient";
+import { ProductPickerSheet, type BackendArticle, type LigneForm } from "../components/ProductPickerSheet";
+import { useCreateSimulation, useGenererPDFDevis } from "../hooks/useSimulations";
 import { calculerTotalSimulation } from "../services/simulations.service";
-import type { ProduitCatalogue, ProduitSimulation } from "../types";
+import type { ProduitSimulation } from "../types";
 import { toast } from "@/hooks/use-toast";
 
 export function SimulationPage() {
@@ -52,241 +46,123 @@ export function SimulationPage() {
   const [fraisAdditionnels, setFraisAdditionnels] = useState(0);
   const [notes, setNotes] = useState("");
   const [validiteJours, setValiditeJours] = useState(30);
+  const [tvaActive, setTvaActive] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Dialog pour ajouter un produit
-  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
-  const [selectedProduitId, setSelectedProduitId] = useState<string>("");
-  const [quantite, setQuantite] = useState(1);
-  const [remisePercentage, setRemisePercentage] = useState(0);
-
-  // Fetch produits
-  const { data: produitsData } = useProduits({ limit: 100 });
-  const produits = produitsData?.data || [];
+  // Fetch articles (même source que VentesPage / CreateCommandeDialog)
+  const { data: articlesRaw = [] } = useQuery<BackendArticle[]>({
+    queryKey: ["articles"],
+    queryFn: async () => { const r = await apiClient.get<any>("/articles"); return r.data ?? r ?? []; },
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Mutations
   const createSimulation = useCreateSimulation();
   const genererPDF = useGenererPDFDevis();
-  const envoyerEmail = useEnvoyerDevisEmail();
 
   // Calculs automatiques
-  const totaux = calculerTotalSimulation(lignesProduits, 0.18, fraisAdditionnels);
+  const TVA_RATE = 0.18;
+  const totaux = calculerTotalSimulation(lignesProduits, tvaActive ? TVA_RATE : 0, fraisAdditionnels);
 
-  // Ajouter un produit à la simulation
-  const handleAddProduit = () => {
-    const produit = produits.find(p => p.id === selectedProduitId);
-    if (!produit) return;
-
-    const totalLigne = produit.prixVente * quantite;
-    const remiseMontant = (totalLigne * remisePercentage) / 100;
-
-    const nouvelleLigne: ProduitSimulation = {
-      produitId: produit.id,
-      produit,
-      quantite,
-      prixUnitaire: produit.prixVente,
-      remisePercentage,
-      remiseMontant,
-    };
-
-    setLignesProduits([...lignesProduits, nouvelleLigne]);
-
-    // Reset form
-    setSelectedProduitId("");
-    setQuantite(1);
-    setRemisePercentage(0);
-    setIsAddProductOpen(false);
-
-    toast({
-      title: "Produit ajouté",
-      description: `${produit.nom} a été ajouté au devis`,
-    });
+  // Convertir la sélection du picker en ProduitSimulation[]
+  const handlePickerConfirm = (lines: LigneForm[]) => {
+    const newLignes: ProduitSimulation[] = lines.map(line => {
+      const a = articlesRaw.find(art => String(art.id) === line.article_id);
+      if (!a) return null;
+      const existing = lignesProduits.find(l => l.produitId === line.article_id);
+      const remise = existing?.remisePercentage ?? 0;
+      return {
+        produitId: String(a.id),
+        produit: { id: String(a.id), nom: a.libelle, reference: a.reference } as any,
+        quantite: line.quantite,
+        prixUnitaire: a.prix,
+        remisePercentage: remise,
+        remiseMontant: (a.prix * line.quantite * remise) / 100,
+      };
+    }).filter(Boolean) as ProduitSimulation[];
+    setLignesProduits(newLignes);
   };
 
-  // Supprimer un produit
+  // Convertir lignesProduits → LigneForm[] pour pré-remplir le picker
+  const pickerSelected: LigneForm[] = lignesProduits.map(l => ({
+    article_id: l.produitId,
+    quantite: l.quantite,
+  }));
+
+  // Mise à jour remise inline dans le tableau
+  const handleUpdateRemise = (index: number, remise: number) => {
+    setLignesProduits(prev => prev.map((l, i) => {
+      if (i !== index) return l;
+      const montantBase = l.prixUnitaire * l.quantite;
+      return { ...l, remisePercentage: remise, remiseMontant: (montantBase * remise) / 100 };
+    }));
+  };
+
   const handleRemoveProduit = (index: number) => {
-    const newLignes = [...lignesProduits];
-    newLignes.splice(index, 1);
-    setLignesProduits(newLignes);
+    setLignesProduits(prev => prev.filter((_, i) => i !== index));
   };
 
   // Sauvegarder comme brouillon
   const handleSaveBrouillon = async () => {
     if (lignesProduits.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez ajouter au moins un produit",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Veuillez ajouter au moins un produit", variant: "destructive" });
       return;
     }
-
     try {
       const result = await createSimulation.mutateAsync({
         produits: lignesProduits,
         fraisAdditionnels,
         validiteJours,
         notes,
+        tvaActive,
       });
-
       if (result.success) {
-        toast({
-          title: "Devis sauvegardé",
-          description: `Référence: ${result.data?.reference}`,
-        });
-
-        // Reset form
+        toast({ title: "Devis sauvegardé", description: `Référence: ${result.data?.reference}` });
         setLignesProduits([]);
         setFraisAdditionnels(0);
         setNotes("");
       }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder le devis",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder le devis", variant: "destructive" });
     }
   };
 
   // Générer PDF
   const handleGenererPDF = async () => {
     if (lignesProduits.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez ajouter au moins un produit",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Veuillez ajouter au moins un produit", variant: "destructive" });
       return;
     }
-
     try {
-      // D'abord créer la simulation
       const simResult = await createSimulation.mutateAsync({
         produits: lignesProduits,
         fraisAdditionnels,
         validiteJours,
         notes,
+        tvaActive,
       });
-
       if (simResult.success && simResult.data) {
-        // Ensuite générer le PDF
         const pdfResult = await genererPDF.mutateAsync(simResult.data.id);
-
         if (pdfResult.success) {
-          toast({
-            title: "PDF généré",
-            description: "Le devis PDF est prêt au téléchargement",
-          });
-
-          // Simuler le téléchargement
+          toast({ title: "PDF généré", description: "Le devis PDF est prêt au téléchargement" });
           window.open(pdfResult.data?.url, '_blank');
         }
       }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de générer le PDF",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de générer le PDF", variant: "destructive" });
     }
   };
 
   return (
     <>
-      {/* Dialog pour ajouter un produit */}
-      <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un produit au devis</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label>Produit</Label>
-              <Select value={selectedProduitId} onValueChange={setSelectedProduitId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un produit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {produits.map((produit) => (
-                    <SelectItem key={produit.id} value={produit.id}>
-                      {produit.nom} - {formatCurrency(produit.prixVente)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Quantité</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={quantite}
-                  onChange={(e) => setQuantite(Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <Label>Remise (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={remisePercentage}
-                  onChange={(e) => setRemisePercentage(Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            {selectedProduitId && (
-              <div className="p-3 bg-muted rounded">
-                <div className="text-sm">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-muted-foreground">Prix unitaire:</span>
-                    <span className="font-medium">
-                      {formatCurrency(produits.find(p => p.id === selectedProduitId)?.prixVente || 0)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-muted-foreground">Sous-total:</span>
-                    <span className="font-medium">
-                      {formatCurrency((produits.find(p => p.id === selectedProduitId)?.prixVente || 0) * quantite)}
-                    </span>
-                  </div>
-                  {remisePercentage > 0 && (
-                    <div className="flex justify-between mb-1 text-orange-600">
-                      <span>Remise ({remisePercentage}%):</span>
-                      <span>
-                        -{formatCurrency(((produits.find(p => p.id === selectedProduitId)?.prixVente || 0) * quantite * remisePercentage) / 100)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between border-t pt-1 mt-1">
-                    <span className="font-semibold">Total ligne:</span>
-                    <span className="font-semibold">
-                      {formatCurrency(
-                        ((produits.find(p => p.id === selectedProduitId)?.prixVente || 0) * quantite) *
-                        (1 - remisePercentage / 100)
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddProductOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleAddProduit} disabled={!selectedProduitId}>
-              <Plus className="mr-2 h-4 w-4" />
-              Ajouter
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Sheet de sélection produits */}
+      <ProductPickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        articles={articlesRaw}
+        selected={pickerSelected}
+        onConfirm={handlePickerConfirm}
+      />
 
       <div className="space-y-6">
         {/* Page Header */}
@@ -318,9 +194,9 @@ export function SimulationPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Produits</CardTitle>
-              <Button onClick={() => setIsAddProductOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter un produit
+              <Button onClick={() => setPickerOpen(true)}>
+                <Package className="mr-2 h-4 w-4" />
+                Sélectionner des produits
               </Button>
             </div>
           </CardHeader>
@@ -329,7 +205,7 @@ export function SimulationPage() {
               <div className="text-center py-8 text-muted-foreground">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>Aucun produit ajouté</p>
-                <p className="text-sm">Cliquez sur "Ajouter un produit" pour commencer</p>
+                <p className="text-sm">Cliquez sur "Sélectionner des produits" pour ouvrir le catalogue</p>
               </div>
             ) : (
               <Table>
@@ -338,39 +214,41 @@ export function SimulationPage() {
                     <TableHead>Produit</TableHead>
                     <TableHead>Qté</TableHead>
                     <TableHead>Prix unitaire</TableHead>
-                    <TableHead>Remise</TableHead>
+                    <TableHead>Remise (%)</TableHead>
                     <TableHead>Total HT</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {lignesProduits.map((ligne, index) => {
-                    const totalLigne = ligne.prixUnitaire * ligne.quantite;
-                    const totalApresRemise = totalLigne - ligne.remiseMontant;
-
+                    const totalApresRemise = ligne.prixUnitaire * ligne.quantite - ligne.remiseMontant;
                     return (
                       <TableRow key={index}>
                         <TableCell>
                           <div>
                             <div className="font-medium">{ligne.produit?.nom}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {ligne.produit?.reference}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{ligne.produit?.reference}</div>
                           </div>
                         </TableCell>
                         <TableCell>{ligne.quantite}</TableCell>
                         <TableCell>{formatCurrency(ligne.prixUnitaire)}</TableCell>
                         <TableCell>
-                          {ligne.remisePercentage > 0 ? (
-                            <div className="text-orange-600">
-                              {ligne.remisePercentage}%
-                              <div className="text-xs">
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={ligne.remisePercentage}
+                              onChange={(e) => handleUpdateRemise(index, Number(e.target.value))}
+                              className="w-16 h-7 text-xs px-2"
+                            />
+                            <span className="text-xs text-muted-foreground">%</span>
+                            {ligne.remisePercentage > 0 && (
+                              <span className="text-xs text-orange-600">
                                 -{formatCurrency(ligne.remiseMontant)}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="font-semibold">
                           {formatCurrency(totalApresRemise)}
@@ -401,6 +279,14 @@ export function SimulationPage() {
               <CardTitle>Options</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <Label className="text-sm font-medium">TVA (18%)</Label>
+                  <p className="text-xs text-muted-foreground">Appliquer la taxe sur la valeur ajoutée</p>
+                </div>
+                <Switch checked={tvaActive} onCheckedChange={setTvaActive} />
+              </div>
+
               <div>
                 <Label>Frais additionnels (FCFA)</Label>
                 <Input
@@ -477,14 +363,18 @@ export function SimulationPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">TVA (18%):</span>
-                  <span className="font-medium">{formatCurrency(totaux.taxe)}</span>
-                </div>
+                {tvaActive && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">TVA (18%):</span>
+                    <span className="font-medium">{formatCurrency(totaux.taxe)}</span>
+                  </div>
+                )}
 
                 <div className="border-t pt-3">
                   <div className="flex justify-between">
-                    <span className="text-lg font-semibold">Total TTC:</span>
+                    <span className="text-lg font-semibold">
+                      {tvaActive ? "Total TTC:" : "Total HT:"}
+                    </span>
                     <span className="text-2xl font-bold text-primary">
                       {formatCurrency(totaux.total)}
                     </span>
@@ -501,12 +391,6 @@ export function SimulationPage() {
                     </div>
                   </div>
                 )}
-
-                <div className="pt-3">
-                  <Badge variant="outline" className="w-full justify-center py-2">
-                    Paiement: Comptant uniquement
-                  </Badge>
-                </div>
               </div>
             </CardContent>
           </Card>

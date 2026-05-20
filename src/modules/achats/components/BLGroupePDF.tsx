@@ -26,7 +26,7 @@ const S = StyleSheet.create({
   addrBox:     { backgroundColor: "#f9fafb", border: "1px solid #d1d5db", borderRadius: 4, padding: "8 10", marginBottom: 12 },
   addrLabel:   { fontSize: 7, fontFamily: "Helvetica-Bold", color: "#6b7280", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 },
   addrText:    { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#111" },
-  thead:       { flexDirection: "row", backgroundColor: "#111", padding: "5 8", borderRadius: "2 2 0 0" },
+  thead:       { flexDirection: "row", backgroundColor: "#111", padding: "5 8", borderTopLeftRadius: 2, borderTopRightRadius: 2 },
   thText:      { color: "#fff", fontFamily: "Helvetica-Bold", fontSize: 8, textTransform: "uppercase" },
   trow:        { flexDirection: "row", borderBottom: "1px solid #f3f4f6", padding: "6 8", minHeight: 22 },
   trowAlt:     { backgroundColor: "#f9fafb" },
@@ -74,9 +74,9 @@ function BLPage({ data, index, total }: { data: any; index: number; total: numbe
       {/* Header */}
       <View style={S.header}>
         <View>
-          <Text style={S.companyName}>2SI SARL</Text>
-          <Text style={S.companyLine}>Équipements Professionnels & Électriques</Text>
-          <Text style={S.companyLine}>Dakar, Sénégal  ·  contact@2si.sn</Text>
+          <Text style={S.companyName}>Sen Services International</Text>
+          <Text style={S.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
+          <Text style={S.companyLine}>Sicap Amitié villa n 4337, Dakar  ·  contact@sen-services.com</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
           <View style={S.docBadge}>
@@ -94,9 +94,9 @@ function BLPage({ data, index, total }: { data: any; index: number; total: numbe
       <View style={S.parties}>
         <View style={S.partyBox}>
           <Text style={S.partyLabel}>Expéditeur</Text>
-          <Text style={S.partyName}>2SI SARL</Text>
-          <Text style={S.partyLine}>Zone Industrielle, Dakar</Text>
-          <Text style={S.partyLine}>Tel : +221 77 000 00 00</Text>
+          <Text style={S.partyName}>Sen Services International</Text>
+          <Text style={S.partyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337</Text>
+          <Text style={S.partyLine}>Tel : +221 33 864 48 48 / 77 225 83 83</Text>
         </View>
         <View style={S.partyBox}>
           <Text style={S.partyLabel}>Destinataire</Text>
@@ -187,9 +187,7 @@ function BLPage({ data, index, total }: { data: any; index: number; total: numbe
 function GroupeDoc({ fiches, bdcLabel }: { fiches: any[]; bdcLabel: string }) {
   return (
     <Document title={`Bordereaux de Livraison — ${bdcLabel}`}>
-      {fiches.map((fiche, i) => (
-        <BLPage key={i} data={fiche} index={i} total={fiches.length} />
-      ))}
+      {fiches.map((fiche, i) => BLPage({ data: fiche, index: i, total: fiches.length }))}
     </Document>
   );
 }

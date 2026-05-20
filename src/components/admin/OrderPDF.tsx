@@ -165,10 +165,10 @@ export function OrderPDF({ order }: OrderPDFProps) {
             <Text style={styles.companyName}>Sen Services International</Text>
             <Text style={{ fontSize: 10, color: "#006847" }}>2SI.Sarl</Text>
             <Text style={{ fontSize: 9, marginTop: 5 }}>
-              En face Auto Pont BRT Liberté 5 Villa N°5492
+              Avenue Bourguiba, Sicap Amitié villa n 4337
             </Text>
             <Text style={{ fontSize: 9 }}>Dakar, Sénégal</Text>
-            <Text style={{ fontSize: 9 }}>Tél: +221 33 864 48 48</Text>
+            <Text style={{ fontSize: 9 }}>Tél: 33 864 48 48 / 77 225 83 83 / 77 420 90 03</Text>
             <Text style={{ fontSize: 9 }}>NINEA: 007835162</Text>
           </View>
           <View style={styles.companyInfo}>
@@ -255,8 +255,8 @@ export function OrderPDF({ order }: OrderPDFProps) {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Sen Services International (2SI.Sarl) - Équipement à Moindre Coût</Text>
-          <Text>contact@sen-services.com | +221 33 864 48 48</Text>
+          <Text>Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar</Text>
+          <Text>contact@sen-services.com | 33 864 48 48 / 77 225 83 83 / 77 420 90 03 | www.sen-services.com</Text>
         </View>
       </Page>
     </Document>

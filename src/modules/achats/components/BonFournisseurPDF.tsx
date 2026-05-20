@@ -58,9 +58,9 @@ function BonFournisseurDoc({ cf }: { cf: CF }) {
         {/* En-tête */}
         <View style={S.header}>
           <View>
-            <Text style={S.company}>2SI SARL</Text>
-            <Text style={S.subtitle}>Équipements Professionnels</Text>
-            <Text style={S.subtitle}>Tel: 33 XXX XX XX</Text>
+            <Text style={S.company}>Sen Services International</Text>
+            <Text style={S.subtitle}>Informatique · Électronique · Électroménager · BTP</Text>
+            <Text style={S.subtitle}>Tel: 33 864 48 48 / 77 225 83 83 / 77 420 90 03</Text>
           </View>
           <View>
             <Text style={S.docTitle}>Bon de Commande Fournisseur</Text>

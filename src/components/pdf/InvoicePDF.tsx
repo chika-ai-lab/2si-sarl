@@ -107,16 +107,16 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
   const statusColor = isPaid ? GREEN : isLate ? RED : BLUE;
 
   return (
-    <Document title={data.numero} author="2SI.Sarl">
+    <Document title={data.numero} author="Sen Services International">
       <Page size="A4" style={s.page}>
 
         {/* ── Header ── */}
         <View style={s.header}>
           <View>
-            <Text style={s.companyName}>2SI.Sarl</Text>
-            <Text style={s.companyLine}>Solutions Informatiques &amp; Services Intégrés</Text>
-            <Text style={s.companyLine}>BP 1234, Dakar — Sénégal</Text>
-            <Text style={s.companyLine}>contact@2si.sn · +221 33 XXX XX XX</Text>
+            <Text style={s.companyName}>Sen Services International</Text>
+            <Text style={s.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
+            <Text style={s.companyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar</Text>
+            <Text style={s.companyLine}>contact@sen-services.com · +221 33 864 48 48</Text>
           </View>
           <View>
             <Text style={s.docTitle}>FACTURE</Text>
@@ -198,7 +198,7 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
 
         {/* ── Footer ── */}
         <Text style={s.footer}>
-          2SI.Sarl — NINEA : XXXXXXXX — RC : SN.DKR.XXXX — Ce document fait foi de facture officielle.
+          Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar — contact@sen-services.com
         </Text>
       </Page>
     </Document>

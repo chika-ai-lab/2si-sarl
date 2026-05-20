@@ -20,12 +20,12 @@ const loginSchema = z.object({
 });
 type LoginFormData = z.infer<typeof loginSchema>;
 
-const TEST_USERS = [
-  { role: "Admin",       telephone: "admin@2si.sn",    name: "Moussa Diallo",   color: "red"    },
-  { role: "Commercial",  telephone: "aissatou@2si.sn", name: "Aïssatou Camara", color: "green"  },
-  { role: "Logistique",  telephone: "fatou@2si.sn",    name: "Fatou Sarr",      color: "orange" },
-  { role: "Comptable",   telephone: "cheikh@2si.sn",   name: "Cheikh Ndiaye",   color: "blue"   },
-] as const;
+// const TEST_USERS = [
+//   { role: "Admin",       telephone: "sthiaw@sen-services.com",         name: "Souleynmane Thiaw", color: "red"    },
+//   { role: "Commercial",  telephone: "mbarro@sen-services.com",          name: "Mai Barro",         color: "green"  },
+//   { role: "Logistique",  telephone: "thiernoba@sen-services.com",       name: "Thierno Ba",        color: "orange" },
+//   { role: "Comptable",   telephone: "coura@sen-services.com",           name: "Ndeye Coura Diop",  color: "blue"   },
+// ] as const;
 
 const COLOR_MAP = {
   red:    "border-red-200 hover:border-red-400 hover:bg-red-50 text-red-700",
@@ -62,7 +62,7 @@ export function LoginPage() {
 
   const fill = (telephone: string, name: string) => {
     form.setValue("telephone", telephone);
-    form.setValue("password", "Admin@2024");
+    form.setValue("password", "Gestemc@2025");
     toast({ title: `Connecté en tant que ${name}` });
   };
 
@@ -153,7 +153,7 @@ export function LoginPage() {
               </Form>
 
               {/* Identifiants de test */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-px bg-border flex-1" />
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
@@ -176,9 +176,9 @@ export function LoginPage() {
                   ))}
                 </div>
                 <p className="text-center text-[10px] text-muted-foreground mt-2">
-                  Mot de passe universel : <span className="font-mono font-semibold">Admin@2024</span>
+                  Mot de passe universel : <span className="font-mono font-semibold">Gestemc@2025</span>
                 </p>
-              </div>
+              </div> */}
 
             </CardContent>
           </Card>

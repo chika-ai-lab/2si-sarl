@@ -50,9 +50,9 @@ export default function BonFournisseur({ cf, onClose }: Props) {
           {/* En-tête */}
           <div className="flex justify-between items-start">
             <div>
-              <p className="font-bold text-lg">2SI SARL</p>
-              <p className="text-xs text-gray-500">Équipements Professionnels</p>
-              <p className="text-xs text-gray-500">Tel: 33 XXX XX XX</p>
+              <p className="font-bold text-lg">Sen Services International</p>
+              <p className="text-xs text-gray-500">Informatique · Électronique · Électroménager · BTP</p>
+              <p className="text-xs text-gray-500">Tel: 33 864 48 48 / 77 225 83 83 / 77 420 90 03</p>
             </div>
             <div className="text-right">
               <p className="font-bold">Bon de Commande Fournisseur</p>

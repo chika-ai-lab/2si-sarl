@@ -7,7 +7,7 @@ const AUTH_STORAGE_KEY = "2si-auth-user";
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
-const PERMISSIONS_VERSION = 5; // v5: COMMERCIAL:ORDERS:READ ajouté au comptable
+const PERMISSIONS_VERSION = 6; // v6: rôle responsable_commercial + commercial = PWA uniquement
 
 // ─── Liste exhaustive des modules de l'application ───────────────────────────
 const ALL_MODULE_IDS = [
@@ -15,7 +15,7 @@ const ALL_MODULE_IDS = [
 ] as const;
 
 type ModuleId = typeof ALL_MODULE_IDS[number];
-type RoleKey = "admin" | "commercial" | "logistique" | "comptabilite" | "default";
+type RoleKey = "admin" | "responsable_commercial" | "commercial" | "logistique" | "comptabilite" | "default";
 
 // ─── Source unique de vérité : permissions et accès modules par rôle ─────────
 const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] }> = {
@@ -23,14 +23,25 @@ const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] 
     permissions: ["*:*:*"],
     modules: [...ALL_MODULE_IDS],
   },
+  // Responsable commercial : gestion complète commandes + BDC pour logistique
+  responsable_commercial: {
+    permissions: [
+      "DASHBOARD:*:READ",
+      "COMMERCIAL:*:*",           // ventes, clients, catalogue, accréditif, SAV, rapports
+      "PRODUCTS:PRODUCT:READ",
+      "ACHATS:BON_COMMANDES:*",   // création et gestion des bons de commande
+      "ACHATS:FOURNISSEURS:READ", // lecture fournisseurs (assignation sur BDC)
+    ],
+    modules: ["dashboard", "commercial", "products", "achats"],
+  },
+  // Commercial terrain : accès PWA uniquement, pas de /admin dans 2si-sarl
   commercial: {
     permissions: [
       "DASHBOARD:*:READ",
-      "COMMERCIAL:*:*",          // ventes, clients, catalogue, accréditif, SAV, rapports
+      "COMMERCIAL:*:*",
       "PRODUCTS:PRODUCT:READ",
-      "ACHATS:BON_COMMANDES:READ", // lecture des BDC créés depuis les commandes
     ],
-    modules: ["dashboard", "commercial", "products", "achats"],
+    modules: [],
   },
   logistique: {
     permissions: [
@@ -59,13 +70,19 @@ const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] 
   },
 };
 
+// ─── Normalise une chaîne : minuscules + suppression des accents ──────────────
+function norm(s: string) {
+  return s.toLowerCase().trim().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
 // ─── Détection du rôle depuis un tableau de titres backend ───────────────────
 function detectRoleKey(roleTitles: string[]): RoleKey {
-  const lower = roleTitles.map((r) => r.toLowerCase().trim());
-  if (lower.some((r) => r === "admin" || r === "super_admin")) return "admin";
-  if (lower.some((r) => r === "logistique" || r === "logistic")) return "logistique";
-  if (lower.some((r) => r === "comptabilite" || r === "comptable")) return "comptabilite";
-  if (lower.some((r) => r === "commercial" || r === "vendeur" || r === "vendeuse" || r === "sales" || r === "salesman")) return "commercial";
+  const n = roleTitles.map(norm);
+  if (n.some((r) => r === "admin" || r === "super_admin")) return "admin";
+  if (n.some((r) => r === "responsable commercial" || r === "responsable_commercial")) return "responsable_commercial";
+  if (n.some((r) => r === "logistique" || r === "logistic")) return "logistique";
+  if (n.some((r) => r === "comptabilite" || r === "comptable")) return "comptabilite";
+  if (n.some((r) => r === "commercial" || r === "commerciale" || r === "vendeur" || r === "vendeuse" || r === "sales")) return "commercial";
   return "default";
 }
 
@@ -248,10 +265,12 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     saveUserToStorage(updatedUser);
   };
 
-  // Retourne true pour tout rôle métier (gate d'entrée sur /admin)
+  // Rôles autorisés à accéder à /admin dans 2si-sarl
+  // Les commerciaux terrain sont PWA uniquement (role "commercial" non listé ici)
+  const SARL_ROLES: RoleKey[] = ["admin", "responsable_commercial", "logistique", "comptabilite"];
   const isAdmin = (): boolean => {
     if (!user) return false;
-    return detectRoleKey(user.roles) !== "default";
+    return SARL_ROLES.includes(detectRoleKey(user.roles));
   };
 
   return (
