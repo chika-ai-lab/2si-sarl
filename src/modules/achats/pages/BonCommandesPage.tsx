@@ -102,13 +102,16 @@ export default function BonCommandesPage() {
   const { user } = useAuth();
 
   const rolesLower = (user?.roles ?? []).map((r) => r.toLowerCase().trim());
-  const isCommercial = rolesLower.some((r) => ["commercial", "vendeur", "vendeuse", "sales"].includes(r));
-  const isLogistique = rolesLower.some((r) => ["logistique", "logistic"].includes(r));
-  // Admin voit tout comme logistique (peut assigner fournisseurs)
-  const isAdmin = rolesLower.some((r) => ["admin", "super_admin"].includes(r));
+  const isCommercial        = rolesLower.some((r) => ["commercial", "vendeur", "vendeuse", "sales"].includes(r));
+  const isResponsableComm   = rolesLower.some((r) => r === "responsable_commercial" || r === "responsable commercial");
+  const isLogistique        = rolesLower.some((r) => ["logistique", "logistic"].includes(r));
+  const isAdmin             = rolesLower.some((r) => ["admin", "super_admin"].includes(r));
+  // Seuls logistique et admin peuvent assigner des fournisseurs
+  const canAssignFournisseur = isLogistique || isAdmin;
 
   const [openId, setOpenId]         = useState<number | null>(null);
   const [localFourn, setLocalFourn] = useState<Record<number, number>>({});
+  const [localPrix, setLocalPrix]   = useState<Record<number, string>>({}); // ligneId → prix saisi
   const [saving, setSaving]         = useState(false);
   const [transmitting, setTransmitting] = useState<number | null>(null);
   const [deleting, setDeleting]     = useState<number | null>(null);
@@ -164,8 +167,14 @@ export default function BonCommandesPage() {
     },
     staleTime: 1000 * 60 * 10,
   });
-  const articleMap: Record<number, { libelle: string; prix: number }> = Object.fromEntries(
-    articlesRaw.map((a: any) => [a.id, { libelle: a.libelle, prix: Number(a.prix) }])
+  const articleMap: Record<number, { libelle: string; prix: number; marque?: string; reference?: string; categorie?: string }> = Object.fromEntries(
+    articlesRaw.map((a: any) => [a.id, {
+      libelle:    a.libelle,
+      prix:       Number(a.prix),
+      marque:     a.marque     ?? undefined,
+      reference:  a.reference  ?? undefined,
+      categorie:  a.categorie?.categorie ?? a.categorie_nom ?? undefined,
+    }])
   );
 
   const fournMap: Record<number, string> = Object.fromEntries(
@@ -238,15 +247,20 @@ export default function BonCommandesPage() {
     setGenResult((prev) => ({ ...prev }));
   };
 
-  // ── Sauvegarder les assignations fournisseur ───────────────────────────
+  // ── Sauvegarder les assignations fournisseur + prix ──────────────────
   const handleSaveFournisseurs = async (bdc: BonCommande) => {
     setSaving(true);
     try {
-      const promises = bdc.lignes
+      const fournPromises = bdc.lignes
         .filter((l) => localFourn[l.id] !== undefined && localFourn[l.id] !== l.fournisseurId)
         .map((l) => BonCommandesService.assignerFournisseur(bdc.id, l.id, localFourn[l.id]));
-      await Promise.all(promises);
-      toast({ title: "Fournisseurs enregistrés" });
+
+      const prixPromises = bdc.lignes
+        .filter((l) => localPrix[l.id] !== undefined && Number(localPrix[l.id]) !== Number(l.prix))
+        .map((l) => BonCommandesService.updatePrixLigne(bdc.id, l.id, Number(localPrix[l.id])));
+
+      await Promise.all([...fournPromises, ...prixPromises]);
+      toast({ title: "Assignations et prix enregistrés" });
       refetch();
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
@@ -306,7 +320,7 @@ export default function BonCommandesPage() {
     try {
       const result = await BonCommandesService.generer(bdc.id);
       setGenResult((prev) => ({ ...prev, [bdc.id]: result }));
-      toast({ title: `${result.commandes.length} commande(s) fournisseur générée(s)` });
+      toast({ title: `${result.commandes.length} commande(s) fournisseur créée(s)`, description: "Renseignez les frais dans Commandes Fournisseurs puis générez les factures." });
       refetch();
       qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
     } catch (e: any) {
@@ -462,7 +476,7 @@ export default function BonCommandesPage() {
                     {statutBadge(bdc.statut)}
 
                     {/* Brouillon : transmettre à la logistique */}
-                    {(isCommercial || isAdmin) && bdc.statut === "brouillon" && (
+                    {(isResponsableComm || isAdmin) && bdc.statut === "brouillon" && (
                       <>
                         <Button
                           size="sm"
@@ -536,7 +550,7 @@ export default function BonCommandesPage() {
                               <TableHead>Client</TableHead>
                               <TableHead>Produit / Référence</TableHead>
                               <TableHead className="text-right">Qté</TableHead>
-                              <TableHead className="text-right">Prix</TableHead>
+                              <TableHead className="text-right">{canAssignFournisseur ? "Prix achat" : "Prix"}</TableHead>
                               <TableHead>Adresse livraison</TableHead>
                               <TableHead className="w-52">Fournisseur</TableHead>
                             </TableRow>
@@ -560,10 +574,11 @@ export default function BonCommandesPage() {
                               // Référence commande (avant le " — " dans complement)
                               const refCommande = ligne.complement?.split(" — ")[0] || ligne.complement;
 
-                              // Produit/Référence : article ou référence commande
-                              const articleLib = ligne.articleId
-                                ? articleMap[ligne.articleId]?.libelle || `Art. #${ligne.articleId}`
-                                : refCommande || "—";
+                              // Produit : backend enrichit ligne.article pour les lignes sans articleId
+                              const articleData = ligne.article
+                                ?? (ligne.articleId ? articleMap[ligne.articleId] : null);
+                              const articleLib = articleData?.libelle
+                                || (ligne.articleId ? `Art. #${ligne.articleId}` : refCommande || "—");
 
                               // Adresse : ligne BDC, puis commande joinée
                               const adresse =
@@ -577,18 +592,72 @@ export default function BonCommandesPage() {
                               return (
                                 <TableRow key={ligne.id}>
                                   <TableCell className="font-medium">{clientNom}</TableCell>
-                                  <TableCell>{articleLib}</TableCell>
+                                  <TableCell>
+                                    {/* Cas : plusieurs articles pour cette commande */}
+                                    {ligne.articlesCommande && ligne.articlesCommande.length > 1 ? (
+                                      <div className="space-y-1">
+                                        {ligne.articlesCommande.map((a, ai) => (
+                                          <div key={ai} className="space-y-0.5">
+                                            <p className="text-sm font-medium leading-tight">{a.libelle || "—"}</p>
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                              {a.categorie && (
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">{a.categorie}</span>
+                                              )}
+                                              {a.marque && <span className="text-[11px] text-muted-foreground">{a.marque}</span>}
+                                              {a.reference && <span className="text-[10px] text-muted-foreground/60 font-mono">#{a.reference}</span>}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-0.5">
+                                        <p className="text-sm font-medium leading-tight">{articleLib}</p>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {articleData?.categorie && (
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                              {articleData.categorie}
+                                            </span>
+                                          )}
+                                          {articleData?.marque && (
+                                            <span className="text-[11px] text-muted-foreground">{articleData.marque}</span>
+                                          )}
+                                          {articleData?.reference && (
+                                            <span className="text-[10px] text-muted-foreground/60 font-mono">#{articleData.reference}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </TableCell>
                                   <TableCell className="text-right">{ligne.quantite}</TableCell>
-                                  <TableCell className="text-right">{formatCurrency(Number(ligne.prix))}</TableCell>
+                                  <TableCell className="text-right">
+                                    {canAssignFournisseur ? (
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        className="w-28 text-right text-xs border rounded px-2 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                        value={localPrix[ligne.id] ?? String(Number(ligne.prix))}
+                                        onChange={(e) => setLocalPrix((prev) => ({ ...prev, [ligne.id]: e.target.value }))}
+                                      />
+                                    ) : (
+                                      formatCurrency(Number(ligne.prix))
+                                    )}
+                                  </TableCell>
                                   <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate">
                                     {adresse}
                                   </TableCell>
                                   <TableCell>
-                                    <FournisseurCombobox
-                                      value={currentFourn}
-                                      onChange={(id) => setLocalFourn((prev) => ({ ...prev, [ligne.id]: id }))}
-                                      fournisseurs={fournisseurs}
-                                    />
+                                    {canAssignFournisseur ? (
+                                      <FournisseurCombobox
+                                        value={currentFourn}
+                                        onChange={(id) => setLocalFourn((prev) => ({ ...prev, [ligne.id]: id }))}
+                                        fournisseurs={fournisseurs}
+                                      />
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">
+                                        {currentFourn ? (fournMap[currentFourn] || `#${currentFourn}`) : "—"}
+                                      </span>
+                                    )}
                                   </TableCell>
                                 </TableRow>
                               );
@@ -613,6 +682,7 @@ export default function BonCommandesPage() {
                       )}
 
                       {/* Actions */}
+                      {canAssignFournisseur && (
                       <TooltipProvider delayDuration={300}>
                       <div className="flex justify-end gap-3 pt-2">
                         <Tooltip>
@@ -659,6 +729,7 @@ export default function BonCommandesPage() {
                         </Tooltip>
                       </div>
                       </TooltipProvider>
+                      )}
                     </CardContent>
                   </div>
                 )}

@@ -36,6 +36,8 @@ const S = StyleSheet.create({
 interface Ligne { designation: string; quantite: number; prix: number; montant: number; }
 interface CF {
   id: number; date: string; montant: number; etat: string; note: string | null;
+  fraisExpedition?: number | null;
+  autresCharges?: number | null;
   fournisseur?: { id: number; nomComplet: string; adresse?: string; telephone?: string; email?: string };
   lignes: Ligne[];
 }
@@ -47,7 +49,11 @@ function BonFournisseurDoc({ cf }: { cf: CF }) {
   const dateStr = cf.date
     ? new Date(cf.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
     : new Date().toLocaleDateString("fr-FR");
-  const total = cf.lignes.reduce((s, l) => s + Number(l.montant), 0) || Number(cf.montant);
+  const sousTotal      = cf.lignes.reduce((s, l) => s + Number(l.montant), 0) || Number(cf.montant);
+  const fraisExpedition = Number(cf.fraisExpedition ?? 0);
+  const autresCharges   = Number(cf.autresCharges   ?? 0);
+  const totalTTC        = sousTotal + fraisExpedition + autresCharges;
+  const hasFrais        = fraisExpedition > 0 || autresCharges > 0;
 
   const fmt = (n: number) =>
     new Intl.NumberFormat("fr-FR", { style: "decimal", maximumFractionDigits: 0 }).format(n) + " FCFA";
@@ -98,12 +104,46 @@ function BonFournisseurDoc({ cf }: { cf: CF }) {
               <Text style={{ ...S.tdPrice, fontFamily: "Helvetica-Bold" }}>{fmt(Number(l.montant))}</Text>
             </View>
           ))}
+          {/* Sous-total marchandises */}
           <View style={S.trowTotal}>
-            <Text style={{ ...S.thDesig, textAlign: "right" }}>Total</Text>
+            <Text style={{ ...S.thDesig, textAlign: "right", fontFamily: "Helvetica" }}>
+              {hasFrais ? "Sous-total marchandises" : "Total"}
+            </Text>
             <Text style={S.thQty}> </Text>
             <Text style={S.thPrice}> </Text>
-            <Text style={{ ...S.thPrice }}>{fmt(total)}</Text>
+            <Text style={S.thPrice}>{fmt(sousTotal)}</Text>
           </View>
+          {/* Frais expédition */}
+          {fraisExpedition > 0 && (
+            <View style={S.trowTotal}>
+              <Text style={{ ...S.thDesig, textAlign: "right", fontFamily: "Helvetica", color: "#6b7280" }}>
+                Frais d'expédition
+              </Text>
+              <Text style={S.thQty}> </Text>
+              <Text style={S.thPrice}> </Text>
+              <Text style={{ ...S.thPrice, color: "#6b7280" }}>{fmt(fraisExpedition)}</Text>
+            </View>
+          )}
+          {/* Autres charges */}
+          {autresCharges > 0 && (
+            <View style={S.trowTotal}>
+              <Text style={{ ...S.thDesig, textAlign: "right", fontFamily: "Helvetica", color: "#6b7280" }}>
+                Autres charges
+              </Text>
+              <Text style={S.thQty}> </Text>
+              <Text style={S.thPrice}> </Text>
+              <Text style={{ ...S.thPrice, color: "#6b7280" }}>{fmt(autresCharges)}</Text>
+            </View>
+          )}
+          {/* Total TTC */}
+          {hasFrais && (
+            <View style={{ ...S.trowTotal, backgroundColor: "#1f2937" }}>
+              <Text style={{ ...S.thDesig, textAlign: "right", color: "#f9fafb" }}>Total TTC</Text>
+              <Text style={{ ...S.thQty, color: "#f9fafb" }}> </Text>
+              <Text style={{ ...S.thPrice, color: "#f9fafb" }}> </Text>
+              <Text style={{ ...S.thPrice, color: "#f9fafb", fontFamily: "Helvetica-Bold" }}>{fmt(totalTTC)}</Text>
+            </View>
+          )}
         </View>
 
         {cf.note && <Text style={{ fontSize: 9, color: "#6b7280", fontStyle: "italic", marginBottom: 10 }}>Note : {cf.note}</Text>}

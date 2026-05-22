@@ -1,5 +1,13 @@
 import { apiClient } from "@/modules/commercial/services/apiClient";
 
+export interface ArticleInfo {
+  id?: number;
+  libelle?: string;
+  marque?: string;
+  reference?: string;
+  categorie?: string;
+}
+
 export interface BonCommandeLigne {
   id: number;
   bonCommandeId: number;
@@ -12,6 +20,9 @@ export interface BonCommandeLigne {
   prix: number;
   fournisseurId: number | null;
   complement: string | null;
+  // Enrichi par le backend via enrichLignes()
+  article?: ArticleInfo | null;
+  articlesCommande?: ArticleInfo[];
 }
 
 export interface BonCommande {
@@ -61,8 +72,19 @@ export const BonCommandesService = {
     );
   },
 
+  updatePrixLigne: async (bdcId: number, ligneId: number, prix: number) => {
+    return apiClient.put<BonCommandeLigne>(
+      `${base}/${bdcId}/lignes/${ligneId}/prix`,
+      { prix },
+    );
+  },
+
   generer: async (bdcId: number): Promise<GenererResult> => {
     return apiClient.post<GenererResult>(`${base}/${bdcId}/generer`, {});
+  },
+
+  genererFactures: async (cfId: number): Promise<{ message: string; factureFournisseur: any }> => {
+    return apiClient.post(`${base}/commande-fournisseur/${cfId}/generer-factures`, {});
   },
 
   delete: async (id: number) => {

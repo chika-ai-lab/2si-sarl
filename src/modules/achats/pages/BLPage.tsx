@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import BLFicheExpeditionPDF from "../components/BLFicheExpeditionPDF";
 import BLGroupePDF from "../components/BLGroupePDF";
+import BLRecapGlobalPDF from "../components/BLRecapGlobalPDF";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -69,8 +70,9 @@ export default function BLPage() {
   const [filterEtat, setFilterEtat] = useState("tous");
   const [openBdcIds, setOpenBdcIds] = useState<Set<string>>(new Set());
   const [loading,      setLoading]      = useState<string | null>(null);
-  const [printBlId,    setPrintBlId]    = useState<number | null>(null);
-  const [printGroupe,  setPrintGroupe]  = useState<{ bdcId: number; bdcLabel: string } | null>(null);
+  const [printBlId,     setPrintBlId]    = useState<number | null>(null);
+  const [printGroupe,   setPrintGroupe]  = useState<{ bdcId: number; bdcLabel: string } | null>(null);
+  const [printRecap,    setPrintRecap]   = useState<{ bdcId: number; bdcLabel: string } | null>(null);
 
   const toggleBdc = (key: string) => {
     setOpenBdcIds((prev) => {
@@ -189,7 +191,7 @@ export default function BLPage() {
       </DialogContent>
     </Dialog>
 
-    {/* Dialog Impression groupée BDC */}
+    {/* Dialog Impression groupée BDC (1 page par client) */}
     <Dialog open={!!printGroupe} onOpenChange={(o) => !o && setPrintGroupe(null)}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         {printGroupe && (
@@ -197,6 +199,19 @@ export default function BLPage() {
             bdcId={printGroupe.bdcId}
             bdcLabel={printGroupe.bdcLabel}
             onClose={() => setPrintGroupe(null)}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+
+    {/* Dialog BL Récapitulatif Global (1 seul document, toutes lignes + client par ligne) */}
+    <Dialog open={!!printRecap} onOpenChange={(o) => !o && setPrintRecap(null)}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+        {printRecap && (
+          <BLRecapGlobalPDF
+            bdcId={printRecap.bdcId}
+            bdcLabel={printRecap.bdcLabel}
+            onClose={() => setPrintRecap(null)}
           />
         )}
       </DialogContent>
@@ -341,25 +356,43 @@ export default function BLPage() {
                     </span>
                   )}
 
-                  {/* Imprimer tout le groupe — uniquement si BDC connu */}
+                  {/* Boutons impression — uniquement si BDC connu */}
                   {group.bdcId != null && (
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs"
-                            onClick={(e) => { e.stopPropagation(); setPrintGroupe({ bdcId: group.bdcId!, bdcLabel: bdcLabel }); }}
-                          >
-                            <Printer className="h-3 w-3 mr-1" /> Tout imprimer
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          Imprimer les bordereaux de tous les clients de ce BDC en un seul PDF
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div className="flex items-center gap-1.5">
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              onClick={(e) => { e.stopPropagation(); setPrintGroupe({ bdcId: group.bdcId!, bdcLabel: bdcLabel }); }}
+                            >
+                              <Printer className="h-3 w-3 mr-1" /> Par client
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            1 BL par client (pour la livraison)
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                              onClick={(e) => { e.stopPropagation(); setPrintRecap({ bdcId: group.bdcId!, bdcLabel: bdcLabel }); }}
+                            >
+                              <Printer className="h-3 w-3 mr-1" /> BL Global
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            Document unique · toutes lignes + client par ligne (pour le commercial)
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   )}
                 </div>
 
