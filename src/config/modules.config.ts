@@ -143,10 +143,12 @@ export function getModuleNavigation(user: User | null): NavigationItem[] {
   if (!user) return [];
 
   const rolesLower = user.roles.map((r) => r.toLowerCase().trim());
-  const isAdmin       = rolesLower.some(r => ["admin", "super_admin"].includes(r));
-  const isCommercial  = rolesLower.some(r => ["commercial", "vendeur", "vendeuse", "sales"].includes(r));
-  const isLogistique  = rolesLower.some(r => ["logistique", "logistic"].includes(r));
-  const isComptable   = rolesLower.some(r => ["comptabilite", "comptable"].includes(r));
+  const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const isAdmin               = rolesLower.some(r => ["admin", "super_admin"].includes(r));
+  const isResponsableComm     = rolesLower.some(r => norm(r) === "responsable_commercial" || norm(r) === "responsable commercial");
+  const isCommercial          = rolesLower.some(r => ["commercial", "vendeur", "vendeuse", "sales"].includes(r));
+  const isLogistique          = rolesLower.some(r => ["logistique", "logistic"].includes(r));
+  const isComptable           = rolesLower.some(r => ["comptabilite", "comptable"].includes(r));
 
   if (isAdmin) {
     return [
@@ -159,9 +161,10 @@ export function getModuleNavigation(user: User | null): NavigationItem[] {
     ];
   }
 
-  if (isCommercial)  return [...NAV_GENERAL, ...NAV_COMMERCIAL];
-  if (isLogistique)  return [...NAV_GENERAL, ...NAV_LOGISTIQUE];
-  if (isComptable)   return [...NAV_GENERAL, ...NAV_COMPTABILITE];
+  if (isResponsableComm) return [...NAV_GENERAL, ...NAV_COMMERCIAL_ADMIN];
+  if (isCommercial)      return [...NAV_GENERAL, ...NAV_COMMERCIAL];
+  if (isLogistique)      return [...NAV_GENERAL, ...NAV_LOGISTIQUE];
+  if (isComptable)       return [...NAV_GENERAL, ...NAV_COMPTABILITE];
 
   // Fallback : dashboard uniquement
   return NAV_GENERAL;

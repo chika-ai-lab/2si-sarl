@@ -7,7 +7,7 @@ const AUTH_STORAGE_KEY = "2si-auth-user";
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
-const PERMISSIONS_VERSION = 6; // v6: rôle responsable_commercial + commercial = PWA uniquement
+const PERMISSIONS_VERSION = 7; // v7: sidebar responsable_commercial = NAV_COMMERCIAL_ADMIN (Factures, Clients, SAV, Rapports, Commerciales)
 
 // ─── Liste exhaustive des modules de l'application ───────────────────────────
 const ALL_MODULE_IDS = [
