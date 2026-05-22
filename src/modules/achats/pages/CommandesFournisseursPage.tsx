@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,14 @@ import {
 } from "@/components/ui/table";
 import {
   ShoppingCart, Search, RefreshCcw, CheckCircle2, Clock,
-  XCircle, Package, ChevronDown, ChevronRight, Loader2, Printer,
+  XCircle, Package, ChevronDown, ChevronRight, Loader2, Printer, FileText, Truck,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -36,8 +38,12 @@ interface CF {
   id: number;
   fournisseurId: number;
   fournisseur?: { id: number; nomComplet: string };
+  bonCommandeId?: number | null;
+  factureId?: number | null;
   date: string;
   montant: number;
+  fraisExpedition: number;
+  autresCharges: number;
   etat: string;
   note: string | null;
   lignes: CFLigne[];
@@ -66,11 +72,14 @@ function StatutBadge({ etat }: { etat: string }) {
 
 export default function CommandesFournisseursPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch]         = useState("");
   const [filterEtat, setFilterEtat] = useState("tous");
   const [openId, setOpenId]         = useState<number | null>(null);
   const [loading, setLoading]       = useState<string | null>(null);
   const [printCf, setPrintCf]       = useState<CF | null>(null);
+  // frais locaux : cfId → { fraisExpedition, autresCharges }
+  const [localFrais, setLocalFrais] = useState<Record<number, { fraisExpedition: string; autresCharges: string }>>({});
 
   const { data: res, isLoading, refetch, error } = useQuery({
     queryKey: ["commandes-fournisseurs"],
@@ -121,7 +130,20 @@ export default function CommandesFournisseursPage() {
     setLoading(`${id}-${endpoint}`);
     try {
       await apiClient.put(`/commande-fournisseurs/${id}/${endpoint}`, {});
-      toast({ title: label });
+      if (endpoint === "valider") {
+        toast({
+          title: "Commande validée",
+          description: "La commande a été envoyée au fournisseur.",
+          action: (
+            <ToastAction altText="Voir livraisons" onClick={() => navigate("/admin/achats/livraisons")} className="gap-1.5">
+              <Truck className="h-3 w-3" />
+              Voir livraisons
+            </ToastAction>
+          ),
+        });
+      } else {
+        toast({ title: label });
+      }
       qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
@@ -130,10 +152,50 @@ export default function CommandesFournisseursPage() {
     }
   };
 
+  // ── Sauvegarder frais ────────────────────────────────────────────────
+  const handleSaveFrais = async (cf: CF) => {
+    const frais = localFrais[cf.id];
+    if (!frais) return;
+    setLoading(`${cf.id}-frais`);
+    try {
+      await apiClient.put(`/commande-fournisseurs/${cf.id}`, {
+        frais_expedition: Number(frais.fraisExpedition) || 0,
+        autres_charges:   Number(frais.autresCharges)   || 0,
+      });
+      toast({ title: "Frais enregistrés" });
+      qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
+    } catch {
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // ── Générer facture depuis CF ─────────────────────────────────────────
+  const handleGenererFacture = async (cf: CF) => {
+    // Sauvegarder les frais s'ils ont été modifiés
+    if (localFrais[cf.id]) await handleSaveFrais(cf);
+
+    setLoading(`${cf.id}-facture`);
+    try {
+      const result = await apiClient.post<any>(
+        `/bon-commandes/commande-fournisseur/${cf.id}/generer-factures`,
+        {},
+      );
+      toast({ title: result.message || "Facture générée" });
+      qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
+      qc.invalidateQueries({ queryKey: ["factures"] });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e?.message, variant: "destructive" });
+    } finally {
+      setLoading(null);
+    }
+  };
+
   // ── Stats ──────────────────────────────────────────────────────────────
 
-  const montantTotal     = all.reduce((s, c) => s + Number(c.montant), 0);
-  const montantRecu      = all.filter((c) => c.etat === "reçu").reduce((s, c) => s + Number(c.montant), 0);
+  const montantTotal = all.reduce((s, c) => s + Number(c.montant) + Number(c.fraisExpedition ?? 0) + Number(c.autresCharges ?? 0), 0);
+  const montantRecu = all.filter((c) => c.etat === "reçu").reduce((s, c) => s + Number(c.montant) + Number(c.fraisExpedition ?? 0) + Number(c.autresCharges ?? 0), 0);
 
   return (
     <>
@@ -294,6 +356,21 @@ export default function CommandesFournisseursPage() {
                             Signaler que la marchandise n'a pas été reçue (retard, litige, erreur fournisseur)
                           </TooltipContent>
                         </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50 gap-1"
+                              onClick={() => navigate("/admin/achats/livraisons")}
+                            >
+                              <Truck className="h-3 w-3" /> Livraisons
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            Voir les bons de livraison associés
+                          </TooltipContent>
+                        </Tooltip>
                       </>
                     )}
                     <Tooltip>
@@ -317,7 +394,8 @@ export default function CommandesFournisseursPage() {
 
                 {/* ── Détail lignes (accordéon) ── */}
                 {isOpen && cf.lignes?.length > 0 && (
-                  <div className="border-t bg-muted/20 px-4 py-3">
+                  <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
+                    {/* Tableau articles */}
                     <Table>
                       <TableHeader>
                         <TableRow className="border-0">
@@ -338,14 +416,99 @@ export default function CommandesFournisseursPage() {
                             <TableCell className="py-1.5 text-sm text-right font-medium">{formatCurrency(Number(l.montant))}</TableCell>
                           </TableRow>
                         ))}
-                        <TableRow className="border-t">
-                          <TableCell colSpan={3} className="py-2 text-sm font-semibold text-right">Total</TableCell>
-                          <TableCell className="py-2 text-sm font-bold text-right">{formatCurrency(montantLignes)}</TableCell>
-                        </TableRow>
                       </TableBody>
                     </Table>
+
+                    {/* Frais + total général */}
+                    <div className="rounded-lg border bg-background p-4 space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Frais & récapitulatif</p>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Frais expédition */}
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Frais d'expédition (FCFA)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="w-full text-sm border rounded px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                            value={localFrais[cf.id]?.fraisExpedition ?? String(Number(cf.fraisExpedition ?? 0))}
+                            onChange={(e) => setLocalFrais((prev) => ({
+                              ...prev,
+                              [cf.id]: { fraisExpedition: e.target.value, autresCharges: prev[cf.id]?.autresCharges ?? String(Number(cf.autresCharges ?? 0)) },
+                            }))}
+                          />
+                        </div>
+                        {/* Autres charges */}
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Autres charges (FCFA)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="w-full text-sm border rounded px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                            value={localFrais[cf.id]?.autresCharges ?? String(Number(cf.autresCharges ?? 0))}
+                            onChange={(e) => setLocalFrais((prev) => ({
+                              ...prev,
+                              [cf.id]: { fraisExpedition: prev[cf.id]?.fraisExpedition ?? String(Number(cf.fraisExpedition ?? 0)), autresCharges: e.target.value },
+                            }))}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Récap montants */}
+                      <div className="border-t pt-3 space-y-1 text-sm">
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Sous-total articles</span>
+                          <span>{formatCurrency(montantLignes)}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Frais d'expédition</span>
+                          <span>{formatCurrency(Number(localFrais[cf.id]?.fraisExpedition ?? cf.fraisExpedition ?? 0))}</span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Autres charges</span>
+                          <span>{formatCurrency(Number(localFrais[cf.id]?.autresCharges ?? cf.autresCharges ?? 0))}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-base border-t pt-1">
+                          <span>Total TTC</span>
+                          <span>
+                            {formatCurrency(
+                              montantLignes
+                              + Number(localFrais[cf.id]?.fraisExpedition ?? cf.fraisExpedition ?? 0)
+                              + Number(localFrais[cf.id]?.autresCharges   ?? cf.autresCharges   ?? 0)
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={loading === `${cf.id}-frais`}
+                          onClick={() => handleSaveFrais(cf)}
+                        >
+                          {loading === `${cf.id}-frais` ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                          Enregistrer les frais
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          disabled={!!cf.factureId || loading === `${cf.id}-facture`}
+                          onClick={() => handleGenererFacture(cf)}
+                        >
+                          {loading === `${cf.id}-facture`
+                            ? <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            : <FileText className="h-3 w-3 mr-1" />}
+                          {cf.factureId ? "Facture déjà générée" : "Générer Facture"}
+                        </Button>
+                      </div>
+                    </div>
+
                     {cf.note && (
-                      <p className="text-xs text-muted-foreground mt-2 italic">Note : {cf.note}</p>
+                      <p className="text-xs text-muted-foreground italic">Note : {cf.note}</p>
                     )}
                   </div>
                 )}

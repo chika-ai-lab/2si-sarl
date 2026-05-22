@@ -1,3 +1,4 @@
+import { useSSE } from "@/hooks/useSSE";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,7 +35,7 @@ const queryClient = new QueryClient({
       gcTime:               1000 * 60 * 10, // 10 min — libère les entrées non utilisées
       retry:                1,
       refetchOnWindowFocus: false,
-      refetchOnMount:       "stale",        // refetch uniquement si les données ont expiré
+      refetchOnMount:       true,           // refetch uniquement si les données ont expiré
     },
   },
 });
@@ -42,6 +43,7 @@ const queryClient = new QueryClient({
 function MainApp() {
   const [isInMaintenance, setIsInMaintenance] = useState(false);
   const { user } = useAuth();
+  useSSE();
 
   useEffect(() => {
     // Check maintenance mode on mount and listen for storage changes
