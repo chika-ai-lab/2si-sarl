@@ -24,7 +24,9 @@ interface RawCommande {
   id: number;
   etat: string;
   montant: string | number;
-  user_id: number | null;
+  userId?: number | null;
+  user_id?: number | null;
+  commercialId?: number | null;
   commercial_id?: number | null;
 }
 
@@ -78,10 +80,9 @@ async function fetchCommerciauxStats(): Promise<CommercialStats[]> {
   const users: BackendUser[] = Array.isArray(usersRaw) ? usersRaw : (usersRaw?.data ?? []);
   const commandes: RawCommande[] = Array.isArray(commandesRaw) ? commandesRaw : (commandesRaw?.data ?? []);
 
-  // Tous les utilisateurs — pas de filtre par rôle pour ne pas exclure ceux sans rôle assigné
-  return users.map((user) => {
+  return users.filter((u) => isCommercialRole(u.roles)).map((user) => {
     const mine = commandes.filter((c) => {
-      const uid = c.commercial_id ?? c.user_id;
+      const uid = c.commercialId ?? c.commercial_id ?? c.userId ?? c.user_id;
       return uid === user.id;
     });
 
@@ -219,7 +220,7 @@ export default function CommerciauxPage() {
             Équipe
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {isLoading ? "Chargement…" : `${stats.length} utilisateur${stats.length !== 1 ? "s" : ""}`}
+            {isLoading ? "Chargement…" : `${stats.length} commercial${stats.length !== 1 ? "aux" : ""}`}
           </p>
         </div>
       </div>

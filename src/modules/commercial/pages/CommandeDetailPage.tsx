@@ -201,7 +201,7 @@ export default function CommandeDetailPage() {
                 <RefreshCw className="mr-2 h-4 w-4" />Changer statut
               </Button>
             )}
-            {commande.statut === "brouillon" && (
+            {(commande.statut === "brouillon" || commande.statut === "en_attente") && (
               <Button variant="destructive" size="icon" onClick={() => setIsDeleteOpen(true)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -285,6 +285,9 @@ export default function CommandeDetailPage() {
             <CardHeader><CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4 text-muted-foreground" />Paiement</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
               <Row label="Mode" value={<span className="capitalize">{commande.modePaiement ?? "virement"}</span>} />
+              {(commande as any).dureePaiement && (
+                <Row label="Durée" value={`${(commande as any).dureePaiement} mois`} />
+              )}
               <Row
                 label="Statut"
                 value={<Badge variant="outline" className={paiementCfg.color}>{paiementCfg.label}</Badge>}

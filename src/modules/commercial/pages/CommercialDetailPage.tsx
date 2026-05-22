@@ -71,7 +71,7 @@ async function fetchCommercialDetail(userId: string) {
 
   const allCommandes: any[] = Array.isArray(commandesRaw) ? commandesRaw : (commandesRaw?.data ?? []);
   const mine = allCommandes.filter((c) => {
-    const uid = c.commercial_id ?? c.user_id;
+    const uid = c.commercialId ?? c.commercial_id ?? c.userId ?? c.user_id;
     return String(uid) === userId;
   });
 
@@ -79,12 +79,17 @@ async function fetchCommercialDetail(userId: string) {
     id:           String(c.id),
     reference:    c.reference || `CMD-${String(c.id).padStart(5, "0")}`,
     statut:       mapCmdStatut(c.etat),
-    date:         c.date || c.created_at?.split("T")[0] || "",
-    client:       c.client ? (`${c.client.nom || ""} ${c.client.prenom || ""}`).trim() || c.client.raison_sociale || "—" : "—",
+    date:         c.date || c.createdAt?.split("T")[0] || c.created_at?.split("T")[0] || "",
+    client:       c.client
+      ? (`${c.client.nom || ""} ${c.client.prenom || ""}`).trim()
+        || c.client.raisonSociale || c.client.raison_sociale
+        || c.client.nomComplet    || c.client.nom_complet
+        || "—"
+      : "—",
     telephone:    c.client?.telephone || "",
-    articles:     (c.articles || []).length,
+    articles:     c.lignesCount ?? (c.lignes || c.articles || []).length,
     total:        Number(c.montant) || 0,
-    modePaiement: c.mode_paiement || null,
+    modePaiement: c.modePaiement ?? c.mode_paiement ?? null,
   }));
 
   return { user, commandes };

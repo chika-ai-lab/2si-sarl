@@ -43,7 +43,15 @@ import {
   CheckSquare,
   Square,
   MoreVertical,
+  Building2,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +69,8 @@ interface BackendUser {
   telephone?: string;
   photo?: string;
   createdAt: string;
+  agenceId?: number;
+  agence?: { id: number; agence: string };
   roles: { id: number; title: string }[];
 }
 
@@ -69,12 +79,9 @@ interface RoleOption {
   title: string;
 }
 
-interface UsersResponse {
-  data: BackendUser[];
-}
-
-interface RolesResponse {
-  data: RoleOption[];
+interface AgenceOption {
+  id: number;
+  agence: string;
 }
 
 const EMPTY_FORM = {
@@ -83,11 +90,13 @@ const EMPTY_FORM = {
   telephone: "",
   password: "",
   roleIds: [] as number[],
+  agenceId: null as number | null,
 };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<BackendUser[]>([]);
   const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [agences, setAgences] = useState<AgenceOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
@@ -99,12 +108,14 @@ export default function UsersPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, rolesRes] = await Promise.all([
+      const [usersRes, rolesRes, agencesRes] = await Promise.all([
         apiClient.get<any>("/users"),
         apiClient.get<any>("/roles"),
+        apiClient.get<any>("/agences"),
       ]);
       setUsers(Array.isArray(usersRes) ? usersRes : (usersRes?.data ?? []));
       setRoles(Array.isArray(rolesRes) ? rolesRes : (rolesRes?.data ?? []));
+      setAgences(Array.isArray(agencesRes) ? agencesRes : (agencesRes?.data ?? []));
     } catch (err) {
       console.error(err);
       toast({
@@ -142,6 +153,7 @@ export default function UsersPage() {
       telephone: user.telephone ?? "",
       password: "",
       roleIds: user.roles.map((r) => Number(r.id)),
+      agenceId: user.agenceId ?? null,
     });
     setIsDialogOpen(true);
   };
@@ -172,6 +184,7 @@ export default function UsersPage() {
           name: form.name,
           telephone: form.telephone,
           roles: form.roleIds.map(Number),
+          agenceId: form.agenceId ?? null,
         });
         toast({ title: "Utilisateur modifié avec succès" });
       } else {
@@ -298,6 +311,27 @@ export default function UsersPage() {
                 placeholder="77 000 00 00"
                 className="mt-1"
               />
+            </div>
+
+            <div>
+              <Label>
+                <Building2 className="inline h-3.5 w-3.5 mr-1" />
+                Agence
+              </Label>
+              <Select
+                value={form.agenceId ? String(form.agenceId) : "none"}
+                onValueChange={(v) => setForm((p) => ({ ...p, agenceId: v === "none" ? null : Number(v) }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Sélectionner une agence" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Aucune agence —</SelectItem>
+                  {agences.map((a) => (
+                    <SelectItem key={a.id} value={String(a.id)}>{a.agence}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {!editId && (
@@ -449,6 +483,7 @@ export default function UsersPage() {
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Nom / Email</TableHead>
                     <TableHead>Téléphone</TableHead>
+                    <TableHead>Agence</TableHead>
                     <TableHead>Rôles</TableHead>
                     <TableHead>Inscription</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -458,7 +493,7 @@ export default function UsersPage() {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={6}
                         className="text-center py-8 text-muted-foreground"
                       >
                         Aucun utilisateur trouvé.
@@ -480,6 +515,15 @@ export default function UsersPage() {
                           {user.telephone ? (
                             <span className="flex items-center gap-1">
                               <Phone className="h-3 w-3" />{user.telephone}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/50">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {user.agence ? (
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />{user.agence.agence}
                             </span>
                           ) : (
                             <span className="text-muted-foreground/50">—</span>

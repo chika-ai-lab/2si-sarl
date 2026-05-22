@@ -49,19 +49,21 @@ const STATUT_TO_ETAT: Record<string, string> = {
 };
 
 function mapBackendToCommande(c: any): CommandeCommerciale {
-  const lignes = (c.articles || []).map((a: any) => ({
+  // NestJS/TypeORM retourne camelCase; supporter aussi snake_case pour compatibilité
+  const rawLignes: any[] = c.lignes || c.articles || [];
+  const lignes = rawLignes.map((a: any) => ({
     id: String(a.id),
-    produitId: String(a.article_id),
-    produit: a.article ? { id: String(a.article.id), nom: a.article.libelle, prixVente: a.article.prix } : undefined,
+    produitId: String(a.articleId ?? a.article_id ?? ''),
+    produit: a.article ? { id: String(a.article.id), nom: a.article.libelle, reference: a.article.reference, prixVente: a.article.prix } : undefined,
     quantite: Number(a.quantite) || 1,
     prixUnitaire: Number(a.prix) || 0,
-    prixAchat: Number(a.prix_achat) || 0,
-    fraisLivraisonFournisseur: Number(a.frais_livraison_fournisseur) || 0,
-    fraisLivraisonClient: Number(a.frais_livraison_client) || 0,
-    typeLivraison: a.type_livraison || 'agence',
-    tauxCommission: Number(a.taux_commission) || 0.05,
+    prixAchat: Number(a.prixAchat ?? a.prix_achat) || 0,
+    fraisLivraisonFournisseur: Number(a.fraisLivraisonFournisseur ?? a.frais_livraison_fournisseur) || 0,
+    fraisLivraisonClient: Number(a.fraisLivraisonClient ?? a.frais_livraison_client) || 0,
+    typeLivraison: a.typeLivraison ?? a.type_livraison ?? 'agence',
+    tauxCommission: Number(a.tauxCommission ?? a.taux_commission) || 0.05,
     commission: Number(a.commission) || 0,
-    cTotal: Number(a.c_total) || 0,
+    cTotal: Number(a.cTotal ?? a.c_total) || 0,
     marge: Number(a.marge) || 0,
     statut: a.statut || 'attente',
     remise: Number(a.reduction) || 0,
@@ -72,12 +74,12 @@ function mapBackendToCommande(c: any): CommandeCommerciale {
     id: String(c.id),
     numero: c.reference || `CMD-${String(c.id).padStart(5, '0')}`,
     reference: c.reference || `CMD-${String(c.id).padStart(5, '0')}`,
-    clientId: String(c.client_id),
+    clientId: String(c.clientId ?? c.client_id ?? ''),
     client: c.client ? {
       id: String(c.client.id),
-      nom: c.client.nom || c.client.nom_complet || '',
+      nom: c.client.nom || c.client.nomComplet || c.client.nom_complet || '',
       prenom: c.client.prenom,
-      raisonSociale: c.client.raison_sociale,
+      raisonSociale: c.client.raisonSociale ?? c.client.raison_sociale,
       type: c.client.type || 'particulier',
       telephone: c.client.telephone || '',
       email: c.client.email || '',
@@ -86,19 +88,20 @@ function mapBackendToCommande(c: any): CommandeCommerciale {
     sousTotal: Number(c.montant) || 0,
     taxe: Number(c.taxe) || 0,
     remise: Number(c.remise) || 0,
-    fraisLivraison: Number(c.frais_livraison) || 0,
-    total: (Number(c.montant) || 0) + (Number(c.taxe) || 0) + (Number(c.frais_livraison) || 0) - (Number(c.remise) || 0),
+    fraisLivraison: Number(c.fraisLivraison ?? c.frais_livraison) || 0,
+    total: (Number(c.montant) || 0) + (Number(c.taxe) || 0) + (Number(c.fraisLivraison ?? c.frais_livraison) || 0) - (Number(c.remise) || 0),
     adresseLivraison: { rue: '', ville: 'Dakar', codePostal: '', pays: 'Sénégal' },
-    modeLivraison: c.mode_livraison || 'retrait',
-    modePaiement: c.mode_paiement || 'virement',
-    statutPaiement: c.statut_paiement || 'en_attente',
+    modeLivraison: c.modeLivraison ?? c.mode_livraison ?? 'retrait',
+    modePaiement: c.modePaiement ?? c.mode_paiement ?? 'virement',
+    statutPaiement: c.statutPaiement ?? c.statut_paiement ?? 'en_attente',
     montantPaye: 0,
     statut: (ETAT_TO_STATUT[c.etat] || 'brouillon') as CommandeStatut,
-    dateCommande: c.date || c.created_at?.split('T')[0] || '',
-    creePar: String(c.user_id || ''),
+    dateCommande: c.date || c.createdAt?.split?.('T')?.[0] || c.created_at?.split('T')[0] || '',
+    creePar: String(c.userId ?? c.user_id ?? ''),
     notes: c.note,
-    bonLivraison: c.avis_banque,
-  };
+    bonLivraison: c.avisBanque ?? c.avis_banque,
+    dureePaiement: c.dureePaiement ?? c.duree_paiement ?? null,
+  } as any;
 }
 
 // ============================================
@@ -144,9 +147,9 @@ export async function getCommandes(filters: {
   };
 }
 
-export async function getCommandeById(id: string): Promise<ApiResponse<CommandeCommerciale>> {
+export async function getCommandeById(id: string): Promise<CommandeCommerciale> {
   const res = await apiClient.get<any>(API_ENDPOINTS.commandes.getById(id));
-  return { success: true, data: mapBackendToCommande(res.data || res) };
+  return mapBackendToCommande(res.data || res);
 }
 
 export async function createCommande(data: CreateCommandeDTO): Promise<ApiResponse<CommandeCommerciale>> {

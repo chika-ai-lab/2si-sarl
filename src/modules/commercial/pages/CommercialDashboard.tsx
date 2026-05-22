@@ -27,7 +27,7 @@ export default function CommercialDashboard() {
       const r = await apiClient.get<any>("/commande-clients", { per_page: 500 });
       return (r.data ?? r ?? []) as any[];
     },
-    staleTime: 1000 * 30,
+    staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
