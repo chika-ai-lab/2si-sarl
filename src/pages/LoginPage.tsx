@@ -15,8 +15,8 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Lock, Phone, Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
-  telephone: z.string().min(6, "Numéro invalide"),
-  password:  z.string().min(6, "Au moins 6 caractères"),
+  telephone: z.string().min(6, "Identifiant invalide").trim(),
+  password:  z.string().min(6, "Au moins 6 caractères").trim(),
 });
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -99,11 +99,11 @@ export function LoginPage() {
                     name="telephone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Téléphone</FormLabel>
+                        <FormLabel className="text-xs">Email ou Téléphone</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input {...field} type="tel" placeholder="77 000 00 00" className="pl-9 h-9 text-sm" disabled={isLoading} autoComplete="tel" />
+                            <Input {...field} type="text" placeholder="email@exemple.com" className="pl-9 h-9 text-sm" disabled={isLoading} autoComplete="username" />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
