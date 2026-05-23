@@ -1,4 +1,4 @@
-import { ShoppingCart, Check, Heart, CreditCard } from "lucide-react";
+import { ShoppingCart, Check, Heart, CreditCard, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +24,12 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
   const { items, addItem, removeItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const isInCart = items.some((item) => item.id === product.id);
   const inWishlist = isInWishlist(product.id);
-  // Get primary image
   const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
+  const showPlaceholder = !primaryImage?.url || imgError;
 
   const handleCartAction = async () => {
     setIsAddingToCart(true);
@@ -67,11 +68,16 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           {/* Image Section */}
           <Link to={`/product/${product.id}`} className="relative md:w-1/3">
             <div className="relative aspect-[4/3] md:aspect-auto md:h-full overflow-hidden bg-secondary">
-              <img
-                src={primaryImage.url}
-                alt={primaryImage.alt}
-                className="w-full h-full object-cover image-zoom-hover"
-              />
+              {showPlaceholder ? (
+                <ProductPlaceholder name={product.name} category={product.category} />
+              ) : (
+                <img
+                  src={primaryImage.url}
+                  alt={primaryImage.alt}
+                  onError={() => setImgError(true)}
+                  className="w-full h-full object-cover image-zoom-hover"
+                />
+              )}
 
               {/* Badges on image */}
               <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -168,7 +174,23 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
               <div>
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-primary">Financement disponible</span>
+                  <span className="text-sm font-semibold text-primary">
+                    {product.banque ? `Financement ${product.banque}` : "Financement disponible"}
+                  </span>
+                  {product.banque && (
+                    <Badge
+                      variant="secondary"
+                      className={
+                        product.banque === "CBAO"
+                          ? "text-[10px] px-1.5 py-0 bg-blue-100 text-blue-800 border-blue-200"
+                          : product.banque === "CMS"
+                          ? "text-[10px] px-1.5 py-0 bg-red-100 text-red-800 border-red-200"
+                          : "text-[10px] px-1.5 py-0"
+                      }
+                    >
+                      {product.banque}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">Payable en plusieurs tranches</p>
               </div>
@@ -211,11 +233,16 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative block flex-shrink-0">
         <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
-          <img
-            src={primaryImage.url}
-            alt={primaryImage.alt}
-            className="w-full h-full object-cover image-zoom-hover"
-          />
+          {showPlaceholder ? (
+            <ProductPlaceholder name={product.name} category={product.category} />
+          ) : (
+            <img
+              src={primaryImage.url}
+              alt={primaryImage.alt}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover image-zoom-hover"
+            />
+          )}
 
           {/* Badges on image */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -309,7 +336,23 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           {/* Financement */}
           <div className="flex items-center gap-2 pt-2 border-t border-border">
             <CreditCard className="h-4 w-4 text-primary shrink-0" />
-            <span className="text-sm font-semibold text-primary">Financement disponible</span>
+            <span className="text-sm font-semibold text-primary">
+              {product.banque ? `Financement ${product.banque}` : "Financement disponible"}
+            </span>
+            {product.banque && (
+              <Badge
+                variant="secondary"
+                className={
+                  product.banque === "CBAO"
+                    ? "ml-auto text-[10px] px-1.5 py-0 bg-blue-100 text-blue-800 border-blue-200"
+                    : product.banque === "CMS"
+                    ? "ml-auto text-[10px] px-1.5 py-0 bg-red-100 text-red-800 border-red-200"
+                    : "ml-auto text-[10px] px-1.5 py-0"
+                }
+              >
+                {product.banque}
+              </Badge>
+            )}
           </div>
         </CardContent>
 
@@ -342,5 +385,36 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
       </div>
     </Card>
     </motion.div>
+  );
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  "Informatique":    "from-blue-500/20 to-blue-600/10",
+  "Mobilier":        "from-amber-500/20 to-amber-600/10",
+  "Équipement":      "from-emerald-500/20 to-emerald-600/10",
+  "Véhicules":       "from-slate-500/20 to-slate-600/10",
+  "Outillage":       "from-orange-500/20 to-orange-600/10",
+  "Énergie":         "from-yellow-500/20 to-yellow-600/10",
+  "Sécurité":        "from-red-500/20 to-red-600/10",
+  "Électronique":    "from-violet-500/20 to-violet-600/10",
+};
+
+function ProductPlaceholder({ name, category }: { name: string; category: string }) {
+  const gradient = CATEGORY_COLORS[category] ?? "from-primary/15 to-primary/5";
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+
+  return (
+    <div className={`w-full h-full bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-3 select-none`}>
+      <div className="w-14 h-14 rounded-2xl bg-white/60 dark:bg-white/10 flex items-center justify-center shadow-sm">
+        <Package className="w-7 h-7 text-primary/60" />
+      </div>
+      <span className="text-xs font-semibold text-primary/50 tracking-widest uppercase">
+        {initials || category}
+      </span>
+    </div>
   );
 }

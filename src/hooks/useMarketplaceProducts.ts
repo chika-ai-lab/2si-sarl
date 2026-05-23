@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Product, ProductImage } from "@/data/products";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3002/api/v2";
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
 
-interface BackendArticle {
+export interface BackendArticle {
   id: number;
   libelle: string;
   description?: string | null;
@@ -17,12 +19,25 @@ interface BackendArticle {
   images?: string[] | null;
 }
 
+async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<any> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY * (attempt + 1)));
+    }
+  }
+}
+
 function mapToProduct(a: BackendArticle): Product {
   let images: ProductImage[] = [];
   if (Array.isArray(a.images) && a.images.length > 0) {
     images = a.images.map((url, i) => ({ url, alt: a.libelle, isPrimary: i === 0 }));
   } else {
-    images = [{ url: "/placeholder-product.png", alt: a.libelle, isPrimary: true }];
+    images = [{ url: "", alt: a.libelle, isPrimary: true }];
   }
 
   const categoryName =
@@ -31,64 +46,81 @@ function mapToProduct(a: BackendArticle): Product {
       ? a.categories[0].categorie
       : "Général");
 
+  const banque = (a.banque ?? "").toUpperCase();
+
   return {
     id: String(a.id),
     name: a.libelle,
     description: a.description ?? "",
     longDescription: a.description ?? "",
-    price: 0, // prix de vente non affiché sur la marketplace
+    price: 0,
     images,
     category: categoryName,
+    banque: banque || undefined,
     inStock: a.statut !== "rupture" && (a.quantite ?? 0) > 0,
     stockQuantity: a.quantite ?? 0,
     reference: a.reference ?? "",
-    specifications: { Marque: a.marque ?? "—", Référence: a.reference ?? "—" },
+    specifications: {
+      Marque: a.marque ?? "—",
+      Référence: a.reference ?? "—",
+      ...(banque ? { Financement: banque } : {}),
+    },
     featured: false,
     isNew: false,
     onSale: false,
-    tags: [categoryName, a.marque ?? ""].filter(Boolean),
+    tags: [categoryName, a.marque ?? "", banque].filter(Boolean),
   };
 }
 
-export function useMarketplaceProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+export function useMarketplaceProducts(searchQuery?: string) {
+  const [products, setProducts]     = useState<Product[]>([]);
   const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState<string | null>(null);
+
+  const load = useCallback(async (cancelled: { value: boolean }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const artUrl = searchQuery
+        ? `${API_BASE}/public/articles?search=${encodeURIComponent(searchQuery)}`
+        : `${API_BASE}/public/articles`;
+
+      const [artRes, catRes] = await Promise.all([
+        fetchWithRetry(artUrl),
+        fetchWithRetry(`${API_BASE}/public/categories`),
+      ]);
+
+      if (cancelled.value) return;
+
+      const articles: BackendArticle[] = Array.isArray(artRes) ? artRes : (artRes.data ?? []);
+      const mapped = articles.map(mapToProduct);
+      setProducts(mapped);
+
+      const cats = Array.isArray(catRes) ? catRes : (catRes.data ?? []);
+      setCategories(
+        cats.map((c: { id: number; categorie: string }) => ({
+          id: String(c.id),
+          label: c.categorie,
+        }))
+      );
+    } catch {
+      if (!cancelled.value) setError("Impossible de charger le catalogue. Vérifiez votre connexion.");
+    } finally {
+      if (!cancelled.value) setLoading(false);
+    }
+  }, [searchQuery]);
 
   useEffect(() => {
-    let cancelled = false;
+    const cancelled = { value: false };
+    load(cancelled);
+    return () => { cancelled.value = true; };
+  }, [load]);
 
-    const load = async () => {
-      try {
-        const [artRes, catRes] = await Promise.all([
-          fetch(`${API_BASE}/public/articles`).then((r) => r.json()),
-          fetch(`${API_BASE}/public/categories`).then((r) => r.json()),
-        ]);
+  const refetch = useCallback(() => {
+    const cancelled = { value: false };
+    load(cancelled);
+  }, [load]);
 
-        if (cancelled) return;
-
-        const articles: BackendArticle[] = artRes.data ?? artRes ?? [];
-        const mapped = articles.map(mapToProduct);
-        setProducts(mapped);
-
-        const cats = (catRes.data ?? catRes ?? []) as { id: number; categorie: string }[];
-        const activeCatNames = new Set(mapped.map((p) => p.category));
-        setCategories(
-          cats
-            .filter((c) => activeCatNames.has(c.categorie))
-            .map((c) => ({ id: String(c.id), label: c.categorie }))
-        );
-      } catch (e) {
-        if (!cancelled) setError("Impossible de charger le catalogue.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => { cancelled = true; };
-  }, []);
-
-  return { products, categories, loading, error };
+  return { products, categories, loading, error, refetch };
 }

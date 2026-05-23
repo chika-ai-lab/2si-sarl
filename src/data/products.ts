@@ -40,6 +40,7 @@ export interface Product {
   tags?: string[]; // Searchable tags
   relatedProducts?: string[]; // Product IDs
   promoCode?: string; // Promo code like "christmas", "newyear", etc.
+  banque?: string; // Banque partenaire pour le financement (CBAO, CMS, etc.)
 }
 
 export const categories = [

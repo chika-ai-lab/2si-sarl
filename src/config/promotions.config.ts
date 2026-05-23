@@ -1,6 +1,3 @@
-// Seasonal promotions configuration
-// Configure promotional banners for special occasions
-
 export const LOCAL_STORAGE_PROMO_KEY = "2si-promotions-config";
 
 export interface Promotion {
@@ -14,103 +11,84 @@ export interface Promotion {
     fr: string;
     en: string;
   };
-  icon?: string; // emoji or lucide icon name
-  link?: string; // Optional link to promo page
-  startDate?: string; // Format: YYYY-MM-DD
-  endDate?: string;   // Format: YYYY-MM-DD
+  icon?: string;
+  link?: string;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string;   // YYYY-MM-DD
   backgroundColor?: string;
   textColor?: string;
 }
 
 export interface PromotionsConfig {
   enabled: boolean;
-  autoRotate: boolean; // Rotate between multiple active promos
-  rotationInterval: number; // in milliseconds
+  autoRotate: boolean;
+  rotationInterval: number;
   promotions: Promotion[];
 }
 
 export const promotionsConfig: PromotionsConfig = {
   enabled: true,
   autoRotate: false,
-  rotationInterval: 5000, // 5 seconds
+  rotationInterval: 5000,
 
   promotions: [
     {
-      id: "christmas-2024",
+      id: "tabaski-2026",
       enabled: true,
+      icon: "Star",
       title: {
-        fr: "🎄 Promo Noël : Jusqu'à -30% sur une sélection d'articles !",
-        en: "🎄 Christmas Sale: Up to -30% off selected items!",
+        fr: "Tabaski 2026 : Équipez-vous pour la fête",
+        en: "Tabaski 2026: Equip yourself for the celebration",
       },
       description: {
-        fr: "Profitez de réductions exceptionnelles sur nos équipements professionnels pour célébrer les fêtes de fin d'année.",
-        en: "Enjoy exceptional discounts on our professional equipment to celebrate the holiday season.",
+        fr: "Profitez de nos meilleures offres de financement à l'occasion de la Tabaski. Payez en plusieurs mensualités sans frais cachés.",
+        en: "Take advantage of our best financing offers for Tabaski. Pay in multiple monthly installments with no hidden fees.",
       },
-      link: "/catalog?promo=christmas",
-      // Pas de dates = toujours visible (pour test)
-      // Décommentez les lignes ci-dessous pour activer la période spécifique
-      // startDate: "2024-12-15",
-      // endDate: "2024-12-31",
-      backgroundColor: "#c41e3a",
-      textColor: "#ffffff",
-    },
-    {
-      id: "newyear-2025",
-      enabled: false,
-      title: {
-        fr: "🎊 Nouvelle Année : Profitez de nos offres spéciales !",
-        en: "🎊 New Year: Take advantage of our special offers!",
-      },
-      description: {
-        fr: "Démarrez l'année en beauté avec nos offres exclusives sur tout le catalogue.",
-        en: "Start the year in style with our exclusive offers on the entire catalog.",
-      },
-      link: "/catalog?promo=newyear",
-      startDate: "2025-01-01",
-      endDate: "2025-01-15",
-      backgroundColor: "#4169e1",
-      textColor: "#ffffff",
-    },
-    {
-      id: "ramadan-2025",
-      enabled: false,
-      title: {
-        fr: "🌙 Ramadan Kareem : Offres spéciales pour le mois sacré",
-        en: "🌙 Ramadan Kareem: Special offers for the holy month",
-      },
-      description: {
-        fr: "Célébrez le mois béni avec des réductions exceptionnelles sur une sélection de produits.",
-        en: "Celebrate the blessed month with exceptional discounts on selected products.",
-      },
-      link: "/catalog?promo=ramadan",
-      startDate: "2025-03-10",
-      endDate: "2025-04-09",
-      backgroundColor: "#ffd700",
-      textColor: "#000000",
-    },
-    {
-      id: "independence-2025",
-      enabled: false,
-      title: {
-        fr: "🇸🇳 Fête de l'Indépendance : Célébrons ensemble !",
-        en: "🇸🇳 Independence Day: Let's celebrate together!",
-      },
-      description: {
-        fr: "Célébrons notre fierté nationale avec des offres spéciales sur nos équipements made in Sénégal.",
-        en: "Let's celebrate our national pride with special offers on our made in Senegal equipment.",
-      },
-      link: "/catalog?promo=independence",
-      startDate: "2025-04-04",
-      endDate: "2025-04-05",
+      link: "/catalog",
+      startDate: "2026-05-20",
+      endDate: "2026-06-20",
       backgroundColor: "#00853f",
       textColor: "#ffffff",
     },
     {
-      id: "free-delivery",
-      enabled: false,
+      id: "financement-cbao",
+      enabled: true,
+      icon: "Landmark",
       title: {
-        fr: "📦 Livraison gratuite à partir de 500 000 FCFA",
-        en: "📦 Free delivery from 500,000 FCFA",
+        fr: "Financement CBAO : Jusqu'à 36 mois",
+        en: "CBAO Financing: Up to 36 months",
+      },
+      description: {
+        fr: "Financez votre équipement professionnel via la CBAO. Dossier simple, réponse rapide. Payez en 6, 12, 24 ou 36 mensualités.",
+        en: "Finance your professional equipment via CBAO. Simple application, quick response. Pay over 6, 12, 24 or 36 months.",
+      },
+      link: "/catalog",
+      backgroundColor: "#1a3a6b",
+      textColor: "#ffffff",
+    },
+    {
+      id: "financement-cms",
+      enabled: true,
+      icon: "Wallet",
+      title: {
+        fr: "Financement CMS : Crédit adapté à votre besoin",
+        en: "CMS Financing: Credit tailored to your needs",
+      },
+      description: {
+        fr: "Le Crédit Mutuel du Sénégal finance vos équipements avec des conditions avantageuses. Simulez votre crédit en ligne.",
+        en: "Crédit Mutuel du Sénégal finances your equipment with advantageous terms. Simulate your credit online.",
+      },
+      link: "/catalog",
+      backgroundColor: "#c0392b",
+      textColor: "#ffffff",
+    },
+    {
+      id: "livraison-gratuite",
+      enabled: false,
+      icon: "Package",
+      title: {
+        fr: "Livraison gratuite à Dakar",
+        en: "Free delivery in Dakar",
       },
       backgroundColor: "#165b33",
       textColor: "#ffffff",
@@ -118,39 +96,30 @@ export const promotionsConfig: PromotionsConfig = {
   ],
 };
 
-// Helper function to get active promotions
 export function getActivePromotions(): Promotion[] {
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
 
   let promosToEvaluate = promotionsConfig.promotions;
 
-  // Attempt to load from localStorage first
   try {
     const savedConfig = localStorage.getItem(LOCAL_STORAGE_PROMO_KEY);
     if (savedConfig) {
       const parsed = JSON.parse(savedConfig);
       promosToEvaluate = parsed.promotions || promosToEvaluate;
     }
-  } catch (e) {
-    console.warn("Could not read dynamic promotion config from local storage", e);
+  } catch {
+    // ignore
   }
 
   return promosToEvaluate.filter((promo) => {
     if (!promo.enabled) return false;
-
-    // If no dates specified, promo is always active
     if (!promo.startDate && !promo.endDate) return true;
-
-    // Check if today is within the promo period
     const start = promo.startDate || "1900-01-01";
     const end = promo.endDate || "2100-12-31";
-
     return today >= start && today <= end;
   });
 }
 
-// Helper function to get current promo (for single display)
 export function getCurrentPromotion(): Promotion | null {
   const activePromos = getActivePromotions();
   return activePromos.length > 0 ? activePromos[0] : null;

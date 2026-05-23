@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Star, Landmark, Wallet, Package, Gift, Sparkles, type LucideIcon } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 import { getActivePromotions } from "@/config/promotions.config";
 import type { Promotion } from "@/config/promotions.config";
@@ -12,11 +11,19 @@ import {
   viewportOptions,
 } from "@/lib/animations";
 
+const ICON_MAP: Record<string, LucideIcon> = {
+  Star,
+  Landmark,
+  Wallet,
+  Package,
+  Gift,
+  Sparkles,
+};
+
 export function PromoSection() {
   const { locale } = useI18n();
   const activePromos = getActivePromotions();
 
-  // Don't render if no active promos or more than 3 (to avoid cluttering)
   if (activePromos.length === 0 || activePromos.length > 3) {
     return null;
   }
@@ -75,85 +82,75 @@ function PromoCard({ promo, locale }: { promo: Promotion; locale: string }) {
     ? promo.description[locale as "fr" | "en"] || promo.description.fr
     : null;
 
-  const bgColor = promo.backgroundColor || "#c41e3a";
+  const bgColor = promo.backgroundColor || "#1a3a6b";
   const textColor = promo.textColor || "#ffffff";
+
+  const IconComponent = promo.icon ? (ICON_MAP[promo.icon] ?? Gift) : Gift;
 
   const card = (
     <motion.div
       variants={staggerItemVariant}
       className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
-      style={{
-        backgroundColor: bgColor,
-        color: textColor,
-      }}
+      style={{ backgroundColor: bgColor, color: textColor }}
     >
-      {/* Decorative background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, ${textColor} 1px, transparent 1px), radial-gradient(circle at 80% 80%, ${textColor} 1px, transparent 1px)`,
-            backgroundSize: "50px 50px",
-          }}
-        />
-      </div>
+      {/* Subtle radial pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage: `radial-gradient(circle at 10% 20%, ${textColor} 1px, transparent 1px), radial-gradient(circle at 90% 80%, ${textColor} 1px, transparent 1px)`,
+          backgroundSize: "48px 48px",
+        }}
+      />
 
-      {/* Content */}
-      <div className="relative p-8 flex flex-col h-full min-h-[280px]">
-        {/* Icon/Emoji */}
-        <div className="text-5xl mb-4">
-          {promo.icon || title.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || "🎁"}
+      <div className="relative p-8 flex flex-col h-full min-h-[260px]">
+        {/* Icon */}
+        <div
+          className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 shrink-0"
+          style={{ backgroundColor: `${textColor}18` }}
+        >
+          <IconComponent className="w-7 h-7" style={{ color: textColor }} />
         </div>
 
         {/* Title */}
-        <h3 className="text-2xl font-bold mb-3 leading-tight">
-          {title.replace(/[\u{1F300}-\u{1F9FF}]/gu, "").trim()}
+        <h3 className="text-xl font-bold mb-3 leading-snug" style={{ color: textColor }}>
+          {title}
         </h3>
 
         {/* Description */}
         {description && (
-          <p className="text-sm opacity-90 mb-6 flex-grow">{description}</p>
+          <p className="text-sm leading-relaxed flex-grow" style={{ color: `${textColor}cc` }}>
+            {description}
+          </p>
         )}
 
-        {/* CTA Button */}
-        {promo.link && (
-          <div className="mt-auto">
-            <div
-              className="inline-flex items-center gap-2 font-semibold group-hover:gap-3 transition-all"
-              style={{ color: textColor }}
-            >
-              <span>{locale === "fr" ? "Découvrir" : "Discover"}</span>
-              <ArrowRight className="h-5 w-5" />
-            </div>
+        {/* Dates badge */}
+        {promo.endDate && (
+          <div
+            className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-xs font-medium"
+            style={{ backgroundColor: `${textColor}18`, color: textColor }}
+          >
+            {locale === "fr" ? "Jusqu'au" : "Until"}{" "}
+            {new Date(promo.endDate).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
+              day: "numeric",
+              month: "short",
+            })}
           </div>
         )}
 
-        {/* Dates badge if available */}
-        {(promo.startDate || promo.endDate) && (
-          <div
-            className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm"
-            style={{
-              backgroundColor: `${textColor}20`,
-              color: textColor,
-            }}
-          >
-            {promo.endDate &&
-              `${locale === "fr" ? "Jusqu'au" : "Until"} ${new Date(
-                promo.endDate
-              ).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
-                day: "numeric",
-                month: "short",
-              })}`}
+        {/* CTA */}
+        {promo.link && (
+          <div className="mt-6 flex items-center gap-2 font-semibold text-sm group-hover:gap-3 transition-all" style={{ color: textColor }}>
+            <span>{locale === "fr" ? "Découvrir" : "Discover"}</span>
+            <ArrowRight className="h-4 w-4" />
           </div>
         )}
       </div>
 
-      {/* Shine effect on hover */}
+      {/* Shine on hover */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
     </motion.div>
   );
 
-  // If there's a link, wrap in Link component
   if (promo.link) {
     return (
       <Link to={promo.link} className="block">

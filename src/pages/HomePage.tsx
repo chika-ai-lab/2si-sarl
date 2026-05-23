@@ -5,9 +5,12 @@ import {
   Users,
   CheckCircle,
   Clock,
+  AlertCircle,
+  RefreshCcw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductCard } from "@/components/business/ProductCard";
 import { TrustBadges } from "@/components/business/TrustBadges";
@@ -32,10 +35,10 @@ import {
 export default function HomePage() {
   const company = useCompany();
   const { t } = useTranslation();
-  const { products: apiProducts, categories: apiCategories } = useMarketplaceProducts();
+  const { products: apiProducts, categories: apiCategories, loading, error, refetch } = useMarketplaceProducts();
   const featuredProducts = apiProducts.slice(0, 3);
   const newProducts = apiProducts.slice(3, 6);
-  const saleProducts = apiProducts.slice(6, 9);
+
 
   return (
     <MainLayout>
@@ -87,30 +90,41 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <motion.div
-            variants={staggerContainerVariant}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOptions}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch"
-          >
-            {apiCategories.map((category) => (
-                <motion.div
-                  key={category.id}
-                  variants={staggerItemVariant}
-                  className="h-full"
-                >
+          {error ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
+              <AlertCircle className="h-8 w-8 text-destructive/60" />
+              <p className="text-sm">{error}</p>
+              <Button variant="outline" size="sm" onClick={refetch}>
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Réessayer
+              </Button>
+            </div>
+          ) : loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              variants={staggerContainerVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOptions}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-stretch"
+            >
+              {apiCategories.map((category) => (
+                <motion.div key={category.id} variants={staggerItemVariant} className="h-full">
                   <CategoryCard
                     id={category.id}
                     name={category.label}
-                    productCount={
-                      apiProducts.filter((p) => p.category === category.label).length
-                    }
+                    productCount={apiProducts.filter((p) => p.category === category.label).length}
                     className="w-full"
                   />
                 </motion.div>
               ))}
-          </motion.div>
+            </motion.div>
+          )}
         </div>
       </section>
 
@@ -140,28 +154,34 @@ export default function HomePage() {
             </Link>
           </motion.div>
 
-          <motion.div
-            variants={staggerContainerVariant}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOptions}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {featuredProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                variants={staggerItemVariant}
-                className="h-full"
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </motion.div>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-72 rounded-xl" />
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <motion.div
+              variants={staggerContainerVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOptions}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {featuredProducts.map((product) => (
+                <motion.div key={product.id} variants={staggerItemVariant} className="h-full">
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : !error ? (
+            <p className="text-center text-muted-foreground py-10">Aucun produit disponible pour le moment.</p>
+          ) : null}
         </div>
       </section>
 
       {/* New Products Section */}
-      {newProducts.length > 0 && (
+      {!loading && newProducts.length > 0 && (
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
             <motion.div
@@ -195,11 +215,7 @@ export default function HomePage() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {newProducts.map((product) => (
-                <motion.div
-                  key={product.id}
-                  variants={staggerItemVariant}
-                  className="h-full"
-                >
+                <motion.div key={product.id} variants={staggerItemVariant} className="h-full">
                   <ProductCard product={product} />
                 </motion.div>
               ))}
