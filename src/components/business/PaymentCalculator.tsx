@@ -29,12 +29,6 @@ const PAYMENT_PLANS: PaymentPlan[] = [
     description: "0% d'intérêt",
   },
   {
-    months: 24,
-    label: "24 mois",
-    interestRate: 5,
-    description: "5% d'intérêt",
-  },
-  {
     months: 36,
     label: "36 mois",
     interestRate: 8,

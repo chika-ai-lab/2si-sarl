@@ -294,7 +294,7 @@ export default function OrderPage() {
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
                   <CreditCard className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                   <p className="text-xs text-primary font-medium">
-                    Le prix et le plan de paiement (6, 12 ou 24 mois) seront calculés et communiqués dans votre devis sous 24h.
+                    Le prix et le plan de paiement (6 ou 12 mois) seront calculés et communiqués dans votre devis sous 24h.
                   </p>
                 </div>
 
