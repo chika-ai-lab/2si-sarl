@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -280,7 +281,7 @@ export default function OrderPage() {
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-secondary shrink-0">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <ProductImage src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{item.name}</p>

@@ -10,6 +10,7 @@ import {
   Search, Package, BookOpen, Plus, Minus, SlidersHorizontal, X, CheckCircle,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { ProductImage } from "@/components/ui/ProductImage";
 
 export interface BackendArticle {
   id: number;
@@ -154,7 +155,7 @@ export function ProductPickerSheet({ open, onClose, articles, selected, onConfir
             return (
               <div key={a.id} className={`flex items-center gap-3 rounded-lg border p-2.5 transition-colors ${inCart ? "border-primary/40 bg-primary/5" : "hover:bg-muted/40"}`}>
                 <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden border">
-                  {a.images?.[0] ? <img src={a.images[0]} alt={a.libelle} className="h-full w-full object-cover" /> : <Package className="h-6 w-6 text-muted-foreground" />}
+                  {a.images?.[0] ? <ProductImage src={a.images[0]} alt={a.libelle} className="h-full w-full object-cover" /> : <Package className="h-6 w-6 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm line-clamp-1">{a.libelle}</p>

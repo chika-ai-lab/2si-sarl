@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SEO } from "@/components/SEO";
@@ -158,9 +159,10 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-              <img
+              <ProductImage
                 src={product.images[selectedImageIndex]?.url}
                 alt={product.images[selectedImageIndex]?.alt}
+                priority
                 className="w-full h-full object-contain"
               />
 
@@ -212,7 +214,7 @@ export default function ProductDetailPage() {
                         : "border-transparent hover:border-muted-foreground"
                     }`}
                   >
-                    <img
+                    <ProductImage
                       src={image.url}
                       alt={image.alt}
                       className="w-full h-full object-cover"

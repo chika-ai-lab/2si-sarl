@@ -1,5 +1,6 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { useCart, type CartItem as CartItemType } from "@/providers/CartProvider";
 
 interface CartItemProps {
@@ -13,7 +14,7 @@ export function CartItem({ item }: CartItemProps) {
     <div className="flex gap-4 p-4 bg-card rounded-xl border border-border/50">
       {/* Image */}
       <div className="w-24 h-24 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-        <img
+        <ProductImage
           src={item.image}
           alt={item.name}
           className="w-full h-full object-cover"

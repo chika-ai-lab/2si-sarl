@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ProductImage as ProductImg } from "@/components/ui/ProductImage";
 import type { ProductImage } from "@/data/products";
 
 interface ProductGalleryProps {
@@ -31,9 +32,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
       <div className="space-y-4">
         {/* Main Image */}
         <div className="relative aspect-square bg-secondary/30 rounded-xl overflow-hidden group">
-          <img
+          <ProductImg
             src={currentImage.url}
             alt={currentImage.alt || productName}
+            priority
             className="w-full h-full object-cover"
           />
 
@@ -88,7 +90,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                     : "border-transparent hover:border-border"
                 )}
               >
-                <img
+                <ProductImg
                   src={image.url}
                   alt={image.alt || `${productName} - ${index + 1}`}
                   className="w-full h-full object-cover"
@@ -106,9 +108,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
           <div className="relative w-full h-full flex items-center justify-center bg-black">
-            <img
+            <ProductImg
               src={currentImage.url}
               alt={currentImage.alt || productName}
+              priority
               className="max-w-full max-h-full object-contain"
             />
 

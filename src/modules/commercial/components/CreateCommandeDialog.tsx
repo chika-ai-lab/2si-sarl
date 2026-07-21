@@ -13,6 +13,7 @@ import { apiClient } from "../services/apiClient";
 import { MODES_PAIEMENT } from "../lib/commandes.constants";
 import { ClientPickerSheet } from "./ClientPickerSheet";
 import { ProductPickerSheet, type BackendArticle, type LigneForm } from "./ProductPickerSheet";
+import { ProductImage } from "@/components/ui/ProductImage";
 
 export function CreateCommandeDialog({ open, onClose, onCreated, articles, clients, editCommandeId }: {
   open: boolean;
@@ -176,7 +177,7 @@ export function CreateCommandeDialog({ open, onClose, onCreated, articles, clien
                       <div key={ligne.article_id} className="flex items-center gap-3 border rounded-lg px-3 py-2">
                         <div className="h-9 w-9 rounded bg-muted flex items-center justify-center shrink-0 overflow-hidden border">
                           {art?.images?.[0]
-                            ? <img src={art.images[0]} alt={art.libelle} className="h-full w-full object-cover" />
+                            ? <ProductImage src={art.images[0]} alt={art.libelle} className="h-full w-full object-cover" />
                             : <Package className="h-4 w-4 text-muted-foreground" />}
                         </div>
                         <div className="flex-1 min-w-0">

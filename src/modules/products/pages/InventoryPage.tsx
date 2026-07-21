@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ProductImage } from "@/components/ui/ProductImage";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -581,7 +582,7 @@ export function InventoryPage() {
                     <TableRow key={item.id}>
                       <TableCell className="p-2">
                         {(item as any).images?.length > 0 ? (
-                          <img
+                          <ProductImage
                             src={(item as any).images[0]}
                             alt={item.nom}
                             className="h-10 w-10 rounded object-cover border"

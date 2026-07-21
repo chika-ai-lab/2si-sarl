@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { formatCurrency } from "@/lib/currency";
 import { Package, Tag, DollarSign, Layers, Image as ImageIcon, Star, X } from "lucide-react";
 import { useState } from "react";
@@ -85,7 +86,7 @@ export function ProductDetailsDialog({
           <div className="space-y-3">
             <div className="relative bg-muted rounded-lg overflow-hidden aspect-video">
               {product.images.length > 0 ? (
-                <img
+                <ProductImage
                   src={product.images[currentImageIndex]?.url}
                   alt={product.images[currentImageIndex]?.alt}
                   className="w-full h-full object-contain"
@@ -110,7 +111,7 @@ export function ProductDetailsDialog({
                         : "border-transparent hover:border-border"
                     }`}
                   >
-                    <img
+                    <ProductImage
                       src={image.url}
                       alt={image.alt}
                       className="w-full h-full object-cover"
