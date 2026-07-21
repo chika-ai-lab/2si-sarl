@@ -123,12 +123,6 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
               >
                 <Heart className={cn("w-5 h-5", inWishlist && "fill-current")} />
               </button>
-
-              {!product.inStock && (
-                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                  <Badge className="badge-out-of-stock">{t("badges.outOfStock")}</Badge>
-                </div>
-              )}
             </div>
           </Link>
 
@@ -289,12 +283,6 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           >
             <Heart className={cn("w-4 h-4", inWishlist && "fill-current")} />
           </button>
-
-          {!product.inStock && (
-            <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-              <Badge className="badge-out-of-stock">{t("badges.outOfStock")}</Badge>
-            </div>
-          )}
         </div>
       </Link>
 
