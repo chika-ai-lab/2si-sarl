@@ -7,6 +7,7 @@ import { useWishlist } from "@/providers/WishlistProvider";
 import { useTranslation } from "@/providers/I18nProvider";
 import { type Product } from "@/data/products";
 import { ProductRating } from "./ProductRating";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -71,7 +72,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
               {showPlaceholder ? (
                 <ProductPlaceholder name={product.name} category={product.category} />
               ) : (
-                <img
+                <ProductImage
                   src={primaryImage.url}
                   alt={primaryImage.alt}
                   onError={() => setImgError(true)}
@@ -155,12 +156,6 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
                 {product.description}
               </p>
 
-              {/* Stock indicator */}
-              {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
-                <p className="text-sm text-warning font-medium">
-                  {t("productDetails.onlyLeft", { count: product.stockQuantity })}
-                </p>
-              )}
             </div>
 
             {/* Price and Actions */}
@@ -230,7 +225,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           {showPlaceholder ? (
             <ProductPlaceholder name={product.name} category={product.category} />
           ) : (
-            <img
+            <ProductImage
               src={primaryImage.url}
               alt={primaryImage.alt}
               onError={() => setImgError(true)}
@@ -313,13 +308,6 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
           <p className="text-sm text-muted-foreground line-clamp-2 leading-5">
             {product.description}
           </p>
-
-          {/* Stock indicator */}
-          {product.inStock && product.stockQuantity && product.stockQuantity <= 5 && (
-            <p className="text-xs text-warning font-semibold">
-              {t("productDetails.onlyLeft", { count: product.stockQuantity })}
-            </p>
-          )}
 
           {/* Financement */}
           <div className="flex items-center gap-2 pt-2 border-t border-border">

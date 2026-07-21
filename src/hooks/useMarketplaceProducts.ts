@@ -57,7 +57,9 @@ function mapToProduct(a: BackendArticle): Product {
     images,
     category: categoryName,
     banque: banque || undefined,
-    inStock: a.statut !== "rupture" && (a.quantite ?? 0) > 0,
+    // Le stock n'est pas suivi article par article dans ce modèle (vente à
+    // financement) : seul le statut décide de la disponibilité à la commande.
+    inStock: a.statut !== "rupture",
     stockQuantity: a.quantite ?? 0,
     reference: a.reference ?? "",
     specifications: {

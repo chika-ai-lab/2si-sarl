@@ -26,6 +26,8 @@ import { isMaintenanceModeEnabled } from "./services/settingsService";
 import { useEffect, useState, Suspense } from "react";
 import { getActiveModules } from "@/config/modules.config";
 import { ProtectedModuleRoute } from "@/core/router/ProtectedModuleRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient({
@@ -39,6 +41,20 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * Frontière d'erreur d'une route. La clé sur le pathname garantit qu'une
+ * frontière en échec est remontée à neuf dès qu'on navigue ailleurs, sinon
+ * l'état d'erreur resterait collé après le changement de page.
+ */
+function Guard({ label, children }: { label: string; children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary key={pathname} label={label}>
+      {children}
+    </ErrorBoundary>
+  );
+}
 
 function MainApp() {
   const [isInMaintenance, setIsInMaintenance] = useState(false);
@@ -80,14 +96,16 @@ function MainApp() {
 
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/catalog" element={<CatalogPage />} />
-      <Route path="/product/:id" element={<ProductDetailPage />} />
-      <Route path="/wishlist" element={<WishlistPage />} />
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/order" element={<OrderPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      {/* Public Routes — chaque page a sa propre frontière d'erreur : un plantage
+          sur l'une n'empêche pas de naviguer vers les autres. La clé sur le
+          pathname réarme la frontière dès qu'on change de page. */}
+      <Route path="/" element={<Guard label="l'accueil"><HomePage /></Guard>} />
+      <Route path="/catalog" element={<Guard label="le catalogue"><CatalogPage /></Guard>} />
+      <Route path="/product/:id" element={<Guard label="la fiche produit"><ProductDetailPage /></Guard>} />
+      <Route path="/wishlist" element={<Guard label="les favoris"><WishlistPage /></Guard>} />
+      <Route path="/cart" element={<Guard label="le panier"><CartPage /></Guard>} />
+      <Route path="/order" element={<Guard label="la commande"><OrderPage /></Guard>} />
+      <Route path="/login" element={<Guard label="la connexion"><LoginPage /></Guard>} />
 
       {/* Admin Routes - Dynamic with Modules */}
       <Route
@@ -114,18 +132,22 @@ function MainApp() {
                 key={`${module.id}-${route.path}`}
                 path={routePath}
                 element={
-                  <Suspense
-                    fallback={
-                      <div className="flex h-screen items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      </div>
-                    }
-                  >
-                    <ProtectedModuleRoute
-                      permissions={route.requiresPermission || []}
-                      component={route.component}
-                    />
-                  </Suspense>
+                  // Frontière à l'intérieur du layout admin : si un module
+                  // plante, le menu et les autres modules restent accessibles.
+                  <Guard label="ce module">
+                    <Suspense
+                      fallback={
+                        <div className="flex h-screen items-center justify-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                      }
+                    >
+                      <ProtectedModuleRoute
+                        permissions={route.requiresPermission || []}
+                        component={route.component}
+                      />
+                    </Suspense>
+                  </Guard>
                 }
               />
             );
@@ -154,7 +176,11 @@ const App = () => (
                   <Toaster />
                   <Sonner />
                   <BrowserRouter>
-                    <MainApp />
+                    <ScrollToTop />
+                    {/* Filet de sécurité ultime : couvre ce qui est hors des routes */}
+                    <ErrorBoundary>
+                      <MainApp />
+                    </ErrorBoundary>
                   </BrowserRouter>
                 </TooltipProvider>
               </CartProvider>

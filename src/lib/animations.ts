@@ -10,97 +10,85 @@ const prefersReducedMotion = () => {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 };
 
-// Fade up animation variant - optimized with higher initial opacity
+/**
+ * Principes de réglage (révision : les apparitions semblaient désordonnées).
+ *
+ * - On part de `opacity: 0` : à 0.8 on apercevait l'élément avant qu'il ne
+ *   saute en place, ce qui se lisait comme un bug d'affichage.
+ * - Déplacements courts (8–14px) et durées brèves : un décalage de 50px sur
+ *   600ms donne l'impression que la mise en page bouge toute seule.
+ * - Décalage entre enfants très serré, et plafonné : au-delà de quelques
+ *   éléments, une grille de 20 cartes mettait plusieurs secondes à se remplir.
+ * - Déclenchement dès que l'élément effleure le viewport, pour que le contenu
+ *   soit déjà stable quand l'utilisateur le regarde.
+ */
+const DUR = () => (isMobile() ? 0.3 : 0.35);
+const EASE = [0.22, 1, 0.36, 1] as const; // easeOutQuint : démarre franc, finit doux
+
+// Coupe toute animation si l'utilisateur a demandé à les réduire.
+const still = { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0 } };
+
+// Fade up : titres et blocs de section
 export const fadeUpVariant: Variants = {
-  hidden: {
-    opacity: 0.8, // Start at 0.8 instead of 0 for better UX
-    y: isMobile() ? 15 : 30, // Less movement on mobile
-  },
-  visible: {
+  hidden: prefersReducedMotion() ? still : { opacity: 0, y: 12 },
+  visible: prefersReducedMotion() ? still : {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: isMobile() ? 0.4 : 0.6, // Faster on mobile
-      ease: "easeOut",
-    },
+    transition: { duration: DUR(), ease: EASE },
   },
 };
 
-// Fade in with scale - optimized
+// Fade in with scale
 export const fadeInScaleVariant: Variants = {
-  hidden: {
-    opacity: 0.8,
-    scale: 0.98, // Subtle scale change
-  },
-  visible: {
+  hidden: prefersReducedMotion() ? still : { opacity: 0, scale: 0.99 },
+  visible: prefersReducedMotion() ? still : {
     opacity: 1,
     scale: 1,
-    transition: {
-      duration: isMobile() ? 0.3 : 0.5,
-      ease: [0.34, 1.56, 0.64, 1], // back.out easing
-    },
+    transition: { duration: DUR(), ease: EASE },
   },
 };
 
-// Stagger container for grids - optimized
+// Conteneur de grille : les enfants apparaissent dans l'ordre du DOM, vite.
+// Décalage court (35ms) : sur une grille de 20 cartes la cascade complète tient
+// en ~700ms, au lieu de plusieurs secondes qui donnaient l'impression d'un bug.
 export const staggerContainerVariant: Variants = {
-  hidden: { opacity: 0.9 }, // Higher initial opacity
+  hidden: { opacity: 1 }, // le conteneur ne clignote pas, seuls les enfants animent
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: isMobile() ? 0.05 : 0.1, // Faster stagger on mobile
-      delayChildren: isMobile() ? 0.05 : 0.1,
+    transition: prefersReducedMotion() ? { duration: 0 } : {
+      staggerChildren: 0.035,
+      delayChildren: 0,
     },
   },
 };
 
-// Stagger item - fade up with scale - optimized
+// Élément de grille
 export const staggerItemVariant: Variants = {
-  hidden: {
-    opacity: 0.8,
-    y: isMobile() ? 20 : 50, // Less movement on mobile
-    scale: 0.98, // Subtle scale
-  },
-  visible: {
+  hidden: prefersReducedMotion() ? still : { opacity: 0, y: 8 },
+  visible: prefersReducedMotion() ? still : {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: {
-      duration: isMobile() ? 0.4 : 0.6,
-      ease: "easeOut",
-    },
+    transition: { duration: DUR(), ease: EASE },
   },
 };
 
-// Slide in from left - optimized
+// Slide in from left
 export const slideInLeftVariant: Variants = {
-  hidden: {
-    opacity: 0.8,
-    x: isMobile() ? -50 : -100, // Less movement on mobile
-  },
-  visible: {
+  hidden: prefersReducedMotion() ? still : { opacity: 0, x: -14 },
+  visible: prefersReducedMotion() ? still : {
     opacity: 1,
     x: 0,
-    transition: {
-      duration: isMobile() ? 0.5 : 0.8,
-      ease: "easeOut",
-    },
+    transition: { duration: DUR(), ease: EASE },
   },
 };
 
-// Slide in from right - optimized
+// Slide in from right
 export const slideInRightVariant: Variants = {
-  hidden: {
-    opacity: 0.8,
-    x: isMobile() ? 50 : 100, // Less movement on mobile
-  },
-  visible: {
+  hidden: prefersReducedMotion() ? still : { opacity: 0, x: 14 },
+  visible: prefersReducedMotion() ? still : {
     opacity: 1,
     x: 0,
-    transition: {
-      duration: isMobile() ? 0.5 : 0.8,
-      ease: "easeOut",
-    },
+    transition: { duration: DUR(), ease: EASE },
   },
 };
 
@@ -154,25 +142,31 @@ export const buttonPressVariant: Variants = {
   },
 };
 
-// Viewport animation options (for scroll animations) - responsive
+/**
+ * Seuils de déclenchement. La marge basse est POSITIVE : l'animation part quand
+ * l'élément est encore 200px sous le pli, donc il est déjà en place quand il
+ * entre réellement dans le champ. Les anciennes marges négatives obligeaient à
+ * scroller *au-delà* de l'élément pour le voir apparaître, d'où l'effet
+ * surprise. `amount: 0` déclenche dès le premier pixel visible.
+ */
 export const viewportOptions = {
-  once: true, // Animate only once for better performance
-  amount: isMobile() ? 0.15 : 0.3, // Lower threshold on mobile (15% vs 30%)
-  margin: isMobile() ? "0px 0px -50px 0px" : "0px 0px -100px 0px", // Earlier trigger on mobile
+  once: true,
+  amount: 0,
+  margin: "0px 0px 200px 0px",
 };
 
-// Viewport options for instant trigger - responsive
+// Déclenchement immédiat (éléments déjà proches du pli au chargement)
 export const viewportOptionsInstant = {
-  once: true, // Animate only once
-  amount: isMobile() ? 0.05 : 0.1, // Very low threshold
-  margin: isMobile() ? "0px 0px -20px 0px" : "0px 0px -50px 0px",
+  once: true,
+  amount: 0,
+  margin: "0px 0px 300px 0px",
 };
 
-// Viewport options for non-critical elements (can be disabled on mobile)
+// Éléments non critiques
 export const viewportOptionsNonCritical = {
   once: true,
-  amount: isMobile() ? 0 : 0.2, // Disable threshold on mobile
-  margin: "0px",
+  amount: 0,
+  margin: "0px 0px 300px 0px",
 };
 
 export default {
