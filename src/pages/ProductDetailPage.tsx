@@ -13,6 +13,7 @@ import {
   Shield,
   ArrowLeft,
   CreditCard,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +28,7 @@ import { ProductCard } from "@/components/business/ProductCard";
 import { useCart } from "@/providers/CartProvider";
 import { useWishlist } from "@/providers/WishlistProvider";
 import { useTranslation } from "@/providers/I18nProvider";
-import { products, Product } from "@/data/products";
-import { formatCurrency } from "@/lib/currency";
+import { useMarketplaceProducts } from "@/hooks/useMarketplaceProducts";
 import { toast } from "@/hooks/use-toast";
 
 export default function ProductDetailPage() {
@@ -38,38 +38,55 @@ export default function ProductDetailPage() {
   const { addItem, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  // La fiche charge le produit depuis le backend (même source que le catalogue).
+  // Auparavant elle cherchait dans le jeu de démo statique : les ids réels
+  // (ex. 30125) n'y figuraient pas, d'où la redirection systématique vers /catalog.
+  const { products: allProducts, loading } = useMarketplaceProducts();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("6-months");
 
+  const product = allProducts.find((p) => p.id === id) ?? null;
+
   useEffect(() => {
-    if (id) {
-      const foundProduct = products.find((p) => p.id === id);
-      if (foundProduct) {
-        setProduct(foundProduct);
-      } else {
-        navigate("/catalog");
-      }
-    }
-  }, [id, navigate]);
+    // On ne redirige qu'une fois le catalogue chargé et le produit vraiment absent.
+    if (!loading && id && !product) navigate("/catalog");
+  }, [loading, id, product, navigate]);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   if (!product) {
     return null;
   }
 
-  const isProductInCart = items.some((item) => item.product?.id === product.id);
+  const primaryImage = product.images.find((img) => img.isPrimary) || product.images[0];
+  const isProductInCart = items.some((item) => item.id === product.id);
   const inWishlist = isInWishlist(product.id);
   const discount = product.compareAtPrice
     ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
     : 0;
 
-  const relatedProducts = product.relatedProducts
-    ? products.filter((p) => product.relatedProducts?.includes(p.id))
-    : products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const relatedProducts = allProducts
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, 4);
 
   const handleAddToCart = () => {
-    addItem(product, quantity);
+    addItem({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: primaryImage?.url ?? "",
+      category: product.category,
+    });
     toast({
       title: "Produit ajouté",
       description: `${product.name} a été ajouté à votre panier.`,
@@ -84,7 +101,7 @@ export default function ProductDetailPage() {
         description: `${product.name} a été retiré de vos favoris.`,
       });
     } else {
-      addToWishlist(product);
+      addToWishlist(product.id);
       toast({
         title: "Ajouté aux favoris",
         description: `${product.name} a été ajouté à vos favoris.`,
