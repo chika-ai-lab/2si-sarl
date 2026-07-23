@@ -35,7 +35,7 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { addItem, items } = useCart();
+  const { addItem, items, setPaymentPlan } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   // La fiche charge le produit depuis le backend (même source que le catalogue).
@@ -81,6 +81,9 @@ export default function ProductDetailPage() {
     .slice(0, 4);
 
   const handleAddToCart = () => {
+    // On mémorise la durée de paiement choisie (plan au niveau du panier) et la
+    // quantité sélectionnée, pour qu'elles soient reprises jusqu'à la demande.
+    setPaymentPlan(selectedPlanId);
     addItem({
       id: product.id,
       name: product.name,
@@ -88,10 +91,10 @@ export default function ProductDetailPage() {
       price: product.price,
       image: primaryImage?.url ?? "",
       category: product.category,
-    });
+    }, quantity);
     toast({
       title: "Produit ajouté",
-      description: `${product.name} a été ajouté à votre panier.`,
+      description: `${product.name} (×${quantity}) a été ajouté à votre panier.`,
     });
   };
 

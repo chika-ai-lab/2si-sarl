@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
-import { ShoppingBag, ArrowRight, CreditCard, Info } from "lucide-react";
+import { ShoppingBag, ArrowRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { CartItem } from "@/components/business/CartItem";
+import { PaymentPlanSelector } from "@/components/business/PaymentPlanSelector";
 import { SEO } from "@/components/SEO";
 import { useCart } from "@/providers/CartProvider";
 
 export default function CartPage() {
-  const { items } = useCart();
+  const { items, selectedPlanId, setPaymentPlan } = useCart();
 
   if (items.length === 0) {
     return (
@@ -71,13 +72,13 @@ export default function CartPage() {
                   {totalItems} article{totalItems > 1 ? "s" : ""} sélectionné{totalItems > 1 ? "s" : ""}
                 </div>
 
-                {/* Info devis */}
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <CreditCard className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-xs text-primary font-medium">
-                    Le prix et le plan de paiement (6 ou 12 mois) seront calculés et communiqués dans votre devis sous 24h.
-                  </p>
-                </div>
+                {/* Durée de paiement — reprise du choix fait sur la fiche produit,
+                    modifiable ici. Le prix chiffré arrive dans le devis. */}
+                <PaymentPlanSelector
+                  selectedPlanId={selectedPlanId}
+                  onPlanChange={setPaymentPlan}
+                  amount={0}
+                />
 
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
                   <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />

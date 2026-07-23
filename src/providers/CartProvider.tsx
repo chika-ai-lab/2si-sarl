@@ -27,7 +27,7 @@ type CartAction =
   | { type: "LOAD_CART"; payload: CartState };
 
 interface CartContextType extends CartState {
-  addItem: (item: Omit<CartItem, "quantity">) => void;
+  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   setPaymentPlan: (planId: string) => void;
@@ -147,8 +147,8 @@ export function CartProvider({ children }: CartProviderProps) {
     dispatch({ type: "LOAD_CART", payload: savedCart });
   }, []);
 
-  const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
-    dispatch({ type: "ADD_ITEM", payload: { ...item, quantity: 1 } });
+  const addItem = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
+    dispatch({ type: "ADD_ITEM", payload: { ...item, quantity } });
   }, []);
 
   const removeItem = useCallback((id: string) => {

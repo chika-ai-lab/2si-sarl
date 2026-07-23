@@ -53,7 +53,8 @@ export default function OrderPage() {
   const [isSuccess, setIsSuccess]       = useState(false);
   const [reference, setReference]       = useState("");
 
-  const { items, clearCart } = useCart();
+  const { items, clearCart, getSelectedPlan } = useCart();
+  const selectedPlan = getSelectedPlan();
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -73,6 +74,7 @@ export default function OrderPage() {
     try {
       const result = await soumettreDemandeMarketplace({
         ...data,
+        duree_paiement: selectedPlan?.months,
         articles: items.map((item) => ({
           id:       parseInt(item.id),
           quantite: item.quantity,
@@ -291,11 +293,22 @@ export default function OrderPage() {
                   ))}
                 </div>
 
+                {/* Durée de paiement choisie */}
+                {selectedPlan && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <span className="flex items-center gap-2 text-xs font-medium text-primary">
+                      <CreditCard className="h-4 w-4 shrink-0" />
+                      Durée de paiement
+                    </span>
+                    <span className="text-sm font-bold text-primary">{selectedPlan.months} mois</span>
+                  </div>
+                )}
+
                 {/* Info devis */}
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <CreditCard className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-xs text-primary font-medium">
-                    Le prix et le plan de paiement (6 ou 12 mois) seront calculés et communiqués dans votre devis sous 24h.
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+                  <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Le prix final sera calculé et communiqué dans votre devis sous 24h.
                   </p>
                 </div>
 

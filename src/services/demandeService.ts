@@ -19,6 +19,8 @@ export interface DemandePayload {
   localisation: string;
   canal_acquisition?: string;
   message?: string;
+  /** Durée de paiement choisie, en mois (6, 12, 24). */
+  duree_paiement?: number;
   articles: ArticleDemande[];
 }
 
