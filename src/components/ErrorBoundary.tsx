@@ -14,10 +14,34 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+const CHUNK_RELOAD_KEY = "chunk-reload-at";
+const CHUNK_RELOAD_WINDOW_MS = 10_000;
+
+/**
+ * Détecte un échec de chargement de module dynamique (chunk lazy). Se produit
+ * typiquement après un redéploiement : l'index.html en cache référence des
+ * chunks dont le hash a changé, le serveur renvoie alors le fallback SPA (HTML)
+ * et l'import échoue.
+ */
+function isChunkLoadError(error: Error): boolean {
+  const msg = `${error?.name} ${error?.message}`;
+  return (
+    /Failed to fetch dynamically imported module/i.test(msg) ||
+    /Loading chunk [\w-]+ failed/i.test(msg) ||
+    /Importing a module script failed/i.test(msg) ||
+    /error loading dynamically imported module/i.test(msg) ||
+    (/module script/i.test(msg) && /MIME type/i.test(msg))
+  );
+}
+
 /**
  * Isole les erreurs de rendu : si un sous-arbre plante, seul ce sous-arbre est
  * remplacé par un message de reprise, le reste de l'application continue de
  * fonctionner. À placer autour de chaque route et de chaque zone indépendante.
+ *
+ * Cas particulier : une erreur de chargement de chunk (après déploiement)
+ * déclenche un rechargement complet unique — la page revient alors avec les
+ * bons assets, de façon transparente.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { error: null };
@@ -27,6 +51,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (isChunkLoadError(error)) {
+      // Recharge au plus une fois par fenêtre de 10 s : suffisant pour récupérer
+      // les nouveaux assets après un déploiement, sans boucler si un chunk reste
+      // réellement introuvable (au-delà, on affiche le message de reprise).
+      const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0);
+      if (Date.now() - last > CHUNK_RELOAD_WINDOW_MS) {
+        sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
     console.error(`[ErrorBoundary${this.props.label ? ` ${this.props.label}` : ""}]`, error, info.componentStack);
   }
 
