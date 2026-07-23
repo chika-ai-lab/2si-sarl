@@ -30,6 +30,7 @@ import {
   RefreshCcw, FolderOpen, FolderPlus, ChevronRight, ArrowLeft,
 } from "lucide-react";
 import { ImageUrlInput } from "@/components/ui/ImageUrlInput";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { formatCurrency } from "@/lib/currency";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { toast } from "@/hooks/use-toast";
@@ -85,6 +86,27 @@ const STATUS_CONFIG = {
   inactif: { label: "Inactif",  color: "bg-gray-100 text-gray-800" },
   rupture: { label: "Rupture",  color: "bg-red-100 text-red-800" },
 };
+
+/**
+ * Normalise la colonne `images` en tableau d'URLs. L'endpoint admin /articles
+ * renvoie cette colonne telle quelle : une chaîne JSON (ex. '["/images/..."]'),
+ * là où l'endpoint public la renvoie déjà désérialisée. On gère les deux formes.
+ */
+function parseImages(images: unknown): string[] {
+  if (!images) return [];
+  if (Array.isArray(images)) return images.filter((x): x is string => typeof x === "string");
+  if (typeof images === "string") {
+    try {
+      const arr = JSON.parse(images);
+      return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [images];
+    } catch {
+      return [images];
+    }
+  }
+  return [];
+}
+
+const firstImageUrl = (images: unknown): string | null => parseImages(images)[0] ?? null;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -210,7 +232,7 @@ export function CataloguePage() {
       statut: a.statut ?? "actif",
       banque: (a.banque as BanquePartenaire) ?? "",
       categories_ids: Array.isArray(a.categories) ? a.categories : (a.categorie_id ? [a.categorie_id] : []),
-      images: Array.isArray(a.images) ? a.images : [],
+      images: parseImages(a.images),
       imageInput: "",
     });
     setIsFormOpen(true);
@@ -234,7 +256,9 @@ export function CataloguePage() {
       banque: form.banque || null,
       categorie_id: form.categories_ids[0] || null,
       categories_ids: form.categories_ids,
-      images: form.images.length > 0 ? form.images : null,
+      // La colonne `images` est un TEXT désérialisé côté public par JSON.parse :
+      // on stocke donc une chaîne JSON, pas un tableau brut (qui finirait en CSV illisible).
+      images: form.images.length > 0 ? JSON.stringify(form.images) : null,
     };
     try {
       if (editId) {
@@ -417,6 +441,19 @@ export function CataloguePage() {
             <DialogHeader><DialogTitle>{selectedProduit?.libelle}</DialogTitle></DialogHeader>
             {selectedProduit && (
               <div className="space-y-4 text-sm">
+                {(() => {
+                  const url = firstImageUrl(selectedProduit.images);
+                  return url ? (
+                    <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
+                      <ProductImage
+                        src={url}
+                        alt={selectedProduit.libelle}
+                        priority
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  ) : null;
+                })()}
                 <div className="grid grid-cols-2 gap-3">
                   <div><p className="text-muted-foreground">Référence</p><p className="font-mono font-semibold">{selectedProduit.reference || "—"}</p></div>
                   <div><p className="text-muted-foreground">Marque</p><p className="font-semibold">{selectedProduit.marque || "—"}</p></div>
@@ -814,9 +851,20 @@ function ProductsTable({
                 <TableRow key={a.id}>
                   <TableCell>
                     <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
-                        <Package className="h-5 w-5 text-primary" />
-                      </div>
+                      {(() => {
+                        const url = firstImageUrl(a.images);
+                        return url ? (
+                          <ProductImage
+                            src={url}
+                            alt={a.libelle}
+                            className="h-10 w-10 rounded object-cover shrink-0 border"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0">
+                            <Package className="h-5 w-5 text-primary" />
+                          </div>
+                        );
+                      })()}
                       <div>
                         <div className="font-medium line-clamp-1">{a.libelle}</div>
                         <div className="text-sm text-muted-foreground line-clamp-1">{a.marque ?? "—"}</div>
