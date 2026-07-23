@@ -111,9 +111,7 @@
       "12months": "12 months",
       "12months.description": "Our most popular plan",
       "24months": "24 months",
-      "24months.description": "Reduced payments over 2 years",
-      "36months": "36 months",
-      "36months.description": "Maximum flexibility"
+      "24months.description": "Reduced payments over 2 years"
     },
     "popular": "Popular"
   },

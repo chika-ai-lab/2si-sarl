@@ -44,7 +44,9 @@ export default function ProductDetailPage() {
   const { products: allProducts, loading } = useMarketplaceProducts();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("6-months");
+  // "plan-12" correspond au defaultPlanId de la config (une durée est ainsi
+  // présélectionnée d'emblée, cf. payments.config.ts).
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("plan-12");
 
   const product = allProducts.find((p) => p.id === id) ?? null;
 
