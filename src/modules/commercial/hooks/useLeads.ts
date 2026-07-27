@@ -4,7 +4,7 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.sen-services.com/api/v2";
 
 function getToken(): string {
   return localStorage.getItem("auth-token") ?? "";

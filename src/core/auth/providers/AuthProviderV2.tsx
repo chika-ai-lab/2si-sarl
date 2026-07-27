@@ -196,7 +196,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   const login = async (telephone: string, password: string): Promise<void> => {
     setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+      const API_URL = import.meta.env.VITE_API_URL || "https://api.sen-services.com/api/v2";
       const response = await fetch(`${API_URL}/auth/login`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -244,7 +244,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     try {
       const token = localStorage.getItem("auth-token");
       if (token) {
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+        const API_URL = import.meta.env.VITE_API_URL || "https://api.sen-services.com/api/v2";
         await fetch(`${API_URL}/auth/logout`, {
           method:  "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

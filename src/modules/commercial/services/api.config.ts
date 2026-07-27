@@ -4,7 +4,7 @@
 
 export const USE_MOCK_API = false;
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.sen-services.com/api/v2';
 
 export const API_ENDPOINTS = {
   clients: {

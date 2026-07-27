@@ -3,7 +3,7 @@
  * Projets, Notes, Documents, Transactions, Rapports Clients
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.sen-services.com/api/v2';
 
 const getHeaders = () => {
     const token = localStorage.getItem("auth-token");

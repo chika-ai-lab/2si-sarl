@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Product, ProductImage } from "@/data/products";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3002/api/v2";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.sen-services.com/api/v2";
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 

@@ -87,19 +87,54 @@ configurable-commerce-hub/
 
 ## Déploiement
 
-Le projet peut être déployé sur n'importe quelle plateforme supportant les applications Vite/React :
+Le dashboard est déployé sur **Cloudflare Workers** (SPA statique servie depuis `./dist`).
 
-- **Vercel** (recommandé)
-- **Netlify**
-- **GitHub Pages**
-- **AWS Amplify**
-- Tout serveur web statique
+| Élément | Valeur |
+|---|---|
+| Plateforme | Cloudflare Workers (Worker Builds — build automatique depuis le repo git) |
+| Compte Cloudflare | **kantecheikh** |
+| Nom du worker | `emc-store` (voir [`wrangler.json`](./wrangler.json)) |
+| URL publique | https://dashboard.sen-services.com |
+| DNS | OVH (enregistrements A) + Cloudflare |
+
+> L'app commerciale (PWA) `2si-pwa` est déployée séparément (worker `commercial-emc`, `app.sen-services.com`).
+> L'API (`gestemc-api`) est déployée à part — voir `gestemc-api/DEPLOYMENT.md`.
 
 ### Commandes de build
 
 ```sh
 npm run build        # Génère le build de production dans /dist
 ```
+
+### Déploiement manuel (depuis ce dossier)
+
+```sh
+npm run build
+npx wrangler deploy  # publie ./dist sur le worker emc-store (compte kantecheikh)
+```
+
+### Feature flags / activation des fonctionnalités
+
+L'activation des modules et fonctionnalités est **en dur** dans
+[`src/config/features.config.ts`](./src/config/features.config.ts) — **ni variables
+d'environnement, ni base de données**. Pour masquer une fonctionnalité, passer sa
+valeur à `false` dans ce fichier, puis rebuild + redeploy.
+
+### Dépannage — « build token deleted or rolled »
+
+Erreur Cloudflare : *« The build token selected for this build has been deleted or
+rolled and cannot be used for this build. »*
+
+C'est un problème de **réglage Cloudflare**, pas de code. Le jeton que Worker Builds
+utilise pour builder a été supprimé/régénéré. Correction :
+
+1. Cloudflare Dashboard → **Workers & Pages** → worker `emc-store` → **Settings** → **Build**.
+2. Rubrique **Build token** : cliquer **Update / reconnect** et générer un nouveau jeton
+   (ou reconnecter l'intégration Git GitHub).
+3. Relancer le build (**Retry**).
+
+Alternative immédiate : déployer en local avec `npx wrangler deploy` (le build local
+ne dépend pas du build token Cloudflare).
 
 ## Support et Contact
 

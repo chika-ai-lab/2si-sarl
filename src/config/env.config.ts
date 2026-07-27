@@ -46,7 +46,7 @@ export const appConfig = {
  * Configuration API
  */
 export const apiConfig = {
-  baseUrl: getEnvString('VITE_API_URL', 'http://localhost:3000/api'),
+  baseUrl: getEnvString('VITE_API_URL', 'https://api.sen-services.com/api/v2'),
   timeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
 };
 

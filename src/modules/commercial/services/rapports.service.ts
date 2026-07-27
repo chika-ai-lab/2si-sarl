@@ -277,7 +277,7 @@ export async function exporterRapportCSV(
   if (filters.dateFin) params.append('date_fin', filters.dateFin);
 
   const token = localStorage.getItem('auth-token');
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://api.sen-services.com/api/v2';
   const url = `${API_BASE}${API_ENDPOINTS.rapports.export(type)}?${params}`;
 
   const response = await fetch(url, {

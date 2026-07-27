@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-const SSE_URL = `${import.meta.env.VITE_API_URL}/sse`;
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.sen-services.com/api/v2';
+const SSE_URL = `${API_URL}/sse`;
 
 export function useSSE() {
   const qc = useQueryClient();
