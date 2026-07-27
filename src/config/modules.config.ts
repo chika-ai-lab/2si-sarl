@@ -111,10 +111,11 @@ const NAV_LOGISTIQUE: NavigationItem[] = [
   { label: "Bons de Commande",       path: "/admin/achats/bon-commandes",   icon: "ClipboardList", section: "logistique", order: 1 },
   { label: "Commandes Fournisseurs", path: "/admin/achats/commandes",       icon: "ShoppingCart",  section: "logistique", order: 2 },
   { label: "Livraisons",             path: "/admin/achats/livraisons",      icon: "Truck",         section: "logistique", order: 3 },
-  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",      section: "logistique", order: 4 },
-  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",     section: "logistique", order: 5 },
-  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",         section: "logistique", order: 6 },
-  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",        section: "logistique", order: 7 },
+  { label: "Bordereaux (BL)",        path: "/admin/achats/bordereaux",      icon: "FileText",      section: "logistique", order: 4 },
+  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",      section: "logistique", order: 5 },
+  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",     section: "logistique", order: 6 },
+  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",         section: "logistique", order: 7 },
+  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",        section: "logistique", order: 8 },
 ];
 
 const NAV_COMPTABILITE: NavigationItem[] = [
