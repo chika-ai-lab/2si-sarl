@@ -2,6 +2,7 @@
  * Configuration centralisée des variables d'environnement
  * Utilise import.meta.env pour Vite
  */
+import { MODULES_ENABLED, COMMERCIAL_FEATURES } from "@/config/features.config";
 
 /**
  * Helper pour lire une variable d'environnement booléenne
@@ -55,47 +56,38 @@ export const apiConfig = {
 export const modulesConfig = {
   // Core modules (toujours actifs)
   dashboard: {
-    enabled: true, // Toujours activé
+    enabled: MODULES_ENABLED.dashboard, // Toujours activé
     isCore: true,
   },
 
-  // Business modules
+  // Business modules — activation en dur (voir features.config.ts)
   crm: {
-    enabled: getEnvBoolean('VITE_MODULE_CRM_ENABLED', true),
+    enabled: MODULES_ENABLED.crm,
     isCore: false,
   },
   orders: {
-    enabled: getEnvBoolean('VITE_MODULE_ORDERS_ENABLED', true),
+    enabled: MODULES_ENABLED.orders,
     isCore: false,
   },
   products: {
-    enabled: getEnvBoolean('VITE_MODULE_PRODUCTS_ENABLED', true),
+    enabled: MODULES_ENABLED.products,
     isCore: false,
   },
   reports: {
-    enabled: getEnvBoolean('VITE_MODULE_REPORTS_ENABLED', true),
+    enabled: MODULES_ENABLED.reports,
     isCore: false,
   },
   commercial: {
-    enabled: getEnvBoolean('VITE_MODULE_COMMERCIAL_ENABLED', true),
+    enabled: MODULES_ENABLED.commercial,
     isCore: false,
   },
 };
 
 /**
- * Feature flags pour le module Commercial
+ * Feature flags pour le module Commercial.
+ * Activation en dur — source unique : features.config.ts (ni env, ni base).
  */
-export const commercialFeatures = {
-  clients: getEnvBoolean('VITE_COMMERCIAL_CLIENTS_ENABLED', true),
-  commandes: getEnvBoolean('VITE_COMMERCIAL_COMMANDES_ENABLED', true),
-  catalogue: getEnvBoolean('VITE_COMMERCIAL_CATALOGUE_ENABLED', true),
-  accreditif: getEnvBoolean('VITE_COMMERCIAL_ACCREDITIF_ENABLED', true),
-  simulation: getEnvBoolean('VITE_COMMERCIAL_SIMULATION_ENABLED', true),
-  sav: getEnvBoolean('VITE_COMMERCIAL_SAV_ENABLED', true),
-  rapports: getEnvBoolean('VITE_COMMERCIAL_RAPPORTS_ENABLED', true),
-  promotions: getEnvBoolean('VITE_COMMERCIAL_PROMOTIONS_ENABLED', true),
-  leads: getEnvBoolean('VITE_COMMERCIAL_LEADS_ENABLED', true),
-};
+export const commercialFeatures = COMMERCIAL_FEATURES;
 
 /**
  * Configuration des uploads

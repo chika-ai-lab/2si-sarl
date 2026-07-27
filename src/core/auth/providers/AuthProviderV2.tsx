@@ -7,7 +7,7 @@ const AUTH_STORAGE_KEY = "2si-auth-user";
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
-const PERMISSIONS_VERSION = 7; // v7: sidebar responsable_commercial = NAV_COMMERCIAL_ADMIN (Factures, Clients, SAV, Rapports, Commerciales)
+const PERMISSIONS_VERSION = 8; // v8: logistique = lecture des commandes clients (COMMERCIAL:ORDERS:READ) pour préparer les livraisons
 
 // ─── Liste exhaustive des modules de l'application ───────────────────────────
 const ALL_MODULE_IDS = [
@@ -49,6 +49,7 @@ const ROLE_CONFIG: Record<RoleKey, { permissions: string[]; modules: ModuleId[] 
       "COMMERCIAL:CATALOG:READ",
       "COMMERCIAL:CLIENTS:READ",
       "COMMERCIAL:SAV:READ",
+      "COMMERCIAL:ORDERS:READ", // lecture des commandes clients (préparation des livraisons)
       "ACHATS:*:*",           // livraisons, fournisseurs, commandes fournisseurs
     ],
     modules: ["dashboard", "commercial", "achats"],
