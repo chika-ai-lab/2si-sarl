@@ -11,6 +11,9 @@ export interface BackendArticle {
   description?: string | null;
   reference?: string | null;
   marque?: string | null;
+  prix?: number | null;
+  mensualite_12?: number | null;
+  mensualite_24?: number | null;
   quantite: number;
   statut?: "actif" | "inactif" | "rupture" | null;
   banque?: string | null;
@@ -53,7 +56,9 @@ function mapToProduct(a: BackendArticle): Product {
     name: a.libelle,
     description: a.description ?? "",
     longDescription: a.description ?? "",
-    price: 0,
+    price: Number(a.prix) || 0,
+    mensualite12: a.mensualite_12 != null ? Number(a.mensualite_12) : undefined,
+    mensualite24: a.mensualite_24 != null ? Number(a.mensualite_24) : undefined,
     images,
     category: categoryName,
     banque: banque || undefined,

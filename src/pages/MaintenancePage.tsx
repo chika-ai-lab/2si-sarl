@@ -1,5 +1,5 @@
 import { Settings, Clock, Mail, Phone } from "lucide-react";
-import { companyConfig } from "@/config/company.config";
+import { companyConfig, primaryPhone, telHref } from "@/config/company.config";
 import { SEO } from "@/components/SEO";
 
 export function MaintenancePage() {
@@ -79,7 +79,7 @@ export function MaintenancePage() {
               </a>
               <span className="hidden sm:inline text-muted-foreground">•</span>
               <a
-                href={`tel:${companyConfig.phone}`}
+                href={telHref(primaryPhone)}
                 className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
               >
                 <Phone className="h-5 w-5" />

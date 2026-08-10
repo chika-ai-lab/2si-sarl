@@ -39,12 +39,12 @@
     "signIn": "Se connecter",
     "or": "ou",
     "register": "S'inscrire",
-    "searchPlaceholder": "Rechercher des produits...",
-    "announcement": "Livraison gratuite à partir de 500 000 FCFA"
+    "searchPlaceholder": "Rechercher un produit...",
+    "announcement": "Particuliers et entreprises : payez en 6, 12 ou 24 mensualités"
   },
   "catalog": {
     "title": "Notre Catalogue",
-    "subtitle": "Découvrez notre sélection d'équipements professionnels",
+    "subtitle": "Des grandes marques pour la maison comme pour le bureau, payables en plusieurs fois",
     "searchPlaceholder": "Rechercher un produit...",
     "noProducts": "Aucun produit trouvé",
     "categories": {
@@ -73,19 +73,24 @@
   "product": {
     "addToCart": "Ajouter au panier",
     "removeFromCart": "Retirer du panier",
-    "inStock": "En stock",
-    "outOfStock": "Rupture de stock",
+    "inStock": "Disponible",
+    "outOfStock": "Momentanément indisponible",
     "quantity": "Quantité",
     "description": "Description",
     "specifications": "Caractéristiques",
     "fromPerMonth": "à partir de {amount}/mois",
     "reference": "Réf.",
-    "category": "Catégorie"
+    "category": "Catégorie",
+    "startingFrom": "Dès",
+    "perMonth": "/mois",
+    "overMonths": "Étalé sur {months} mensualités",
+    "financingAvailable": "Financement possible",
+    "financingWith": "Financement {bank}"
   },
   "cart": {
     "title": "Votre Panier",
     "empty": "Votre panier est vide",
-    "emptyDescription": "Parcourez notre catalogue pour trouver les équipements dont vous avez besoin.",
+    "emptyDescription": "Parcourez le catalogue et composez votre sélection : vous ne payez qu'en mensualités.",
     "browseCatalog": "Parcourir le catalogue",
     "subtotal": "Sous-total",
     "total": "Total",
@@ -94,46 +99,48 @@
     "checkout": "Valider la commande",
     "remove": "Retirer",
     "updateQuantity": "Modifier la quantité",
-    "paymentPlan": "Plan de paiement",
+    "paymentPlan": "Durée de paiement",
     "monthlyPayment": "Mensualité",
-    "selectPlan": "Choisir un plan de paiement"
+    "selectPlan": "Choisir une durée de paiement"
   },
   "payment": {
-    "title": "Plan de Paiement",
-    "selectPlan": "Sélectionnez votre plan de paiement",
+    "title": "Durée de paiement",
+    "selectPlan": "Choisissez votre durée de paiement",
     "monthly": "par mois",
-    "total": "Total à payer",
-    "interest": "dont intérêts",
-    "noInterest": "Sans intérêts",
+    "total": "Total à régler",
+    "interest": "dont frais de financement",
+    "noInterest": "Sans frais supplémentaires",
     "plans": {
       "6months": "6 mois",
-      "6months.description": "Paiement en 6 mensualités sans frais",
+      "6months.description": "Réglé en 6 mensualités, sans frais supplémentaires",
       "12months": "12 mois",
-      "12months.description": "Notre plan le plus populaire",
+      "12months.description": "Le bon équilibre entre durée et mensualité",
       "24months": "24 mois",
-      "24months.description": "Mensualités réduites sur 2 ans"
+      "24months.description": "La mensualité la plus légère, étalée sur 2 ans"
     },
-    "popular": "Populaire"
+    "popular": "Le plus choisi"
   },
   "order": {
-    "title": "Demande de Crédit",
-    "subtitle": "Complétez votre demande pour finaliser votre commande",
+    "title": "Votre demande de financement",
+    "subtitle": "Complétez votre demande, un chargé de clientèle vous rappelle",
     "personalInfo": "Informations personnelles",
     "contactInfo": "Coordonnées",
-    "professionalInfo": "Informations professionnelles",
+    "professionalInfo": "Situation professionnelle",
     "summary": "Récapitulatif",
-    "submit": "Soumettre ma demande",
+    "submit": "Envoyer ma demande",
     "submitting": "Envoi en cours...",
     "success": "Demande envoyée avec succès",
-    "successMessage": "Nous reviendrons vers vous sous 48h ouvrées.",
+    "successMessage": "Un chargé de clientèle vous rappelle sous 24h.",
     "fields": {
       "firstName": "Prénom",
       "lastName": "Nom",
       "email": "Email",
       "phone": "Téléphone",
-      "company": "Entreprise",
+      "company": "Raison sociale",
       "position": "Fonction",
-      "siret": "SIRET",
+      "siret": "NINEA",
+      "employer": "Employeur",
+      "bank": "Banque de domiciliation",
       "address": "Adresse",
       "city": "Ville",
       "postalCode": "Code postal",
@@ -144,7 +151,7 @@
       "required": "Ce champ est requis",
       "invalidEmail": "Email invalide",
       "invalidPhone": "Numéro de téléphone invalide",
-      "invalidSiret": "SIRET invalide"
+      "invalidSiret": "NINEA invalide"
     }
   },
   "admin": {
@@ -170,65 +177,100 @@
   },
   "home": {
     "hero": {
-      "title": "Équipez votre entreprise",
-      "subtitle": "Solutions de financement flexibles"
+      "title": "Équipez-vous maintenant, payez en plusieurs fois",
+      "subtitle": "Pour les particuliers comme pour les entreprises"
     },
     "promo": {
-      "title": "0% d'intérêt sur 6 mois",
-      "description": "Financez vos équipements professionnels sans frais supplémentaires",
-      "cta": "Voir les conditions"
+      "title": "De 6 à 24 mensualités, à votre rythme",
+      "description": "Téléphone, téléviseur, électroménager, matériel de bureau : choisissez votre produit, choisissez votre durée.",
+      "cta": "Vérifier mon éligibilité"
     },
     "categories": {
       "title": "Nos Catégories",
-      "subtitle": "Trouvez l'équipement adapté à vos besoins professionnels"
+      "subtitle": "Pour la maison, pour le bureau, pour votre activité"
     },
     "featured": {
       "title": "Produits Vedettes",
-      "subtitle": "Nos équipements professionnels les plus populaires",
+      "subtitle": "Les produits les plus demandés par nos clients",
       "viewAll": "Voir tout"
     },
     "new": {
       "title": "Nouveautés",
-      "subtitle": "Découvrez nos derniers arrivages"
+      "subtitle": "Les derniers produits arrivés au catalogue"
     },
     "trust": {
       "title": "Pourquoi choisir Sen Services International ?",
-      "subtitle": "Une solution de financement fiable et transparente",
+      "subtitle": "Un financement clair, du premier appel à la dernière mensualité",
       "stats": {
-        "clients": "Clients satisfaits",
-        "clientsDesc": "Professionnels nous font confiance",
+        "clients": "Clients équipés",
+        "clientsDesc": "Particuliers et entreprises nous font confiance",
         "approval": "Taux d'approbation",
-        "approvalDesc": "Réponse rapide garantie",
+        "approvalDesc": "La grande majorité des dossiers aboutit",
         "delay": "Délai de réponse",
-        "delayDesc": "Approbation ultra-rapide",
-        "interest": "Frais d'intérêt",
-        "interestDesc": "Sur plans 6 et 12 mois"
+        "delayDesc": "Un chargé de clientèle vous rappelle",
+        "interest": "Frais supplémentaires",
+        "interestDesc": "Sur la formule 6 mensualités"
       }
     },
     "cta": {
       "title": "Prêt à vous équiper ?",
-      "description": "Découvrez notre catalogue complet et trouvez les équipements parfaits pour développer votre activité professionnelle.",
+      "description": "Composez votre sélection dans le catalogue et recevez un devis personnalisé sous 24h. Un chargé de clientèle vous accompagne à chaque étape.",
       "browseCatalog": "Explorer le catalogue",
       "makeRequest": "Faire une demande"
     }
   },
+  "eligibility": {
+    "title": "Suis-je éligible ?",
+    "subtitle": "Les conditions sont simples et la réponse est rapide. Choisissez votre situation.",
+    "conditionsTitle": "Conditions d'éligibilité",
+    "documentsTitle": "Pièces à fournir",
+    "particulier": {
+      "tab": "Je suis un particulier",
+      "title": "Salariés et fonctionnaires",
+      "description": "Équipez votre foyer sans attendre d'avoir la somme entière : téléphone, téléviseur, électroménager, mobilier. Vos mensualités sont prélevées sur votre compte domicilié.",
+      "condition1": "Être titulaire d'un compte avec domiciliation de salaire chez CBAO ou CMS",
+      "condition2": "Justifier d'au moins 1 an d'ancienneté pour les salariés du secteur privé",
+      "condition3": "Être titulaire de son poste pour les fonctionnaires",
+      "document1": "Une photocopie de votre carte nationale d'identité",
+      "document2": "Vos 2 derniers bulletins de salaire",
+      "document3": "Une attestation d'emploi",
+      "documentsNote": "D'autres pièces peuvent être demandées selon votre dossier."
+    },
+    "pro": {
+      "tab": "Je suis un professionnel",
+      "title": "Entreprises, commerces et institutions",
+      "description": "Équipez vos bureaux et vos équipes sans immobiliser votre trésorerie : informatique, mobilier, outillage, véhicules. Une seule mensualité, une seule facture.",
+      "condition1": "Être une structure légalement enregistrée au Sénégal",
+      "condition2": "Justifier d'au moins 1 an d'activité",
+      "condition3": "Disposer d'un compte bancaire au nom de la structure chez CBAO ou CMS",
+      "document1": "Registre de commerce et NINEA",
+      "document2": "Vos 3 derniers relevés bancaires",
+      "document3": "Une pièce d'identité du gérant ou du représentant légal",
+      "documentsNote": "D'autres pièces peuvent être demandées selon la nature de votre activité."
+    },
+    "advisor": {
+      "title": "Un chargé de clientèle vous accompagne",
+      "description": "Avant tout engagement, il vous communique le montant finançable, les frais de dossier, la durée de remboursement et les conditions applicables à votre dossier.",
+      "cta": "Parler à un conseiller"
+    }
+  },
   "trustBadges": {
-    "secure": "Paiement sécurisé",
-    "interest": "0% d'intérêt possible",
-    "approval": "Approbation rapide",
-    "shipping": "Livraison gratuite",
-    "warranty": "Garantie incluse"
+    "secure": "Prélèvement sécurisé",
+    "interest": "0 frais sur 6 mensualités",
+    "approval": "Réponse sous 24h",
+    "shipping": "Livraison partout au Sénégal",
+    "warranty": "Garantie constructeur incluse"
   },
   "badges": {
     "new": "Nouveau",
-    "sale": "Solde",
+    "sale": "Promo",
     "featured": "Vedette",
-    "outOfStock": "Rupture de stock"
+    "outOfStock": "Indisponible"
   },
   "productDetails": {
     "from": "Dès",
     "perMonth": "/mois",
-    "onlyLeft": "Seulement {count} en stock",
+    "onlyLeft": "Plus que {count} disponible(s)",
     "addToWishlist": "Ajouter aux favoris",
     "removeFromWishlist": "Retirer des favoris"
   }

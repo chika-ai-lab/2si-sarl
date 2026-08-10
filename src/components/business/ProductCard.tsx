@@ -8,6 +8,7 @@ import { useTranslation } from "@/providers/I18nProvider";
 import { type Product } from "@/data/products";
 import { ProductRating } from "./ProductRating";
 import { ProductImage } from "@/components/ui/ProductImage";
+import { formatCurrency, getStartingMonthly } from "@/lib/currency";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -160,29 +161,7 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
 
             {/* Price and Actions */}
             <div className="mt-4 flex items-end justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-primary">
-                    {product.banque ? `Financement ${product.banque}` : "Financement disponible"}
-                  </span>
-                  {product.banque && (
-                    <Badge
-                      variant="secondary"
-                      className={
-                        product.banque === "CBAO"
-                          ? "text-[10px] px-1.5 py-0 bg-blue-100 text-blue-800 border-blue-200"
-                          : product.banque === "CMS"
-                          ? "text-[10px] px-1.5 py-0 bg-red-100 text-red-800 border-red-200"
-                          : "text-[10px] px-1.5 py-0"
-                      }
-                    >
-                      {product.banque}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">Payable en plusieurs tranches</p>
-              </div>
+              <FinancingPitch product={product} />
 
               <Button
                 onClick={handleCartAction}
@@ -309,26 +288,9 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
             {product.description}
           </p>
 
-          {/* Financement */}
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
-            <CreditCard className="h-4 w-4 text-primary shrink-0" />
-            <span className="text-sm font-semibold text-primary">
-              {product.banque ? `Financement ${product.banque}` : "Financement disponible"}
-            </span>
-            {product.banque && (
-              <Badge
-                variant="secondary"
-                className={
-                  product.banque === "CBAO"
-                    ? "ml-auto text-[10px] px-1.5 py-0 bg-blue-100 text-blue-800 border-blue-200"
-                    : product.banque === "CMS"
-                    ? "ml-auto text-[10px] px-1.5 py-0 bg-red-100 text-red-800 border-red-200"
-                    : "ml-auto text-[10px] px-1.5 py-0"
-                }
-              >
-                {product.banque}
-              </Badge>
-            )}
+          {/* Financement — mensualité d'appel */}
+          <div className="pt-2 border-t border-border">
+            <FinancingPitch product={product} />
           </div>
         </CardContent>
 
@@ -361,6 +323,69 @@ export function ProductCard({ product, variant = "grid", className }: ProductCar
       </div>
     </Card>
     </motion.div>
+  );
+}
+
+function BankBadge({ banque, className }: { banque: string; className?: string }) {
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(
+        "text-[10px] px-1.5 py-0 shrink-0",
+        banque === "CBAO" && "bg-blue-100 text-blue-800 border-blue-200",
+        banque === "CMS" && "bg-red-100 text-red-800 border-red-200",
+        className
+      )}
+    >
+      {banque}
+    </Badge>
+  );
+}
+
+/**
+ * Argument de vente principal de la carte : la plus petite mensualité connue,
+ * mise en avant plutôt que le prix comptant. Quand aucune mensualité n'est
+ * disponible on annonce seulement que le produit est finançable — jamais un
+ * montant inventé, le chiffre ferme restant celui du devis.
+ */
+function FinancingPitch({ product }: { product: Product }) {
+  const { t } = useTranslation();
+  const starting = getStartingMonthly(product);
+
+  if (!starting) {
+    return (
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <CreditCard className="h-4 w-4 text-primary shrink-0" />
+        <span className="text-sm font-semibold text-primary">
+          {product.banque
+            ? t("product.financingWith", { bank: product.banque })
+            : t("product.financingAvailable")}
+        </span>
+        {product.banque && <BankBadge banque={product.banque} className="ml-auto" />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-end justify-between gap-2 flex-1 min-w-0">
+      <div className="min-w-0">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("product.startingFrom")}
+        </span>
+        <div className="flex items-baseline gap-1">
+          <span className="text-xl font-bold text-primary leading-tight">
+            {formatCurrency(starting.amount)}
+          </span>
+          <span className="text-sm font-semibold text-primary/80">
+            {t("product.perMonth")}
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {t("product.overMonths", { months: starting.months })}
+        </p>
+      </div>
+      {product.banque && <BankBadge banque={product.banque} />}
+    </div>
   );
 }
 

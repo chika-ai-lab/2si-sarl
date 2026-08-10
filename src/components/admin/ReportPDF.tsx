@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/currency";
+import { companyConfig } from "@/config/company.config";
 
 const styles = StyleSheet.create({
   page: {
@@ -312,10 +313,10 @@ export function ReportPDF({ period, stats, topProducts, salesByCategory }: Repor
         <View style={styles.footer}>
           <Text>Sen Services International (2SI) - Rapport confidentiel</Text>
           <Text style={{ marginTop: 3 }}>
-            Avenue Bourguiba, Sicap Amitié villa n 4337 - Dakar, Sénégal
+            {companyConfig.address.street} - {companyConfig.address.city}, {companyConfig.address.country}
           </Text>
           <Text style={{ marginTop: 3 }}>
-            Tél: 33 864 48 48 / 77 225 83 83 / 77 420 90 03 • contact@sen-services.com
+            Tél: {companyConfig.phone} • contact@sen-services.com
           </Text>
         </View>
       </Page>

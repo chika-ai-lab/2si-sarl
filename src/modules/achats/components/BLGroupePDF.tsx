@@ -5,6 +5,7 @@ import {
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
+import { companyConfig } from "@/config/company.config";
 
 // ─── Styles (identiques à BLFicheExpeditionPDF) ───────────────────────────────
 
@@ -76,7 +77,7 @@ function BLPage({ data, index, total }: { data: any; index: number; total: numbe
         <View>
           <Text style={S.companyName}>Sen Services International</Text>
           <Text style={S.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
-          <Text style={S.companyLine}>Sicap Amitié villa n 4337, Dakar  ·  contact@sen-services.com</Text>
+          <Text style={S.companyLine}>{companyConfig.address.street}, {companyConfig.address.city}  ·  contact@sen-services.com</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
           <View style={S.docBadge}>
@@ -95,7 +96,7 @@ function BLPage({ data, index, total }: { data: any; index: number; total: numbe
         <View style={S.partyBox}>
           <Text style={S.partyLabel}>Expéditeur</Text>
           <Text style={S.partyName}>Sen Services International</Text>
-          <Text style={S.partyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337</Text>
+          <Text style={S.partyLine}>{companyConfig.address.street}</Text>
           <Text style={S.partyLine}>Tel : +221 33 864 48 48 / 77 225 83 83</Text>
         </View>
         <View style={S.partyBox}>

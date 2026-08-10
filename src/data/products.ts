@@ -41,6 +41,10 @@ export interface Product {
   relatedProducts?: string[]; // Product IDs
   promoCode?: string; // Promo code like "christmas", "newyear", etc.
   banque?: string; // Banque partenaire pour le financement (CBAO, CMS, etc.)
+  // Mensualités arrêtées par le métier et stockées en base (colonnes
+  // mensualite_12 / mensualite_24). Elles priment sur tout calcul côté front.
+  mensualite12?: number;
+  mensualite24?: number;
 }
 
 export const categories = [

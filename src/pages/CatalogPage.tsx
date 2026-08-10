@@ -47,8 +47,8 @@ export default function CatalogPage() {
     <MainLayout>
       <SEO
         title="Catalogue"
-        description="Parcourez notre large catalogue d'équipements professionnels avec paiement échelonné. Bureaux, informatique, mobilier et bien plus encore."
-        keywords="catalogue équipement, matériel professionnel, bureau, informatique, mobilier, paiement échelonné"
+        description="Parcourez notre catalogue et payez en plusieurs mensualités : téléphonie, électroménager, informatique, mobilier, énergie solaire. Pour les particuliers comme pour les entreprises."
+        keywords="catalogue, payer en plusieurs fois, téléphone, téléviseur, électroménager, informatique, mobilier, mensualités, Sénégal"
       />
       {/* Header with Breadcrumb */}
       <section className="bg-background py-8">

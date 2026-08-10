@@ -49,6 +49,38 @@ export const categoryMeta: {
   { match: "électronique grand",icon: Tv,           gradient: "from-violet-500 to-indigo-700",  iconBg: "bg-violet-400/30" },
 ];
 
+/**
+ * Normalise un libellé de catégorie en nom de fichier : sans accent, en
+ * minuscules, « & » écrit « et », le reste en tirets.
+ * « SMARTPHONE & TABLETTE » → « smartphone-et-tablette »
+ */
+export function slugifyCategory(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "") // marques diacritiques isolées par NFD
+    .toLowerCase()
+    .replace(/&/g, " et ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Visuels de catégories servis depuis public/images/categories.
+ *
+ * Le libellé renvoyé par l'API et le nom du fichier divergent parfois sur le
+ * pluriel (« Informatiques » face à informatique.png) : on propose les deux
+ * formes, la carte essaie les candidats dans l'ordre et retombe sur son dégradé
+ * de couleur si aucun ne répond. Une nouvelle catégorie est donc illustrée dès
+ * qu'on dépose un fichier correctement nommé, sans toucher au code.
+ */
+export function getCategoryImageCandidates(name: string): string[] {
+  const slug = slugifyCategory(name);
+  if (!slug) return [];
+
+  const variants = [slug, slug.replace(/s$/, ""), `${slug}s`];
+  return [...new Set(variants)].map((v) => `/images/categories/${v}.webp`);
+}
+
 export function getCategoryMeta(name: string) {
   const lower = name.toLowerCase();
   return (
@@ -69,42 +101,39 @@ export const heroSlides = (company): HeroSlide[] => [
     description: company.description,
     ctaText: "Explorer le catalogue",
     ctaLink: "/catalog",
-    secondaryCtaText: "En savoir plus",
-    secondaryCtaLink: "/catalog",
-    backgroundImage:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1080&fit=crop",
+    secondaryCtaText: "Suis-je éligible ?",
+    secondaryCtaLink: "/#eligibilite",
+    backgroundImage: "/images/hero/slide1.webp",
     backgroundPosition: "center",
-    textPosition: "left",
-    overlay: "gradient",
+    textPosition: "center",
+    overlay: "dark",
   },
   {
     id: "slide-2",
-    title: "Équipements professionnels de qualité",
+    title: "Les grandes marques, pour la maison et le bureau",
     subtitle: "Nouveautés",
     description:
-      "Découvrez notre sélection d'équipements informatiques et bureautiques dernière génération.",
+      "Téléphones, téléviseurs, électroménager, informatique : découvrez les dernières arrivées de notre catalogue.",
     ctaText: "Voir les nouveautés",
     ctaLink: "/catalog?sort=newest",
     secondaryCtaText: "Tous les produits",
     secondaryCtaLink: "/catalog",
-    backgroundImage:
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920&h=1080&fit=crop",
+    backgroundImage: "/images/hero/slide2.webp",
     backgroundPosition: "center",
-    textPosition: "left",
-    overlay: "gradient",
+    textPosition: "center",
+    overlay: "dark",
   },
   {
     id: "slide-3",
-    title: "0% d'intérêt sur 6 mois",
-    subtitle: "Offre spéciale",
+    title: "De 6 à 24 mensualités, à votre rythme",
+    subtitle: "Particuliers & entreprises",
     description:
-      "Financez vos équipements sans frais supplémentaires. Paiement échelonné adapté à votre budget.",
+      "Choisissez votre produit, choisissez votre durée. Un chargé de clientèle vous accompagne jusqu'à la livraison.",
     ctaText: "Profiter de l'offre",
     ctaLink: "/catalog",
     secondaryCtaText: "Voir les conditions",
-    secondaryCtaLink: "/catalog",
-    backgroundImage:
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&h=1080&fit=crop",
+    secondaryCtaLink: "/#eligibilite",
+    backgroundImage: "/images/hero/slide3.webp",
     backgroundPosition: "center",
     textPosition: "center",
     overlay: "dark",

@@ -1,6 +1,7 @@
 import {
   Document, Page, Text, View, StyleSheet, Font,
 } from "@react-pdf/renderer";
+import { companyConfig } from "@/config/company.config";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -114,7 +115,7 @@ export function FactureDocument({ data }: { data: FactureData }) {
         <View style={s.header}>
           <View>
             <Text style={s.companyName}>Sen Services International</Text>
-            <Text style={s.companySub}>Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar, Sénégal</Text>
+            <Text style={s.companySub}>{companyConfig.address.street}, {companyConfig.address.city}, {companyConfig.address.country}</Text>
             <Text style={s.companySub}>contact@sen-services.com  ·  +221 33 864 48 48</Text>
           </View>
           <View>
@@ -223,7 +224,7 @@ export function FactureDocument({ data }: { data: FactureData }) {
         {/* Footer */}
         <View style={s.footer}>
           <Text style={s.footerThank}>Merci de votre confiance !</Text>
-          <Text style={s.footerText}>Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar — www.sen-services.com</Text>
+          <Text style={s.footerText}>Sen Services International (2SI) — {companyConfig.address.street}, {companyConfig.address.city} — www.sen-services.com</Text>
           <Text style={s.footerText}>Cette facture a été générée électroniquement et est valide sans signature.</Text>
         </View>
 

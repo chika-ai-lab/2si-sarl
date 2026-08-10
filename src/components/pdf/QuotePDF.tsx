@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { companyConfig } from "@/config/company.config";
 
 export interface QuotePDFData {
   numero: string;
@@ -130,7 +131,7 @@ export function QuotePDF({ data }: { data: QuotePDFData }) {
           <View>
             <Text style={s.companyName}>Sen Services International</Text>
             <Text style={s.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
-            <Text style={s.companyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar</Text>
+            <Text style={s.companyLine}>{companyConfig.address.street}, {companyConfig.address.city}</Text>
             <Text style={s.companyLine}>contact@sen-services.com · +221 33 864 48 48</Text>
           </View>
           <View>
@@ -221,7 +222,7 @@ export function QuotePDF({ data }: { data: QuotePDFData }) {
 
         {/* ── Footer ── */}
         <Text style={s.footer}>
-          Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar — Ce devis est valable jusqu'au {new Date(data.dateValidite).toLocaleDateString('fr-FR')}.
+          Sen Services International (2SI) — {companyConfig.address.street}, {companyConfig.address.city} — Ce devis est valable jusqu'au {new Date(data.dateValidite).toLocaleDateString('fr-FR')}.
         </Text>
       </Page>
     </Document>

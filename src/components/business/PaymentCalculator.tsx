@@ -15,24 +15,26 @@ interface PaymentPlan {
   description: string;
 }
 
+// Durées et coefficients alignés sur payments.config.ts, source unique du
+// financement proposé en boutique.
 const PAYMENT_PLANS: PaymentPlan[] = [
   {
     months: 6,
     label: "6 mois",
     interestRate: 0,
-    description: "0% d'intérêt",
+    description: "Sans frais supplémentaires",
   },
   {
     months: 12,
     label: "12 mois",
-    interestRate: 0,
-    description: "0% d'intérêt",
+    interestRate: 2.5,
+    description: "Le bon équilibre",
   },
   {
-    months: 36,
-    label: "36 mois",
-    interestRate: 8,
-    description: "8% d'intérêt",
+    months: 24,
+    label: "24 mois",
+    interestRate: 4.5,
+    description: "La mensualité la plus légère",
   },
 ];
 
@@ -122,9 +124,9 @@ export function PaymentCalculator({ price, className }: PaymentCalculatorProps) 
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Taux d'intérêt</span>
+              <span className="text-muted-foreground">Frais de financement</span>
               <span className="font-medium text-foreground">
-                {selectedPlan.interestRate}%
+                {(totalPayment - price).toLocaleString("fr-FR")} FCFA
               </span>
             </div>
             <div className="h-px bg-border my-2" />
@@ -141,11 +143,13 @@ export function PaymentCalculator({ price, className }: PaymentCalculatorProps) 
         <div className="space-y-2">
           <div className="flex items-start gap-2 text-sm">
             <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-            <span className="text-muted-foreground">Approbation rapide en 48h</span>
+            <span className="text-muted-foreground">Réponse sous 24h</span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-            <span className="text-muted-foreground">Sans frais de dossier</span>
+            <span className="text-muted-foreground">
+              Frais de dossier communiqués par votre chargé de clientèle
+            </span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />

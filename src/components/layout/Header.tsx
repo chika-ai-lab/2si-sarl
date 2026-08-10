@@ -12,6 +12,8 @@ import {
   //  useFeatures
 } from "@/providers/ConfigProvider";
 import { useI18n } from "@/providers/I18nProvider";
+import { primaryPhone, telHref } from "@/config/company.config";
+import { useMarketplaceCategories } from "@/hooks/useMarketplaceCategories";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   DropdownMenu,
@@ -35,17 +37,11 @@ export function Header() {
 
   const itemCount = getItemCount();
 
-  // Real API category names (must match product.category from backend)
-  const navCategories = [
-    { name: "Informatique & Bureautique", label: "Informatique" },
-    { name: "Mobilier de Bureau", label: "Mobilier" },
-    { name: "Équipement Professionnel", label: "Équipement" },
-    { name: "Outillage Industriel", label: "Outillage" },
-    { name: "Véhicules & Engins", label: "Véhicules" },
-    { name: "Énergie & Solaire", label: "Énergie" },
-    { name: "Sécurité & Surveillance", label: "Sécurité" },
-    { name: "Électronique Grand Public", label: "Électronique" },
-  ];
+  // Les catégories viennent de l'API : le catalogue filtre en comparant
+  // product.category au paramètre ?categories=, donc toute liste écrite en dur
+  // finit par diverger du back-office et ne renvoyer aucun produit.
+  const { categories: apiCategories } = useMarketplaceCategories();
+  const navCategories = apiCategories.map((c) => ({ name: c.label, label: c.label }));
 
   const activeCategoryParam = searchParams.get("categories");
   const activeNavLabel = activeCategoryParam
@@ -105,7 +101,7 @@ export function Header() {
                 <span>{company.email}</span>
               </a>
               <a
-                href={`tel:${company.phone}`}
+                href={telHref(primaryPhone)}
                 className="flex items-center gap-2 text-xs hover:text-primary-foreground/80 transition-colors"
               >
                 <Phone className="h-3.5 w-3.5" />
@@ -116,7 +112,7 @@ export function Header() {
             {/* Center: Announcement */}
             <div className="flex items-center gap-2 text-xs font-medium">
               <Megaphone className="h-3.5 w-3.5" />
-              <span>{t("header.announcement") || "Livraison gratuite à partir de 500 000 FCFA"}</span>
+              <span>{t("header.announcement")}</span>
             </div>
 
             {/* Right: Language & Auth */}

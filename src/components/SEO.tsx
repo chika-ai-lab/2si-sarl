@@ -22,7 +22,7 @@ export function SEO({
 }: SEOProps) {
   const defaultTitle = `${companyConfig.name} - ${companyConfig.tagline}`;
   const defaultDescription = companyConfig.description;
-  const defaultKeywords = "équipement professionnel, paiement échelonné, crédit équipement, financement entreprise, Sénégal, Dakar";
+  const defaultKeywords = "paiement échelonné, payer en plusieurs fois, achat à crédit Sénégal, financement CBAO, financement CMS, équipement maison, équipement professionnel, Dakar";
 
   const pageTitle = title ? `${title} | ${companyConfig.name}` : defaultTitle;
   const pageDescription = description || defaultDescription;

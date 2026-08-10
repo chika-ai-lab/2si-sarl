@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { companyConfig } from "@/config/company.config";
 
 export interface InvoicePDFData {
   numero: string;
@@ -115,7 +116,7 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
           <View>
             <Text style={s.companyName}>Sen Services International</Text>
             <Text style={s.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
-            <Text style={s.companyLine}>Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar</Text>
+            <Text style={s.companyLine}>{companyConfig.address.street}, {companyConfig.address.city}</Text>
             <Text style={s.companyLine}>contact@sen-services.com · +221 33 864 48 48</Text>
           </View>
           <View>
@@ -198,7 +199,7 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
 
         {/* ── Footer ── */}
         <Text style={s.footer}>
-          Sen Services International (2SI) — Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar — contact@sen-services.com
+          Sen Services International (2SI) — {companyConfig.address.street}, {companyConfig.address.city} — contact@sen-services.com
         </Text>
       </Page>
     </Document>

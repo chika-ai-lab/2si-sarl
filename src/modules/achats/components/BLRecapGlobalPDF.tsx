@@ -5,6 +5,7 @@ import {
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
+import { companyConfig } from "@/config/company.config";
 
 const S = StyleSheet.create({
   page:        { padding: "28 36", fontSize: 9, fontFamily: "Helvetica", color: "#111" },
@@ -61,7 +62,7 @@ function RecapDoc({ data, bdcLabel }: { data: any; bdcLabel: string }) {
           <View>
             <Text style={S.companyName}>Sen Services International</Text>
             <Text style={S.companyLine}>Informatique · Électronique · Électroménager · BTP</Text>
-            <Text style={S.companyLine}>Sicap Amitié villa n 4337, Dakar  ·  contact@sen-services.com</Text>
+            <Text style={S.companyLine}>{companyConfig.address.street}, {companyConfig.address.city}  ·  contact@sen-services.com</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <View style={S.docBadge}>

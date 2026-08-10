@@ -2,6 +2,7 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/currency";
 import { printElement } from "@/lib/print";
+import { companyConfig } from "@/config/company.config";
 
 interface Ligne {
   designation: string;
@@ -52,7 +53,7 @@ export default function BonFournisseur({ cf, onClose }: Props) {
             <div>
               <p className="font-bold text-lg">Sen Services International</p>
               <p className="text-xs text-gray-500">Informatique · Électronique · Électroménager · BTP</p>
-              <p className="text-xs text-gray-500">Tel: 33 864 48 48 / 77 225 83 83 / 77 420 90 03</p>
+              <p className="text-xs text-gray-500">Tel: {companyConfig.phone}</p>
             </div>
             <div className="text-right">
               <p className="font-bold">Bon de Commande Fournisseur</p>

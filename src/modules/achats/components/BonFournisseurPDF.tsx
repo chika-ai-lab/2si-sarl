@@ -3,6 +3,7 @@ import {
 } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { companyConfig } from "@/config/company.config";
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ function BonFournisseurDoc({ cf }: { cf: CF }) {
           <View>
             <Text style={S.company}>Sen Services International</Text>
             <Text style={S.subtitle}>Informatique · Électronique · Électroménager · BTP</Text>
-            <Text style={S.subtitle}>Tel: 33 864 48 48 / 77 225 83 83 / 77 420 90 03</Text>
+            <Text style={S.subtitle}>Tel: {companyConfig.phone}</Text>
           </View>
           <View>
             <Text style={S.docTitle}>Bon de Commande Fournisseur</Text>

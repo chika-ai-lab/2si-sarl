@@ -147,7 +147,7 @@ export default function ProductDetailPage() {
       <SEO
         title={product.name}
         description={product.description}
-        keywords={`${product.name}, ${product.category}, équipement professionnel, paiement échelonné`}
+        keywords={`${product.name}, ${product.category}, payer en plusieurs fois, mensualités, financement Sénégal`}
         image={product.images[0]?.url}
         type="product"
       />

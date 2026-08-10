@@ -39,12 +39,12 @@
     "signIn": "Sign in",
     "or": "or",
     "register": "Register",
-    "searchPlaceholder": "Search products...",
-    "announcement": "Free delivery from 500,000 FCFA"
+    "searchPlaceholder": "Search for a product...",
+    "announcement": "Individuals and businesses: pay over 6, 12 or 24 monthly instalments"
   },
   "catalog": {
     "title": "Our Catalog",
-    "subtitle": "Discover our selection of professional equipment",
+    "subtitle": "Leading brands for your home and your office, payable in instalments",
     "searchPlaceholder": "Search for a product...",
     "noProducts": "No products found",
     "categories": {
@@ -73,19 +73,24 @@
   "product": {
     "addToCart": "Add to Cart",
     "removeFromCart": "Remove from Cart",
-    "inStock": "In Stock",
-    "outOfStock": "Out of Stock",
+    "inStock": "Available",
+    "outOfStock": "Currently unavailable",
     "quantity": "Quantity",
     "description": "Description",
     "specifications": "Specifications",
     "fromPerMonth": "from {amount}/month",
     "reference": "Ref.",
-    "category": "Category"
+    "category": "Category",
+    "startingFrom": "From",
+    "perMonth": "/month",
+    "overMonths": "Spread over {months} instalments",
+    "financingAvailable": "Financing available",
+    "financingWith": "{bank} financing"
   },
   "cart": {
     "title": "Your Cart",
     "empty": "Your cart is empty",
-    "emptyDescription": "Browse our catalog to find the equipment you need.",
+    "emptyDescription": "Browse the catalog and build your selection — you only ever pay in monthly instalments.",
     "browseCatalog": "Browse Catalog",
     "subtotal": "Subtotal",
     "total": "Total",
@@ -94,46 +99,48 @@
     "checkout": "Proceed to Checkout",
     "remove": "Remove",
     "updateQuantity": "Update quantity",
-    "paymentPlan": "Payment Plan",
+    "paymentPlan": "Payment duration",
     "monthlyPayment": "Monthly Payment",
-    "selectPlan": "Select a payment plan"
+    "selectPlan": "Choose a payment duration"
   },
   "payment": {
-    "title": "Payment Plan",
-    "selectPlan": "Select your payment plan",
+    "title": "Payment duration",
+    "selectPlan": "Choose your payment duration",
     "monthly": "per month",
     "total": "Total to pay",
-    "interest": "including interest",
-    "noInterest": "No interest",
+    "interest": "including financing charges",
+    "noInterest": "No additional charges",
     "plans": {
       "6months": "6 months",
-      "6months.description": "Pay in 6 interest-free installments",
+      "6months.description": "Settled in 6 instalments, with no additional charges",
       "12months": "12 months",
-      "12months.description": "Our most popular plan",
+      "12months.description": "The right balance between duration and instalment",
       "24months": "24 months",
-      "24months.description": "Reduced payments over 2 years"
+      "24months.description": "The lightest instalment, spread over 2 years"
     },
-    "popular": "Popular"
+    "popular": "Most chosen"
   },
   "order": {
-    "title": "Credit Application",
-    "subtitle": "Complete your application to finalize your order",
+    "title": "Your financing application",
+    "subtitle": "Complete your application and a client adviser will call you back",
     "personalInfo": "Personal Information",
     "contactInfo": "Contact Details",
-    "professionalInfo": "Professional Information",
+    "professionalInfo": "Employment details",
     "summary": "Summary",
-    "submit": "Submit Application",
+    "submit": "Send my application",
     "submitting": "Submitting...",
     "success": "Application submitted successfully",
-    "successMessage": "We will get back to you within 48 business hours.",
+    "successMessage": "A client adviser will call you back within 24h.",
     "fields": {
       "firstName": "First Name",
       "lastName": "Last Name",
       "email": "Email",
       "phone": "Phone",
-      "company": "Company",
+      "company": "Company name",
       "position": "Position",
-      "siret": "SIRET",
+      "siret": "NINEA",
+      "employer": "Employer",
+      "bank": "Salary account bank",
       "address": "Address",
       "city": "City",
       "postalCode": "Postal Code",
@@ -144,7 +151,7 @@
       "required": "This field is required",
       "invalidEmail": "Invalid email",
       "invalidPhone": "Invalid phone number",
-      "invalidSiret": "Invalid SIRET"
+      "invalidSiret": "Invalid NINEA"
     }
   },
   "admin": {
@@ -170,65 +177,100 @@
   },
   "home": {
     "hero": {
-      "title": "Equip Your Business",
-      "subtitle": "Flexible Financing Solutions"
+      "title": "Get equipped now, pay in instalments",
+      "subtitle": "For individuals and businesses alike"
     },
     "promo": {
-      "title": "0% Interest for 6 Months",
-      "description": "Finance your professional equipment with no additional fees",
-      "cta": "See Conditions"
+      "title": "From 6 to 24 instalments, at your own pace",
+      "description": "Phone, TV, home appliances, office equipment: pick your product, pick your duration.",
+      "cta": "Check my eligibility"
     },
     "categories": {
       "title": "Our Categories",
-      "subtitle": "Find the equipment suited to your professional needs"
+      "subtitle": "For your home, your office, and your business"
     },
     "featured": {
       "title": "Featured Products",
-      "subtitle": "Our most popular professional equipment",
+      "subtitle": "The products our customers ask for most",
       "viewAll": "View All"
     },
     "new": {
       "title": "New Arrivals",
-      "subtitle": "Discover our latest products"
+      "subtitle": "The latest additions to our catalog"
     },
     "trust": {
       "title": "Why Choose Sen Services International?",
-      "subtitle": "A reliable and transparent financing solution",
+      "subtitle": "Clear financing, from the first call to the last instalment",
       "stats": {
-        "clients": "Satisfied Clients",
-        "clientsDesc": "Professionals trust us",
+        "clients": "Customers equipped",
+        "clientsDesc": "Individuals and businesses trust us",
         "approval": "Approval Rate",
-        "approvalDesc": "Fast response guaranteed",
+        "approvalDesc": "The vast majority of applications succeed",
         "delay": "Response Time",
-        "delayDesc": "Ultra-fast approval",
-        "interest": "Interest Fees",
-        "interestDesc": "On 6 and 12 month plans"
+        "delayDesc": "A client adviser calls you back",
+        "interest": "Additional charges",
+        "interestDesc": "On the 6-instalment plan"
       }
     },
     "cta": {
       "title": "Ready to Get Equipped?",
-      "description": "Explore our complete catalog and find the perfect equipment to grow your professional business.",
+      "description": "Build your selection from the catalog and receive a personalised quote within 24h. A client adviser guides you at every step.",
       "browseCatalog": "Browse Catalog",
       "makeRequest": "Make a Request"
     }
   },
+  "eligibility": {
+    "title": "Am I eligible?",
+    "subtitle": "The conditions are simple and the answer comes fast. Pick your situation.",
+    "conditionsTitle": "Eligibility conditions",
+    "documentsTitle": "Documents required",
+    "particulier": {
+      "tab": "I am an individual",
+      "title": "Employees and civil servants",
+      "description": "Equip your home without waiting until you have the full amount: phone, TV, home appliances, furniture. Your instalments are debited from your salary account.",
+      "condition1": "Hold an account with your salary paid into CBAO or CMS",
+      "condition2": "Have at least 1 year of service for private-sector employees",
+      "condition3": "Be a tenured post-holder for civil servants",
+      "document1": "A photocopy of your national identity card",
+      "document2": "Your last 2 payslips",
+      "document3": "A certificate of employment",
+      "documentsNote": "Further documents may be requested depending on your application."
+    },
+    "pro": {
+      "tab": "I am a business",
+      "title": "Companies, retailers and institutions",
+      "description": "Equip your offices and your teams without tying up your cash: IT, furniture, tools, vehicles. One instalment, one invoice.",
+      "condition1": "Be a legally registered entity in Senegal",
+      "condition2": "Have at least 1 year of trading activity",
+      "condition3": "Hold a bank account in the entity's name with CBAO or CMS",
+      "document1": "Trade register and NINEA",
+      "document2": "Your last 3 bank statements",
+      "document3": "Identity document of the manager or legal representative",
+      "documentsNote": "Further documents may be requested depending on your line of business."
+    },
+    "advisor": {
+      "title": "A client adviser guides you",
+      "description": "Before any commitment, they tell you the amount you can finance, the application fees, the repayment duration and the terms that apply to your file.",
+      "cta": "Talk to an adviser"
+    }
+  },
   "trustBadges": {
-    "secure": "Secure Payment",
-    "interest": "0% Interest Available",
-    "approval": "Fast Approval",
-    "shipping": "Free Shipping",
-    "warranty": "Warranty Included"
+    "secure": "Secure direct debit",
+    "interest": "0 charges over 6 instalments",
+    "approval": "Answer within 24h",
+    "shipping": "Delivery across Senegal",
+    "warranty": "Manufacturer warranty included"
   },
   "badges": {
     "new": "New",
     "sale": "Sale",
     "featured": "Featured",
-    "outOfStock": "Out of Stock"
+    "outOfStock": "Unavailable"
   },
   "productDetails": {
     "from": "From",
     "perMonth": "/month",
-    "onlyLeft": "Only {count} left in stock",
+    "onlyLeft": "Only {count} left",
     "addToWishlist": "Add to Wishlist",
     "removeFromWishlist": "Remove from Wishlist"
   }

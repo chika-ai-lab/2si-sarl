@@ -75,8 +75,7 @@ export function FicheExpeditionPDF({ commande }: Props) {
               </View>
             </View>
             <Text style={S.infoLine}>{companyConfig.address.street}</Text>
-            <Text style={S.infoLine}>Tél : {companyConfig.phone} — 77 225 83 83</Text>
-            <Text style={S.infoLine}>77 420 90 03</Text>
+            <Text style={S.infoLine}>Tél : {companyConfig.phone}</Text>
             <Text style={S.infoLine}>Email : {companyConfig.email}</Text>
           </View>
 

@@ -3,6 +3,8 @@
  * Gère les paramètres de l'application avec localStorage
  */
 
+import { companyConfig } from "@/config/company.config";
+
 const SETTINGS_STORAGE_KEY = "2si-app-settings";
 
 export interface CompanySettings {
@@ -46,8 +48,12 @@ const DEFAULT_SETTINGS: AppSettings = {
     name: "2SI",
     legalName: "Sen Services International",
     email: "contact@sen-services.com",
-    phone: "+221 33 864 48 48 / 77 225 83 83 / 77 420 90 03",
-    address: "Avenue Bourguiba, Sicap Amitié villa n 4337, Dakar, Sénégal",
+    phone: companyConfig.phone,
+    address: [
+      companyConfig.address.street,
+      companyConfig.address.city,
+      companyConfig.address.country,
+    ].join(", "),
     ninea: "007835162",
   },
   payment: {

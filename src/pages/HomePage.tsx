@@ -8,7 +8,8 @@ import {
   AlertCircle,
   RefreshCcw,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -18,6 +19,7 @@ import { CategoryCard } from "@/components/business/CategoryCard";
 import { PromoBanner } from "@/components/business/PromoBanner";
 import { HeroCarousel } from "@/components/business/HeroCarousel";
 import { PromoSection } from "@/components/promo/PromoSection";
+import { EligibilitySection } from "@/components/business/EligibilitySection";
 import { SEO } from "@/components/SEO";
 import { useCompany } from "@/providers/ConfigProvider";
 import { useTranslation } from "@/providers/I18nProvider";
@@ -38,13 +40,21 @@ export default function HomePage() {
   const { products: apiProducts, categories: apiCategories, loading, error, refetch } = useMarketplaceProducts();
   const featuredProducts = apiProducts.slice(0, 3);
   const newProducts = apiProducts.slice(3, 6);
+  const { hash } = useLocation();
+
+  // Les CTA « éligibilité » pointent vers /#eligibilite. React Router ne rejoint
+  // pas les ancres de lui-même : on descend jusqu'à la section à la main.
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+  }, [hash]);
 
 
   return (
     <MainLayout>
       <SEO
-        description="Découvrez notre catalogue d'équipements professionnels avec des options de paiement échelonné sur 6, 12, 24 ou 36 mois. Financez votre équipement facilement au Sénégal."
-        keywords="équipement professionnel, paiement échelonné, crédit équipement, financement entreprise, Sénégal, Dakar, 2SI"
+        description="Téléphones, téléviseurs, électroménager, matériel de bureau : équipez-vous et payez en 6, 12 ou 24 mensualités. Une solution pour les particuliers salariés comme pour les entreprises, au Sénégal."
+        keywords="paiement échelonné, payer en plusieurs fois, achat à crédit Sénégal, financement CBAO, financement CMS, équipement particulier, équipement professionnel, Dakar, 2SI"
       />
       {/* Hero Carousel */}
       <motion.div
@@ -66,7 +76,7 @@ export default function HomePage() {
             title={t("home.promo.title")}
             description={t("home.promo.description")}
             ctaText={t("home.promo.cta")}
-            ctaLink="/catalog"
+            ctaLink="/#eligibilite"
             variant="accent"
           />
         </div>
@@ -224,6 +234,9 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* Éligibilité — répond à « est-ce que j'y ai droit ? » juste après le catalogue */}
+      <EligibilitySection />
+
       {/* Trust & Stats Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -264,7 +277,7 @@ export default function HomePage() {
               },
               {
                 icon: Clock,
-                stat: "48h",
+                stat: "24h",
                 labelKey: "home.trust.stats.delay",
                 descKey: "home.trust.stats.delayDesc",
               },

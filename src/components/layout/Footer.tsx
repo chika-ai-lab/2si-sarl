@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCompany } from "@/providers/ConfigProvider";
+import { primaryPhone, telHref } from "@/config/company.config";
 import { useTranslation } from "@/providers/I18nProvider";
 import { useI18n } from "@/providers/I18nProvider";
 
@@ -107,7 +108,7 @@ export function Footer() {
                 <span>{company.email}</span>
               </a>
               <a
-                href={`tel:${company.phone}`}
+                href={telHref(primaryPhone)}
                 className="flex items-center gap-3 text-primary-foreground/80 hover:text-primary-foreground transition-colors"
               >
                 <Phone className="h-4 w-4 flex-shrink-0" />
