@@ -41,8 +41,8 @@ export const promotionsConfig: PromotionsConfig = {
         en: "Tabaski 2026: Equip yourself for the celebration",
       },
       description: {
-        fr: "Équipez la maison pour la fête et réglez en plusieurs mensualités, sans frais cachés. Offre ouverte aux particuliers comme aux entreprises.",
-        en: "Equip your home for the celebration and settle in monthly instalments, with no hidden fees. Open to individuals and businesses alike.",
+        fr: "Équipez la maison pour la fête et réglez en plusieurs mensualités. Un conseiller vous précise les conditions avant tout engagement.",
+        en: "Equip your home for the celebration and settle in monthly instalments. An adviser sets out the terms before any commitment.",
       },
       link: "/catalog",
       startDate: "2026-05-20",
@@ -59,8 +59,8 @@ export const promotionsConfig: PromotionsConfig = {
         en: "CBAO Financing: up to 24 months",
       },
       description: {
-        fr: "Salarié ou entreprise, financez vos achats via la CBAO. Dossier simple, réponse rapide. Payez en 6, 12 ou 24 mensualités.",
-        en: "Employee or business, finance your purchases through CBAO. Simple application, quick response. Pay over 6, 12 or 24 instalments.",
+        fr: "Salaire domicilié à la CBAO ? Financez vos achats en 6, 12 ou 24 mensualités. Dossier simple, réponse sous 24 heures.",
+        en: "Salary paid into CBAO? Finance your purchases over 6, 12 or 24 instalments. Simple application, answer within 24 hours.",
       },
       link: "/catalog",
       backgroundColor: "#1a3a6b",

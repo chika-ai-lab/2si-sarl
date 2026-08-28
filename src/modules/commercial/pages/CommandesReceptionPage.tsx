@@ -28,6 +28,7 @@ import {
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 import { apiClient } from "../services/apiClient";
+import { nomClient as formatNomClient } from "@/lib/client-nom";
 import { deleteCommande } from "../services/commandes.service";
 import { mapCmdStatut, CMD_STATUT } from "../lib/commandes.constants";
 
@@ -381,12 +382,7 @@ export default function CommandesReceptionPage() {
       // Client data
       const cl = c.client;
       const clientNom = cl
-        ? (cl.nom_complet ||
-           `${cl.nom ?? ""} ${cl.prenom ?? ""}`.trim() ||
-           cl.raison_sociale ||
-           cl.name ||
-           cl.telephone ||
-           "—")
+        ? formatNomClient(cl, cl.name || cl.telephone || "—")
         : "—";
 
       // Région/ville du client — essayer tous les champs possibles

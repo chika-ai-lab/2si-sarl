@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { Product, ProductImage } from "@/data/products";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.sen-services.com/api/v2";
@@ -62,6 +63,7 @@ function mapToProduct(a: BackendArticle): Product {
     images,
     category: categoryName,
     banque: banque || undefined,
+    marque: a.marque?.trim() || undefined,
     // Le stock n'est pas suivi article par article dans ce modèle (vente à
     // financement) : seul le statut décide de la disponibilité à la commande.
     inStock: a.statut !== "rupture",
@@ -79,55 +81,82 @@ function mapToProduct(a: BackendArticle): Product {
   };
 }
 
+/** Taille de lot : multiple de 2, 3 et 4, donc des grilles toujours complètes. */
+const TAILLE_LOT = 24;
+
+/**
+ * Catalogue public, chargé par lots.
+ *
+ * La route renvoyait auparavant l'intégralité du catalogue en une fois. Elle
+ * est désormais paginée côté serveur ; on enchaîne les pages à la demande
+ * plutôt que de tout réclamer d'un bloc.
+ *
+ * `products` reste un tableau plat de tout ce qui a été chargé jusqu'ici, pour
+ * que les appelants qui n'ont besoin que des premiers éléments — la page
+ * d'accueil et ses vedettes — n'aient rien à changer.
+ */
 export function useMarketplaceProducts(searchQuery?: string) {
-  const [products, setProducts]     = useState<Product[]>([]);
-  const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  const {
+    data,
+    isLoading,
+    error: queryError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["marketplace", "articles", searchQuery ?? ""],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams({
+        page: String(pageParam),
+        per_page: String(TAILLE_LOT),
+      });
+      if (searchQuery) params.set("search", searchQuery);
+      return fetchWithRetry(`${API_BASE}/public/articles?${params}`);
+    },
+    getNextPageParam: (derniere: any) => {
+      const meta = derniere?.meta;
+      if (!meta) return undefined; // ancienne forme sans pagination
+      return meta.current_page < meta.last_page ? meta.current_page + 1 : undefined;
+    },
+    staleTime: 1000 * 60 * 2,
+  });
 
-  const load = useCallback(async (cancelled: { value: boolean }) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const artUrl = searchQuery
-        ? `${API_BASE}/public/articles?search=${encodeURIComponent(searchQuery)}`
-        : `${API_BASE}/public/articles`;
+  const { data: catData } = useQuery({
+    queryKey: ["marketplace", "categories-hook"],
+    queryFn: () => fetchWithRetry(`${API_BASE}/public/categories`),
+    staleTime: 1000 * 60 * 10,
+  });
 
-      const [artRes, catRes] = await Promise.all([
-        fetchWithRetry(artUrl),
-        fetchWithRetry(`${API_BASE}/public/categories`),
-      ]);
+  const products: Product[] = useMemo(() => {
+    const pages = data?.pages ?? [];
+    return pages.flatMap((p: any) => {
+      const liste: BackendArticle[] = Array.isArray(p) ? p : (p?.data ?? []);
+      return liste.map(mapToProduct);
+    });
+  }, [data]);
 
-      if (cancelled.value) return;
+  const categories = useMemo(() => {
+    const liste = Array.isArray(catData) ? catData : (catData?.data ?? []);
+    return liste.map((c: { id: number; categorie: string }) => ({
+      id: String(c.id),
+      label: c.categorie,
+    }));
+  }, [catData]);
 
-      const articles: BackendArticle[] = Array.isArray(artRes) ? artRes : (artRes.data ?? []);
-      const mapped = articles.map(mapToProduct);
-      setProducts(mapped);
+  const total = (data?.pages?.[0] as any)?.meta?.total ?? products.length;
 
-      const cats = Array.isArray(catRes) ? catRes : (catRes.data ?? []);
-      setCategories(
-        cats.map((c: { id: number; categorie: string }) => ({
-          id: String(c.id),
-          label: c.categorie,
-        }))
-      );
-    } catch {
-      if (!cancelled.value) setError("Impossible de charger le catalogue. Vérifiez votre connexion.");
-    } finally {
-      if (!cancelled.value) setLoading(false);
-    }
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const cancelled = { value: false };
-    load(cancelled);
-    return () => { cancelled.value = true; };
-  }, [load]);
-
-  const refetch = useCallback(() => {
-    const cancelled = { value: false };
-    load(cancelled);
-  }, [load]);
-
-  return { products, categories, loading, error, refetch };
+  return {
+    products,
+    categories,
+    loading: isLoading,
+    error: queryError ? "Impossible de charger le catalogue. Vérifiez votre connexion." : null,
+    refetch,
+    // Chargement progressif — ignorés par les appelants qui n'en ont pas besoin.
+    fetchNextPage,
+    hasNextPage: !!hasNextPage,
+    isFetchingNextPage,
+    total,
+  };
 }

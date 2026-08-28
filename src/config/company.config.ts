@@ -42,7 +42,7 @@ export const companyConfig: CompanyConfig = {
   name: "Sen Services International",
   legalName: "2SI.Sarl",
   tagline: "Équipement à Moindre Coût",
-  description: "Équipez votre foyer ou votre entreprise et payez en plusieurs mensualités : une solution de financement pensée pour les salariés, les fonctionnaires et les professionnels du Sénégal.",
+  description: "Des offres sur mesure pour les salariés et fonctionnaires dont le salaire est domicilié à la CBAO ou au Crédit Mutuel du Sénégal : équipez votre foyer et payez en plusieurs mensualités.",
   email: "contact@sen-services.com",
   phones: [
     { display: "33 864 48 48", e164: "+221338644848" },

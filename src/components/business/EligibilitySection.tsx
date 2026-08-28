@@ -31,9 +31,11 @@ export function EligibilitySection() {
 
   // WhatsApp d'abord : c'est le canal réellement utilisé ici. Sans numéro
   // WhatsApp déclaré, on retombe sur un appel classique.
+  // Message d'accroche volontairement générique : il sert de point d'entrée à
+  // toutes les offres, le conseiller qualifie ensuite le besoin.
   const contact = whatsappPhones[0];
   const contactHref = contact
-    ? whatsappHref(contact, "Bonjour, je souhaite connaître mon éligibilité au paiement en plusieurs fois.")
+    ? whatsappHref(contact, "Bonjour, je voudrais avoir plus d'informations sur cette offre.")
     : telHref(primaryPhone);
 
   return (

@@ -126,7 +126,7 @@ function LeadRow({ lead, onAction, onOptimisticRemove, onRollback }: {
                   <p className="text-xs">Prix de vente : <span className="font-semibold">{formatCfa(lead.prix_vente)}</span></p>
                   {lead.frais_expedition ? <p className="text-xs">Expédition : {formatCfa(lead.frais_expedition)}</p> : null}
                   {lead.duree_paiement ? (
-                    <p className="text-xs">Plan : {lead.duree_paiement} mois · {formatCfa(Math.round(lead.prix_vente / lead.duree_paiement))}/mois</p>
+                    <p className="text-xs">Plan : {lead.duree_paiement} mois · {formatCfa(Math.round(lead.prix_vente / lead.duree_paiement))} par mois</p>
                   ) : null}
                 </div>
               )}

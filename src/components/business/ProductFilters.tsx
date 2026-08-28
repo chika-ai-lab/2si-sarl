@@ -14,6 +14,8 @@ interface ProductFiltersProps {
   clearFilters: () => void;
   activeFilterCount: number;
   apiCategories?: { id: string; label: string }[];
+  /** Marques présentes au catalogue, dérivées des produits chargés. */
+  marques?: string[];
   className?: string;
 }
 
@@ -31,6 +33,7 @@ export function ProductFilters({
   clearFilters,
   activeFilterCount,
   apiCategories = [],
+  marques = [],
   className,
 }: ProductFiltersProps) {
   const { t } = useTranslation();
@@ -40,6 +43,14 @@ export function ProductFilters({
       ? filters.categories.filter((c) => c !== categoryName)
       : [...filters.categories, categoryName];
     updateFilters({ categories: newCategories });
+  };
+
+  const handleMarqueToggle = (marque: string) => {
+    updateFilters({
+      marques: filters.marques.includes(marque)
+        ? filters.marques.filter((m) => m !== marque)
+        : [...filters.marques, marque],
+    });
   };
 
   const handleRatingChange = (rating: number) => {
@@ -75,7 +86,7 @@ export function ProductFilters({
         )}
       </div>
 
-      <Accordion type="multiple" defaultValue={["categories", "price", "rating", "stock"]} className="w-full">
+      <Accordion type="multiple" defaultValue={["categories", "marques", "price", "rating", "stock"]} className="w-full">
         {/* Categories */}
         <AccordionItem value="categories">
           <AccordionTrigger className="hover:no-underline">
@@ -111,6 +122,41 @@ export function ProductFilters({
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        {/* Marques — masqué tant qu'aucun produit n'en porte */}
+        {marques.length > 0 && (
+          <AccordionItem value="marques">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center justify-between w-full pr-3">
+                <span className="font-medium">Marques</span>
+                {filters.marques.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {filters.marques.length}
+                  </Badge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-2 max-h-64 overflow-y-auto">
+                {marques.map((marque) => (
+                  <div key={marque} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`marque-${marque}`}
+                      checked={filters.marques.includes(marque)}
+                      onCheckedChange={() => handleMarqueToggle(marque)}
+                    />
+                    <Label
+                      htmlFor={`marque-${marque}`}
+                      className="cursor-pointer flex-1 text-sm"
+                    >
+                      {marque}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
         {/* Rating */}
         <AccordionItem value="rating">

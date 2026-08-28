@@ -4,6 +4,7 @@ import { products, type Product } from "@/data/products";
 
 export interface FilterState {
   categories: string[];
+  marques: string[];
   priceRange: [number, number];
   minRating: number;
   inStockOnly: boolean;
@@ -15,6 +16,7 @@ export interface FilterState {
 
 const DEFAULT_FILTERS: FilterState = {
   categories: [],
+  marques: [],
   priceRange: [0, 20000000], // Updated for FCFA prices
   minRating: 0,
   inStockOnly: false,
@@ -34,6 +36,11 @@ export function useProductFilters(externalProducts?: Product[]) {
     const categories = searchParams.get("categories");
     if (categories) {
       urlFilters.categories = categories.split(",");
+    }
+
+    const marques = searchParams.get("marques");
+    if (marques) {
+      urlFilters.marques = marques.split(",");
     }
 
     const priceMin = searchParams.get("priceMin");
@@ -90,6 +97,10 @@ export function useProductFilters(externalProducts?: Product[]) {
       params.set("categories", updatedFilters.categories.join(","));
     }
 
+    if (updatedFilters.marques.length > 0) {
+      params.set("marques", updatedFilters.marques.join(","));
+    }
+
     if (
       updatedFilters.priceRange[0] !== DEFAULT_FILTERS.priceRange[0] ||
       updatedFilters.priceRange[1] !== DEFAULT_FILTERS.priceRange[1]
@@ -139,6 +150,11 @@ export function useProductFilters(externalProducts?: Product[]) {
     // Filter by categories
     if (filters.categories.length > 0) {
       result = result.filter((p) => filters.categories.includes(p.category));
+    }
+
+    // Filter by marques
+    if (filters.marques.length > 0) {
+      result = result.filter((p) => p.marque && filters.marques.includes(p.marque));
     }
 
     // Filter by price range
@@ -210,6 +226,7 @@ export function useProductFilters(externalProducts?: Product[]) {
     let count = 0;
 
     if (filters.categories.length > 0) count++;
+    if (filters.marques.length > 0) count++;
     if (
       filters.priceRange[0] !== DEFAULT_FILTERS.priceRange[0] ||
       filters.priceRange[1] !== DEFAULT_FILTERS.priceRange[1]
@@ -224,12 +241,24 @@ export function useProductFilters(externalProducts?: Product[]) {
     return count;
   }, [filters]);
 
+  // Marques réellement présentes au catalogue : la liste est dérivée des
+  // produits, jamais écrite en dur, pour qu'une nouvelle marque apparaisse au
+  // filtre dès qu'un article la porte.
+  const marquesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of sourceProducts) {
+      if (p.marque?.trim()) set.add(p.marque.trim());
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, "fr"));
+  }, [sourceProducts]);
+
   return {
     filters,
     updateFilters,
     clearFilters,
     filteredProducts,
     activeFilterCount,
+    marquesDisponibles,
     totalProducts: sourceProducts.length,
   };
 }

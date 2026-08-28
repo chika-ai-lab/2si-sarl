@@ -14,6 +14,7 @@ interface MobileFiltersProps {
   filteredCount: number;
   totalCount: number;
   apiCategories?: { id: string; label: string }[];
+  marques?: string[];
 }
 
 export function MobileFilters({
@@ -24,6 +25,7 @@ export function MobileFilters({
   filteredCount,
   totalCount,
   apiCategories = [],
+  marques = [],
 }: MobileFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -59,6 +61,7 @@ export function MobileFilters({
             clearFilters={clearFilters}
             activeFilterCount={activeFilterCount}
             apiCategories={apiCategories}
+            marques={marques}
           />
         </div>
 

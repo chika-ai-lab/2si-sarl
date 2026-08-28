@@ -1,654 +1,472 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Truck, PackageCheck, Search, RefreshCcw, Printer, MoreHorizontal,
+  AlertTriangle, XCircle, MapPin, Phone, User, Loader2, Inbox, History, ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Truck, Package, CheckCircle2, Clock, RefreshCcw, FileText,
-  Plus, Search, Trash2, XCircle, Eye, MoreVertical,
-  CheckCircle, Loader2, ShoppingCart, Printer,
-} from "lucide-react";
-import { formatCurrency } from "@/lib/currency";
-import { apiClient } from "@/modules/commercial/services/apiClient";
-import { useClients } from "@/modules/commercial/hooks/useClients";
-import { FactureDialog } from "@/modules/commercial/components/FactureDialog";
-import { CreateCommandeDialog } from "@/modules/commercial/components/CreateCommandeDialog";
-import { type BackendArticle } from "@/modules/commercial/components/ProductPickerSheet";
 import { toast } from "@/hooks/use-toast";
-import { CMD_STATUT, MODES_PAIEMENT } from "@/modules/commercial/lib/commandes.constants";
-import { BLDialog } from "../components/BLDialog";
-import { useLivraisonsCommandes } from "../hooks/useLivraisonsCommandes";
-import { clientDisplayName } from "../lib/livraisons.helpers";
-import type { CommandeLivraison } from "../types";
+import { cn } from "@/lib/utils";
+import { apiClient } from "@/modules/commercial/services/apiClient";
+import {
+  BordereauxService, BL_STATUT, FILES,
+  type Bordereau, type FileId, type ExpedierPayload, type LivrerPayload,
+} from "../services/bordereaux.service";
+import { ExpedierDialog, LivrerDialog, MotifDialog } from "../components/LivraisonDialogs";
+import BLFicheExpeditionPDF from "../components/BLFicheExpeditionPDF";
+import { HistoriqueTimeline } from "@/components/business/HistoriqueTimeline";
+import { VirtualList } from "@/components/business/VirtualList";
+import { nomClient as formatNomClient } from "@/lib/client-nom";
 
-// Re-export query key so LogistiqueDashboard can share cache
-export { LOGISTIQUE_COMMANDES_KEY } from "../hooks/useLivraisonsCommandes";
+/**
+ * Livraisons — écran unique du parcours.
+ *
+ * Il remplace les deux écrans concurrents d'avant (« Livraisons » qui mutait
+ * directement l'état des commandes sans rien enregistrer, et « Bordereaux »
+ * dont le premier bouton confirmait la livraison sous un libellé trompeur).
+ *
+ * Règle d'interface : une seule action principale par ligne, toujours au même
+ * endroit, dont le libellé nomme le résultat. Tout le reste passe derrière « ⋯ ».
+ */
 
-// ─── Component ────────────────────────────────────────────────────────────────
+const BORDEREAUX_KEY = ["bordereaux"] as const;
+
+/**
+ * L'API sérialise les entités TypeORM en camelCase (`nomComplet`), pas en
+ * snake_case comme les colonnes. Lire `nom_complet` renvoyait toujours
+ * undefined et la carte retombait sur le nom de famille seul.
+ */
+interface ClientLite {
+  id: number;
+  nomComplet?: string;
+  nom?: string;
+  prenom?: string;
+  raisonSociale?: string;
+  telephone?: string;
+  adresse?: string;
+}
 
 export function LivraisonsPage() {
-  const { allRaw, isLoading, invalidate, changeStatut, livrer, annuler, supprimer } =
-    useLivraisonsCommandes();
+  const qc = useQueryClient();
 
-  // ── Articles + clients (for CreateCommandeDialog) ──────────────────────
-  const { data: articlesData = [] } = useQuery<BackendArticle[]>({
-    queryKey: ["articles-list"],
-    queryFn:  async () => { const r = await apiClient.get<any>("/articles"); return r.data ?? r ?? []; },
+  const [file, setFile]     = useState<FileId>("a_expedier");
+  const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const [expedier, setExpedier] = useState<Bordereau | null>(null);
+  const [livrer, setLivrer]     = useState<Bordereau | null>(null);
+  const [motif, setMotif]       = useState<{ bl: Bordereau; variante: "echec" | "annule" } | null>(null);
+  const [imprimeId, setImprimeId] = useState<number | null>(null);
+  const [historiqueId, setHistoriqueId] = useState<number | null>(null);
+  const [ouvertId, setOuvertId] = useState<number | null>(null);
+
+  const { data: bordereaux = [], isLoading, refetch } = useQuery({
+    queryKey: BORDEREAUX_KEY,
+    queryFn: async () => (await BordereauxService.getAll({ per_page: 200 })).data,
+    staleTime: 1000 * 60,
+  });
+
+  // Les bordereaux ne portent qu'un client_id : on résout les noms une fois.
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients-lite"],
+    queryFn: async () => {
+      const r = await apiClient.get<any>("/clients", { per_page: 500 });
+      return (Array.isArray(r) ? r : (r?.data ?? [])) as ClientLite[];
+    },
     staleTime: 1000 * 60 * 10,
   });
-  const { data: clientsData } = useClients({ limit: 1000 });
-  const clients = clientsData?.data || [];
 
-  // ── Derived lists ──────────────────────────────────────────────────────
-  const toutesCommandes = allRaw;
-  const commandes       = toutesCommandes.filter((c) => ["validee", "en_cours", "livree"].includes(c.statut));
-  const aPrep           = commandes.filter((c) => c.statut === "validee");
-  const enLivr          = commandes.filter((c) => c.statut === "en_cours");
-  const livrees         = commandes.filter((c) => c.statut === "livree");
+  const clientMap = useMemo(
+    () => new Map(clients.map((c) => [c.id, c])),
+    [clients],
+  );
 
-  // ── UI state ───────────────────────────────────────────────────────────
-  const [activeTab,       setActiveTab]       = useState<"commandes" | "validee" | "en_cours" | "livree">("commandes");
-  const [actionLoading,   setActionLoading]   = useState<string | null>(null);
+  const nomClient = (bl: Bordereau) =>
+    formatNomClient(bl.clientId ? clientMap.get(bl.clientId) : undefined);
 
-  // BL dialog
-  const [blOpen,          setBlOpen]          = useState(false);
-  const [blCommande,      setBlCommande]      = useState<CommandeLivraison | null>(null);
+  const compteurs = useMemo(() => {
+    const out = {} as Record<FileId, number>;
+    for (const f of FILES) out[f.id] = bordereaux.filter((b) => f.etats.includes(b.etat)).length;
+    return out;
+  }, [bordereaux]);
 
-  // Livrer dialog
-  const [livrerCmd,       setLivrerCmd]       = useState<CommandeLivraison | null>(null);
-  const [livrerMode,      setLivrerMode]      = useState("especes");
+  const visibles = useMemo(() => {
+    const etats = FILES.find((f) => f.id === file)!.etats;
+    const q = search.trim().toLowerCase();
+    return bordereaux
+      .filter((b) => etats.includes(b.etat))
+      .filter((b) => !q
+        || (b.num ?? "").toLowerCase().includes(q)
+        || nomClient(b).toLowerCase().includes(q))
+      .sort((a, b) => b.id - a.id);
+  }, [bordereaux, file, search, clientMap]);
 
-  // Cancel dialog
-  const [cancelCmd,       setCancelCmd]       = useState<CommandeLivraison | null>(null);
-  const [cancelNotes,     setCancelNotes]     = useState("");
-  const [saving,          setSaving]          = useState(false);
+  // ── Actions ───────────────────────────────────────────────────────────────
 
-  // Delete dialog
-  const [deleteCmd,       setDeleteCmd]       = useState<CommandeLivraison | null>(null);
-
-  // Detail + facture dialogs
-  const [detailCmd,       setDetailCmd]       = useState<CommandeLivraison | null>(null);
-  const [factureCmd,      setFactureCmd]      = useState<CommandeLivraison | null>(null);
-  const [isCreateOpen,    setIsCreateOpen]    = useState(false);
-
-  // Commandes tab filters
-  const [cmdSearch,       setCmdSearch]       = useState("");
-  const [cmdStatutFilter, setCmdStatut]       = useState("all");
-
-  const filteredCommandes = useMemo(() => {
-    const q = cmdSearch.toLowerCase();
-    return toutesCommandes.filter((c) => {
-      if (cmdStatutFilter !== "all" && c.statut !== cmdStatutFilter) return false;
-      if (q) {
-        const h = [c.reference, clientDisplayName(c.client), c.client?.telephone]
-          .filter(Boolean).join(" ").toLowerCase();
-        if (!h.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [toutesCommandes, cmdSearch, cmdStatutFilter]);
-
-  const visibleRows = activeTab === "validee" ? aPrep : activeTab === "en_cours" ? enLivr : livrees;
-
-  // ── Handlers ───────────────────────────────────────────────────────────
-
-  const openBLDialog = (cmd: CommandeLivraison) => {
-    setBlCommande(cmd);
-    setBlOpen(true);
-  };
-
-  const handleBLPrinted = (cmd: CommandeLivraison) => {
-    if (cmd.statut === "validee") changeStatut(cmd, "en_cours");
-  };
-
-  const handleStatutChange = async (cmd: CommandeLivraison, newEtat: string) => {
-    setActionLoading(cmd.id);
-    await changeStatut(cmd, newEtat);
-    setActionLoading(null);
-  };
-
-  const handleLivrer = async () => {
-    if (!livrerCmd) return;
-    const cmd = livrerCmd;
-    setLivrerCmd(null);
-    setActionLoading(cmd.id);
-    await livrer(cmd, livrerMode);
-    setActionLoading(null);
-  };
-
-  const handleCancelCommande = async () => {
-    if (!cancelCmd) return;
-    setSaving(true);
+  const run = async (bl: Bordereau, fn: () => Promise<unknown>, succes: string) => {
+    setBusyId(bl.id);
     try {
-      await annuler(cancelCmd, cancelNotes);
-      setCancelCmd(null); setCancelNotes("");
-    } catch { /* error toasted inside hook */ }
-    finally { setSaving(false); }
+      await fn();
+      await qc.invalidateQueries({ queryKey: BORDEREAUX_KEY });
+      qc.invalidateQueries({ queryKey: ["bon-commandes"] });
+      toast({ title: succes });
+      setExpedier(null); setLivrer(null); setMotif(null);
+    } catch (e: any) {
+      // Le serveur renvoie un message explicite quand la transition est refusée.
+      toast({ title: "Action impossible", description: e?.message, variant: "destructive" });
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const handleDeleteCommande = async () => {
-    if (!deleteCmd) return;
-    const cmd = deleteCmd;
-    setDeleteCmd(null);
-    await supprimer(cmd);
-  };
-
-  // ── Render ─────────────────────────────────────────────────────────────
+  // ── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
-    <>
-      {/* ── Dialogs ── */}
+    <div className="p-4 sm:p-6 space-y-5 max-w-6xl mx-auto">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Livraisons</h1>
+          <p className="text-sm text-muted-foreground">
+            Tout le parcours de livraison, du départ du dépôt à la remise au client.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCcw className="h-4 w-4 mr-1.5" />Actualiser
+        </Button>
+      </div>
 
-      <CreateCommandeDialog
-        open={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        onCreated={invalidate}
-        articles={articlesData}
-        clients={clients}
-      />
+      <Tabs value={file} onValueChange={(v) => setFile(v as FileId)}>
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          {FILES.map((f) => (
+            <TabsTrigger key={f.id} value={f.id} className="py-2 gap-1.5">
+              {f.label}
+              <span className="text-xs opacity-70 tabular-nums">({compteurs[f.id] ?? 0})</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
-      <BLDialog
-        commande={blCommande}
-        open={blOpen}
-        onClose={() => setBlOpen(false)}
-        onPrinted={handleBLPrinted}
-      />
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          className="pl-9"
+          placeholder="Rechercher un bordereau ou un client…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
-      {/* Confirmation livraison */}
-      <Dialog open={!!livrerCmd} onOpenChange={(o) => { if (!o) setLivrerCmd(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />Confirmer la livraison
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Commande <span className="font-mono font-semibold">{livrerCmd?.reference}</span>
-              {" — "}{clientDisplayName(livrerCmd?.client)}
-            </p>
-            <div>
-              <Label>Mode de paiement reçu *</Label>
-              <Select value={livrerMode} onValueChange={setLivrerMode}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {MODES_PAIEMENT.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setLivrerCmd(null)}>Annuler</Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={handleLivrer}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />Marquer livrée
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Annulation */}
-      <Dialog open={!!cancelCmd} onOpenChange={(o) => { if (!o) { setCancelCmd(null); setCancelNotes(""); } }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-destructive" />Annuler la commande
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Commande <span className="font-mono font-semibold">{cancelCmd?.reference}</span>
-              {" — client : "}<span className="font-medium">{clientDisplayName(cancelCmd?.client)}</span>
-            </p>
-            <div>
-              <Label>Raison de l'annulation *</Label>
-              <Textarea
-                className="mt-1" rows={3} value={cancelNotes}
-                onChange={(e) => setCancelNotes(e.target.value)}
-                placeholder="Expliquez pourquoi cette commande est annulée..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setCancelCmd(null); setCancelNotes(""); }}>Retour</Button>
-            <Button variant="destructive" onClick={handleCancelCommande} disabled={saving || !cancelNotes.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmer l'annulation
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Suppression */}
-      <AlertDialog open={!!deleteCmd} onOpenChange={(o) => !o && setDeleteCmd(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette commande ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              La commande <span className="font-mono font-semibold">{deleteCmd?.reference}</span> sera
-              définitivement supprimée. Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDeleteCommande}
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Détail commande */}
-      <Dialog open={!!detailCmd} onOpenChange={(o) => !o && setDetailCmd(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Commande — {detailCmd?.reference}</DialogTitle></DialogHeader>
-          {detailCmd && (
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Client</p>
-                  <p className="font-semibold">{clientDisplayName(detailCmd.client)}</p>
-                  <p className="text-xs text-muted-foreground">{detailCmd.client?.telephone}</p>
-                </div>
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Paiement</p>
-                  <p className="font-semibold capitalize">{detailCmd.banque || "—"}</p>
-                </div>
-              </div>
-              <div className="rounded-lg border overflow-hidden">
-                <div className="px-3 py-2 bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Articles
-                </div>
-                <table className="w-full">
-                  <tbody className="divide-y">
-                    {detailCmd.lignes.map((l) => (
-                      <tr key={l.id}>
-                        <td className="px-3 py-2">
-                          <p className="font-medium">{l.produit?.nom || `Produit #${l.id}`}</p>
-                          {l.produit?.reference && (
-                            <p className="text-xs text-muted-foreground font-mono">{l.produit.reference}</p>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-center text-muted-foreground w-16">×{l.quantite}</td>
-                        <td className="px-3 py-2 text-right font-semibold whitespace-nowrap">
-                          {formatCurrency(l.prixUnitaire * l.quantite)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="px-3 py-2 border-t bg-muted/20 flex justify-end">
-                  <span className="font-bold">{formatCurrency(detailCmd.total)}</span>
-                </div>
-              </div>
-              {detailCmd.notes && (
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                  <p>{detailCmd.notes}</p>
-                </div>
-              )}
-            </div>
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+      ) : visibles.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-16 text-muted-foreground">
+          <Inbox className="h-9 w-9 opacity-40" />
+          <p className="text-sm">
+            {search ? "Aucun bordereau ne correspond à cette recherche." : "Rien dans cette file."}
+          </p>
+        </div>
+      ) : (
+        // Au-delà de 60 bordereaux, seules les lignes visibles sont rendues.
+        <VirtualList
+          items={visibles}
+          cle={(bl) => bl.id}
+          hauteurEstimee={132}
+          className="max-h-[calc(100vh-22rem)] min-h-[24rem]"
+          renderItem={(bl) => (
+            <LigneBordereau
+              bl={bl}
+              client={nomClient(bl)}
+              telephone={bl.clientId ? clientMap.get(bl.clientId)?.telephone : undefined}
+              busy={busyId === bl.id}
+              ouvert={ouvertId === bl.id}
+              onToggle={() => setOuvertId((id) => (id === bl.id ? null : bl.id))}
+              onExpedier={() => setExpedier(bl)}
+              onLivrer={() => setLivrer(bl)}
+              onEchec={() => setMotif({ bl, variante: "echec" })}
+              onAnnuler={() => setMotif({ bl, variante: "annule" })}
+              onImprimer={() => setImprimeId(bl.id)}
+              onHistorique={() => setHistoriqueId(bl.id)}
+            />
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailCmd(null)}>Fermer</Button>
-            {detailCmd && (detailCmd.statut === "validee" || detailCmd.statut === "livree") && (
-              <Button variant="outline" onClick={() => { setFactureCmd(detailCmd); setDetailCmd(null); }}>
-                <FileText className="mr-2 h-4 w-4" />Générer facture
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {factureCmd && (
-        <FactureDialog
-          commandeId={Number(factureCmd.id)}
-          commandeRef={factureCmd.reference}
-          open={!!factureCmd}
-          onClose={() => setFactureCmd(null)}
         />
       )}
 
-      {/* ── Page ── */}
-      <div className="space-y-6">
+      {/* ── Dialogues ── */}
+      <ExpedierDialog
+        open={!!expedier}
+        onClose={() => setExpedier(null)}
+        reference={expedier?.num ?? ""}
+        client={expedier ? nomClient(expedier) : ""}
+        busy={busyId === expedier?.id}
+        onConfirm={(p: ExpedierPayload) =>
+          expedier && run(expedier, () => BordereauxService.expedier(expedier.id, p), "Bordereau expédié")}
+      />
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Truck className="h-7 w-7" /> Logistique
-            </h2>
-            <p className="text-muted-foreground">Gestion des commandes et expéditions</p>
-          </div>
-          <Button variant="outline" onClick={invalidate} disabled={isLoading}>
-            <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Actualiser
-          </Button>
-        </div>
+      <LivrerDialog
+        open={!!livrer}
+        onClose={() => setLivrer(null)}
+        reference={livrer?.num ?? ""}
+        client={livrer ? nomClient(livrer) : ""}
+        busy={busyId === livrer?.id}
+        onConfirm={(p: LivrerPayload) =>
+          livrer && run(livrer, () => BordereauxService.livrer(livrer.id, p), "Livraison confirmée")}
+      />
 
-        {/* KPIs */}
-        <div className="grid gap-4 grid-cols-3">
-          {[
-            { label: "À préparer",   count: aPrep.length,   icon: Clock,        color: "text-blue-600" },
-            { label: "En livraison", count: enLivr.length,  icon: Truck,        color: "text-orange-500" },
-            { label: "Livrées",      count: livrees.length, icon: CheckCircle2, color: "text-green-600" },
-          ].map(({ label, count, icon: Icon, color }) => (
-            <Card key={label}>
-              <CardContent className="pt-6 flex items-center gap-3">
-                <Icon className={`h-8 w-8 ${color}`} />
-                <div>
-                  <p className="text-sm text-muted-foreground">{label}</p>
-                  <p className="text-3xl font-bold">{isLoading ? "—" : count}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <MotifDialog
+        open={!!motif}
+        onClose={() => setMotif(null)}
+        reference={motif?.bl.num ?? ""}
+        client={motif ? nomClient(motif.bl) : ""}
+        busy={busyId === motif?.bl.id}
+        variante={motif?.variante ?? "echec"}
+        onConfirm={(m) => {
+          if (!motif) return;
+          const { bl, variante } = motif;
+          return variante === "echec"
+            ? run(bl, () => BordereauxService.echec(bl.id, m), "Échec enregistré")
+            : run(bl, () => BordereauxService.annuler(bl.id, m), "Bordereau annulé");
+        }}
+      />
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList>
-            <TabsTrigger value="commandes" className="gap-2">
-              <ShoppingCart className="h-4 w-4" />Commandes
-              {toutesCommandes.filter((c) => c.statut === "brouillon" || c.statut === "en_attente").length > 0 && (
-                <Badge className="ml-1 bg-yellow-500 text-white text-xs px-1.5">
-                  {toutesCommandes.filter((c) => c.statut === "brouillon" || c.statut === "en_attente").length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="validee" className="gap-2">
-              <Clock className="h-4 w-4" />À préparer
-              {aPrep.length > 0 && <Badge className="ml-1 bg-blue-600 text-white text-xs px-1.5">{aPrep.length}</Badge>}
-            </TabsTrigger>
-            <TabsTrigger value="en_cours" className="gap-2">
-              <Truck className="h-4 w-4" />En livraison
-              {enLivr.length > 0 && <Badge className="ml-1 bg-orange-500 text-white text-xs px-1.5">{enLivr.length}</Badge>}
-            </TabsTrigger>
-            <TabsTrigger value="livree" className="gap-2">
-              <CheckCircle2 className="h-4 w-4" />Livrées
-            </TabsTrigger>
-          </TabsList>
+      {/* Chronologie du bordereau — chaque transition, son auteur, son motif. */}
+      <Dialog open={historiqueId !== null} onOpenChange={(o) => !o && setHistoriqueId(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Historique du bordereau</DialogTitle>
+            <DialogDescription>
+              Chronologie des changements de statut, avec leur auteur et leur motif.
+            </DialogDescription>
+          </DialogHeader>
+          {historiqueId !== null && (
+            <HistoriqueTimeline
+              entite="bordereau_livraison"
+              entiteId={historiqueId}
+              titre="Historique du bordereau"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-          {/* ── Onglet Commandes (vue complète + filtres) ── */}
-          <TabsContent value="commandes" className="mt-4 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-              <div className="flex flex-1 gap-2">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Référence, client..."
-                    value={cmdSearch}
-                    onChange={(e) => setCmdSearch(e.target.value)}
-                    className="pl-9 h-9"
-                  />
-                </div>
-                <Select value={cmdStatutFilter} onValueChange={setCmdStatut}>
-                  <SelectTrigger className="w-40 h-9"><SelectValue placeholder="Statut" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous</SelectItem>
-                    {Object.entries(CMD_STATUT).map(([v, cfg]) => (
-                      <SelectItem key={v} value={v}>{cfg.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" />Nouvelle commande
-              </Button>
-            </div>
+      {/* Bon de livraison assemblé par le serveur — produits réels compris. */}
+      <Dialog open={imprimeId !== null} onOpenChange={(o) => !o && setImprimeId(null)}>
+        <DialogContent className="max-w-5xl p-0 gap-0 w-[calc(100%-2rem)]">
+          {/* Le document porte son propre en-tête visuel ; le titre et la
+              description restent nécessaires aux lecteurs d'écran. */}
+          <DialogHeader className="sr-only">
+            <DialogTitle>Bon de livraison</DialogTitle>
+            <DialogDescription>
+              Aperçu imprimable du bon de livraison, avec le destinataire, le transporteur
+              et les produits à remettre.
+            </DialogDescription>
+          </DialogHeader>
+          {imprimeId !== null && (
+            <BLFicheExpeditionPDF blId={imprimeId} onClose={() => setImprimeId(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
-            {isLoading ? (
-              <Card><CardContent className="p-0">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 border-b">
-                    <Skeleton className="h-5 w-32" /><Skeleton className="h-5 w-48 flex-1" />
-                    <Skeleton className="h-5 w-20" /><Skeleton className="h-8 w-8" />
-                  </div>
-                ))}
-              </CardContent></Card>
-            ) : filteredCommandes.length === 0 ? (
-              <Card><CardContent className="py-12 text-center text-muted-foreground">
-                <ShoppingCart className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p>Aucune commande trouvée</p>
-              </CardContent></Card>
-            ) : (
-              <Card><CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/40">
-                      <TableHead className="whitespace-nowrap">Référence</TableHead>
-                      <TableHead className="whitespace-nowrap">Client</TableHead>
-                      <TableHead className="whitespace-nowrap">Date</TableHead>
-                      <TableHead className="whitespace-nowrap">Articles</TableHead>
-                      <TableHead className="whitespace-nowrap text-right">Total</TableHead>
-                      <TableHead className="whitespace-nowrap">Statut</TableHead>
-                      <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCommandes.map((cmd) => {
-                      const cfg        = CMD_STATUT[cmd.statut] ?? CMD_STATUT.brouillon;
-                      const StatusIcon = cfg.icon;
-                      const isAct      = actionLoading === cmd.id;
-                      return (
-                        <TableRow key={cmd.id} className="hover:bg-muted/30 transition-colors">
-                          <TableCell className="font-mono text-sm font-medium whitespace-nowrap">{cmd.reference}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <p className="font-medium">{clientDisplayName(cmd.client)}</p>
-                            <p className="text-xs text-muted-foreground">{cmd.client?.telephone || "—"}</p>
-                          </TableCell>
-                          <TableCell className="text-sm whitespace-nowrap text-muted-foreground">{cmd.dateCommande}</TableCell>
-                          <TableCell>
-                            <div className="space-y-0.5">
-                              {cmd.lignes.slice(0, 2).map((l) => (
-                                <div key={l.id} className="flex items-center gap-1 text-xs">
-                                  <Package className="h-3 w-3 text-muted-foreground shrink-0" />
-                                  <span className="truncate max-w-[140px]">{l.produit?.nom || "Produit"}</span>
-                                  <Badge variant="outline" className="text-xs shrink-0">×{l.quantite}</Badge>
-                                </div>
-                              ))}
-                              {cmd.lignes.length > 2 && (
-                                <span className="text-xs text-muted-foreground">+{cmd.lignes.length - 2} autre(s)</span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold whitespace-nowrap">{formatCurrency(cmd.total)}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={cfg.color}>
-                              <StatusIcon className="mr-1 h-3 w-3" />{cfg.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setDetailCmd(cmd)}>
-                                  <Eye className="mr-2 h-4 w-4" />Voir détails
-                                </DropdownMenuItem>
-                                {cmd.statut === "brouillon" && (
-                                  <DropdownMenuItem onClick={() => handleStatutChange(cmd, "validee")} disabled={isAct}>
-                                    <CheckCircle className="mr-2 h-4 w-4" />Valider
-                                  </DropdownMenuItem>
-                                )}
-                                {cmd.statut === "validee" && (
-                                  <DropdownMenuItem onClick={() => openBLDialog(cmd)}>
-                                    <Printer className="mr-2 h-4 w-4" />Imprimer BL
-                                  </DropdownMenuItem>
-                                )}
-                                {cmd.statut === "en_cours" && (
-                                  <DropdownMenuItem
-                                    onClick={() => { setLivrerCmd(cmd); setLivrerMode(cmd.banque || "especes"); }}
-                                    disabled={isAct}
-                                  >
-                                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />Marquer livrée
-                                  </DropdownMenuItem>
-                                )}
-                                {(cmd.statut === "validee" || cmd.statut === "livree") && (
-                                  <DropdownMenuItem onClick={() => setFactureCmd(cmd)}>
-                                    <FileText className="mr-2 h-4 w-4" />Générer facture
-                                  </DropdownMenuItem>
-                                )}
-                                {cmd.statut !== "annulee" && cmd.statut !== "livree" && (
-                                  <DropdownMenuItem
-                                    className="text-orange-600 focus:text-orange-600"
-                                    onClick={() => { setCancelCmd(cmd); setCancelNotes(""); }}
-                                  >
-                                    <XCircle className="mr-2 h-4 w-4" />Annuler
-                                  </DropdownMenuItem>
-                                )}
-                                {(cmd.statut === "brouillon" || cmd.statut === "annulee") && (
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => setDeleteCmd(cmd)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />Supprimer
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent></Card>
-            )}
-          </TabsContent>
+// ── Ligne ────────────────────────────────────────────────────────────────────
 
-          {/* ── Onglets À préparer / En livraison / Livrées ── */}
-          {(["validee", "en_cours", "livree"] as const).map((tab) => (
-            <TabsContent key={tab} value={tab} className="mt-4">
-              {isLoading ? (
-                <Card><CardContent className="p-0">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 border-b">
-                      <Skeleton className="h-5 w-32" /><Skeleton className="h-5 w-48 flex-1" />
-                      <Skeleton className="h-5 w-24" /><Skeleton className="h-8 w-32" />
-                    </div>
-                  ))}
-                </CardContent></Card>
-              ) : visibleRows.length === 0 ? (
-                <Card><CardContent className="py-12 text-center text-muted-foreground">
-                  <Package className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                  <p>
-                    {tab === "validee"   ? "Aucune commande à préparer"
-                    : tab === "en_cours" ? "Aucune livraison en cours"
-                    :                     "Aucune livraison terminée"}
-                  </p>
-                </CardContent></Card>
-              ) : (
-                <Card><CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Référence</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Produits</TableHead>
-                        <TableHead className="whitespace-nowrap">Total</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {visibleRows.map((cmd) => {
-                        const cfg   = CMD_STATUT[cmd.statut] ?? CMD_STATUT.en_attente;
-                        const isAct = actionLoading === cmd.id;
-                        return (
-                          <TableRow key={cmd.id}>
-                            <TableCell className="whitespace-nowrap">
-                              <span className="font-mono font-semibold text-sm">{cmd.reference}</span>
-                              <div className="text-xs text-muted-foreground mt-0.5">{cmd.dateCommande}</div>
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap">
-                              <p className="font-medium">{clientDisplayName(cmd.client)}</p>
-                              <p className="text-xs text-muted-foreground">{cmd.client?.telephone || "—"}</p>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-0.5 max-w-xs">
-                                {cmd.lignes.slice(0, 2).map((l) => (
-                                  <div key={l.id} className="flex items-center gap-1.5 text-sm">
-                                    <Package className="h-3 w-3 text-muted-foreground shrink-0" />
-                                    <span className="truncate">{l.produit?.nom || "Produit"}</span>
-                                    <Badge variant="outline" className="text-xs shrink-0">×{l.quantite}</Badge>
-                                  </div>
-                                ))}
-                                {cmd.lignes.length > 2 && (
-                                  <span className="text-xs text-muted-foreground">+{cmd.lignes.length - 2} autre(s)</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-semibold whitespace-nowrap">{formatCurrency(cmd.total)}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cfg.color}>{cfg.label}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                {cmd.statut === "validee" && (
-                                  <Button size="sm" disabled={isAct} onClick={() => openBLDialog(cmd)}>
-                                    <Truck className="h-3.5 w-3.5 mr-1" />Préparer
-                                  </Button>
-                                )}
-                                {cmd.statut === "en_cours" && (
-                                  <>
-                                    <Button size="sm" variant="outline" onClick={() => openBLDialog(cmd)}>
-                                      <Printer className="h-3.5 w-3.5 mr-1" />BL / Fiche
-                                    </Button>
-                                    <Button
-                                      size="sm" variant="outline"
-                                      className="text-green-700 border-green-300 hover:bg-green-50"
-                                      disabled={isAct}
-                                      onClick={() => { setLivrerCmd(cmd); setLivrerMode(cmd.banque || "especes"); }}
-                                    >
-                                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Livré
-                                    </Button>
-                                  </>
-                                )}
-                                {cmd.statut === "livree" && (
-                                  <Button size="sm" variant="outline" onClick={() => openBLDialog(cmd)}>
-                                    <Printer className="h-3.5 w-3.5 mr-1" />Réimprimer
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent></Card>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
+/**
+ * Lignes du bordereau, dépliées à la demande.
+ *
+ * Même source que le document imprimé : ce qu'on lit à l'écran est exactement ce
+ * que le chauffeur emporte. La requête n'est lancée qu'à l'ouverture.
+ */
+function LignesBordereau({ blId }: { blId: number }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["bordereau-lignes", blId],
+    queryFn: () => BordereauxService.getFiche(blId),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  if (isLoading) {
+    return <div className="px-4 pb-4 space-y-1.5">
+      {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-7" />)}
+    </div>;
+  }
+  if (error) {
+    return <p className="px-4 pb-4 text-sm text-destructive">
+      Impossible de charger le contenu de ce bordereau.
+    </p>;
+  }
+
+  const produits = data?.produits ?? [];
+  if (produits.length === 0) {
+    return <p className="px-4 pb-4 text-sm text-muted-foreground">
+      Aucun produit rattaché à ce bordereau.
+    </p>;
+  }
+
+  return (
+    <div className="border-t bg-muted/20 px-4 py-3">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[380px]">
+          <thead>
+            <tr className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              <th className="py-1.5 text-left font-semibold">Désignation</th>
+              <th className="py-1.5 text-left font-semibold w-28">Référence</th>
+              <th className="py-1.5 text-right font-semibold w-14">Qté</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {produits.map((p, i) => (
+              <tr key={`${p.designation}-${i}`}>
+                <td className="py-1.5 pr-3">{p.designation}</td>
+                <td className="py-1.5 pr-3 font-mono text-xs text-muted-foreground">
+                  {p.reference ?? "—"}
+                </td>
+                <td className="py-1.5 text-right tabular-nums font-medium">{p.quantite}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </>
+      {data?.client?.adresse && (
+        <p className="text-xs text-muted-foreground mt-2 inline-flex items-start gap-1">
+          <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+          {data.client.adresse}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function LigneBordereau({
+  bl, client, telephone, busy, ouvert, onToggle,
+  onExpedier, onLivrer, onEchec, onAnnuler, onImprimer, onHistorique,
+}: {
+  bl: Bordereau;
+  client: string;
+  telephone?: string;
+  busy: boolean;
+  ouvert: boolean;
+  onToggle: () => void;
+  onExpedier: () => void;
+  onLivrer: () => void;
+  onEchec: () => void;
+  onAnnuler: () => void;
+  onImprimer: () => void;
+  onHistorique: () => void;
+}) {
+  const statut = BL_STATUT[bl.etat];
+
+  // L'action principale découle du statut. Une seule, jamais deux.
+  const principale =
+    bl.etat === "en_attente" || bl.etat === "echec"
+      ? { label: "Expédier", icon: Truck, onClick: onExpedier }
+      : bl.etat === "expedie"
+      ? { label: "Confirmer la livraison", icon: PackageCheck, onClick: onLivrer }
+      : null;
+
+  const Icon = principale?.icon;
+
+  return (
+    <div className="rounded-xl border bg-card overflow-hidden">
+    <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Déplier révèle le contenu du bordereau, comme sur un bon de commande. */}
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={ouvert}
+            className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+          >
+            <ChevronRight className={cn("h-4 w-4 transition-transform", ouvert && "rotate-90")} />
+            <span className="font-mono text-sm font-semibold">{bl.num ?? `BL #${bl.id}`}</span>
+          </button>
+          <Badge variant="outline" className={cn("text-[11px]", statut.className)}>
+            {statut.label}
+          </Badge>
+        </div>
+
+        <p className="font-medium text-sm truncate">{client}</p>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {telephone && (
+            <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{telephone}</span>
+          )}
+          {bl.note && (
+            <span className="inline-flex items-center gap-1 truncate max-w-[26ch]">
+              <MapPin className="h-3 w-3 shrink-0" />{bl.note}
+            </span>
+          )}
+          {bl.livreurNom && (
+            <span className="inline-flex items-center gap-1">
+              <User className="h-3 w-3" />{bl.livreurNom}
+              {bl.vehiculeMatricule ? ` · ${bl.vehiculeMatricule}` : ""}
+            </span>
+          )}
+          {bl.recuPar && (
+            <span className="inline-flex items-center gap-1">
+              <PackageCheck className="h-3 w-3" />Reçu par {bl.recuPar}
+            </span>
+          )}
+        </div>
+
+        {bl.etat === "echec" && bl.motif && (
+          <p className="text-xs text-red-700 dark:text-red-400 inline-flex items-start gap-1">
+            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />{bl.motif}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1.5 shrink-0">
+        {principale && (
+          <Button size="sm" disabled={busy} onClick={principale.onClick}>
+            {busy
+              ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              : Icon && <Icon className="h-4 w-4 mr-1.5" />}
+            {principale.label}
+          </Button>
+        )}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Autres actions" disabled={busy}>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onImprimer}>
+              <Printer className="h-4 w-4 mr-2" />Imprimer le bon
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onHistorique}>
+              <History className="h-4 w-4 mr-2" />Voir l'historique
+            </DropdownMenuItem>
+            {bl.etat === "expedie" && (
+              <DropdownMenuItem onClick={onEchec}>
+                <AlertTriangle className="h-4 w-4 mr-2" />Signaler un échec
+              </DropdownMenuItem>
+            )}
+            {(bl.etat === "en_attente" || bl.etat === "echec") && (
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onAnnuler}>
+                <XCircle className="h-4 w-4 mr-2" />Annuler le bordereau
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+
+    {ouvert && <LignesBordereau blId={bl.id} />}
+    </div>
   );
 }
 

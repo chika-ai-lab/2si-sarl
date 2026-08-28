@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ interface FactureFournisseur {
   id: number;
   numero: string | null;
   fournisseurId: number | null;
+  fournisseur?: { id: number; nomComplet: string | null } | null;
   commandeFournisseurId: number | null;
   montant: number;
   date: string | null;
@@ -96,7 +97,9 @@ function mapFactureItem(item: any): Facture {
     ?? "";
   return {
     id: String(item.id),
-    numero: 'FAC-' + String(item.id).padStart(5, '0'),
+    // Le numéro légal vient du serveur ; le repli ne sert plus qu'aux factures
+    // antérieures à la numérotation séquentielle.
+    numero: item.numero ?? 'FAC-' + String(item.id).padStart(5, '0'),
     client: clientNom,
     dateEmission: item.date ?? "",
     dateEcheance: item.date ?? "",
@@ -161,21 +164,39 @@ export function InvoicesPage() {
   const serverTotal = data?.serverTotal ?? 0;
   const error       = queryError instanceof Error ? queryError.message : null;
 
-  const { data: ffRaw = [], isLoading: ffLoading, refetch: refetchFf } = useQuery({
+  // Chargement par lots : cet onglet demandait 500 lignes et en recevait 200,
+  // sans jamais dire qu'il en manquait.
+  const {
+    data: ffPages,
+    isLoading: ffLoading,
+    refetch: refetchFf,
+    fetchNextPage: ffNext,
+    hasNextPage: ffHasNext,
+    isFetchingNextPage: ffFetchingNext,
+  } = useInfiniteQuery({
     queryKey: ["factures-fournisseurs"],
-    queryFn: async () => {
-      const r = await apiClient.get<any>("/facture-fournisseurs", { per_page: 500 });
-      const list = Array.isArray(r) ? r : Array.isArray(r?.data) ? r.data : Array.isArray(r?.data?.data) ? r.data.data : [];
-      return list as FactureFournisseur[];
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      return apiClient.get<any>("/facture-fournisseurs", { page: pageParam, per_page: 50 });
+    },
+    getNextPageParam: (derniere: any) => {
+      const meta = derniere?.meta;
+      if (!meta) return undefined;
+      return meta.current_page < meta.last_page ? meta.current_page + 1 : undefined;
     },
     staleTime: 1000 * 60,
   });
+
+  const ffRaw: FactureFournisseur[] = (ffPages?.pages ?? []).flatMap((p: any) =>
+    Array.isArray(p) ? p : (p?.data ?? []),
+  );
+  const ffTotal = (ffPages?.pages?.[0] as any)?.meta?.total ?? ffRaw.length;
 
   const filteredFf = ffRaw.filter((f) => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (f.numero ?? "").toLowerCase().includes(q)
-      || String(f.fournisseurId ?? "").includes(q)
+      || (f.fournisseur?.nomComplet ?? "").toLowerCase().includes(q)
       || String(f.id).includes(q);
   });
 
@@ -621,7 +642,14 @@ export function InvoicesPage() {
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-base sm:text-lg">{filteredFf.length} facture(s) fournisseur</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">
+                    {filteredFf.length} facture(s) fournisseur
+                    {ffTotal > ffRaw.length && (
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">
+                        sur {ffTotal} au total
+                      </span>
+                    )}
+                  </CardTitle>
                   <div className="relative w-52">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -663,7 +691,8 @@ export function InvoicesPage() {
                               </TableCell>
                               <TableCell className="font-mono text-xs">{f.numero ?? "—"}</TableCell>
                               <TableCell className="text-sm">
-                                {f.fournisseurId ? `Fournisseur #${f.fournisseurId}` : "—"}
+                                {f.fournisseur?.nomComplet
+                                  ?? (f.fournisseurId ? `Fournisseur #${f.fournisseurId}` : "—")}
                               </TableCell>
                               <TableCell className="text-xs text-muted-foreground">
                                 {f.commandeFournisseurId ? `CF-${String(f.commandeFournisseurId).padStart(4, "0")}` : "—"}
@@ -684,6 +713,19 @@ export function InvoicesPage() {
                         })}
                       </TableBody>
                     </Table>
+
+                    {ffHasNext && (
+                      <div className="flex justify-center pt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={ffFetchingNext}
+                          onClick={() => ffNext()}
+                        >
+                          {ffFetchingNext ? "Chargement…" : "Charger les factures suivantes"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

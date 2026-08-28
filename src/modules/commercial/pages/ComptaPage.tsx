@@ -10,6 +10,15 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { apiClient } from "../services/apiClient";
+import { useListePaginee } from "@/hooks/useListePaginee";
+import { FacturesMensuel } from "../components/FacturesMensuel";
+
+/** Forme renvoyée par les endpoints `/agregats`. */
+interface Agregat {
+  total: number;
+  sommes: Record<string, number>;
+  repartition: Record<string, number>;
+}
 import { Button } from "@/components/ui/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -69,34 +78,30 @@ export default function ComptaPage() {
   const [search, setSearch]   = useState("");
   const [tab, setTab]         = useState("clients");
 
-  // ── Fetch factures clients ────────────────────────────────────────────────
-  const { data: fcRaw = [], isLoading: fcLoading, refetch: refetchFc } = useQuery({
-    queryKey: ["factures-clients"],
-    queryFn: async () => {
-      const r = await apiClient.get<any>("/facture-clients", { per_page: 500 });
-      if (import.meta.env.DEV) console.log("[ComptaPage] /facture-clients raw:", r);
-      // Laravel peut envoyer : tableau direct, {data:[]}, ou {data:{data:[]}}
-      const list = Array.isArray(r) ? r
-        : Array.isArray(r?.data) ? r.data
-        : Array.isArray(r?.data?.data) ? r.data.data
-        : [];
-      return list as FactureClient[];
-    },
+  // Les deux listes demandaient 500 lignes et en recevaient 200 sans le dire.
+  // Elles se chargent désormais par lots, et annoncent ce qui reste.
+  const {
+    items: fcRaw, total: fcTotal, resteACharger: fcReste,
+    chargerSuite: fcSuite, chargementSuite: fcChargement,
+    isLoading: fcLoading, refetch: refetchFc,
+  } = useListePaginee<FactureClient>(["factures-clients"], "/facture-clients", { taille: 50 });
+
+  const {
+    items: ffRaw, total: ffTotal, resteACharger: ffReste,
+    chargerSuite: ffSuite, chargementSuite: ffChargement,
+    isLoading: ffLoading, refetch: refetchFf,
+  } = useListePaginee<FactureFournisseur>(["factures-fournisseurs"], "/facture-fournisseurs", { taille: 50 });
+
+  // Totaux calculés par la base sur l'ensemble des factures, et non par
+  // addition des lignes affichées — qui ne sont qu'une page.
+  const { data: fcAgregat } = useQuery({
+    queryKey: ["agregats", "factures-clients"],
+    queryFn: () => apiClient.get<Agregat>("/facture-clients/agregats"),
     staleTime: 1000 * 60,
   });
-
-  // ── Fetch factures fournisseurs ───────────────────────────────────────────
-  const { data: ffRaw = [], isLoading: ffLoading, refetch: refetchFf } = useQuery({
-    queryKey: ["factures-fournisseurs"],
-    queryFn: async () => {
-      const r = await apiClient.get<any>("/facture-fournisseurs", { per_page: 500 });
-      if (import.meta.env.DEV) console.log("[ComptaPage] /facture-fournisseurs raw:", r);
-      const list = Array.isArray(r) ? r
-        : Array.isArray(r?.data) ? r.data
-        : Array.isArray(r?.data?.data) ? r.data.data
-        : [];
-      return list as FactureFournisseur[];
-    },
+  const { data: ffAgregat } = useQuery({
+    queryKey: ["agregats", "factures-fournisseurs"],
+    queryFn: () => apiClient.get<Agregat>("/facture-fournisseurs/agregats"),
     staleTime: 1000 * 60,
   });
 
@@ -185,6 +190,7 @@ export default function ComptaPage() {
                   <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">{ffRaw.length}</span>
                 )}
               </TabsTrigger>
+              <TabsTrigger value="mensuel">État mensuel</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -198,6 +204,9 @@ export default function ComptaPage() {
             />
           </div>
         </div>
+
+        {/* ── État mensuel ────────────────────────────────────────────────── */}
+        {tab === "mensuel" && <FacturesMensuel />}
 
         {/* ── Factures clients ────────────────────────────────────────────── */}
         {tab === "clients" && (
@@ -266,15 +275,29 @@ export default function ComptaPage() {
                 <tfoot className="bg-muted/40 border-t font-semibold text-sm">
                   <tr>
                     <td colSpan={4} className="px-3 py-2 text-xs text-muted-foreground">
-                      {filteredFc.length} facture(s)
+                      {fcAgregat?.total ?? filteredFc.length} facture(s) au total
                     </td>
-                    <td className="px-3 py-2 text-right">{formatCurrency(filteredFc.reduce((s, f) => s + Number(f.montant), 0))}</td>
-                    <td className="px-3 py-2 text-right text-green-700">{formatCurrency(filteredFc.reduce((s, f) => s + Number(f.recu), 0))}</td>
-                    <td className="px-3 py-2 text-right text-red-600">{formatCurrency(filteredFc.reduce((s, f) => s + Number(f.creance), 0))}</td>
+                    {/* Chiffres de la base, portant sur toutes les factures. */}
+                    <td className="px-3 py-2 text-right">{formatCurrency(fcAgregat?.sommes.montant ?? 0)}</td>
+                    <td className="px-3 py-2 text-right text-green-700">{formatCurrency(fcAgregat?.sommes.recu ?? 0)}</td>
+                    <td className="px-3 py-2 text-right text-red-600">{formatCurrency(fcAgregat?.sommes.creance ?? 0)}</td>
                     <td />
                   </tr>
                 </tfoot>
               </table>
+
+              {/* Les totaux du pied viennent des agrégats serveur : ce bouton
+                  n'ajoute que des lignes visibles, il ne change aucun chiffre. */}
+              {fcReste && (
+                <div className="flex flex-col items-center gap-1.5 py-4 border-t bg-muted/20">
+                  <Button variant="outline" size="sm" disabled={fcChargement} onClick={() => fcSuite()}>
+                    {fcChargement ? "Chargement…" : "Charger les factures suivantes"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    {fcRaw.length} affichée(s) sur {fcTotal}
+                  </p>
+                </div>
+              )}
             </div>
           )
         )}
@@ -334,15 +357,26 @@ export default function ComptaPage() {
                 <tfoot className="bg-muted/40 border-t font-semibold text-sm">
                   <tr>
                     <td colSpan={5} className="px-3 py-2 text-xs text-muted-foreground">
-                      {filteredFf.length} facture(s)
+                      {ffAgregat?.total ?? filteredFf.length} facture(s) au total
                     </td>
                     <td className="px-3 py-2 text-right">
-                      {formatCurrency(filteredFf.reduce((s, f) => s + Number(f.montant), 0))}
+                      {formatCurrency(ffAgregat?.sommes.montant ?? 0)}
                     </td>
                     <td />
                   </tr>
                 </tfoot>
               </table>
+
+              {ffReste && (
+                <div className="flex flex-col items-center gap-1.5 py-4 border-t bg-muted/20">
+                  <Button variant="outline" size="sm" disabled={ffChargement} onClick={() => ffSuite()}>
+                    {ffChargement ? "Chargement…" : "Charger les factures suivantes"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    {ffRaw.length} affichée(s) sur {ffTotal}
+                  </p>
+                </div>
+              )}
             </div>
           )
         )}

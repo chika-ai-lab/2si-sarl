@@ -18,8 +18,11 @@ import { apiClient } from './apiClient';
 // ============================================
 
 function mapBackendToClient(c: any): Client {
-  const creditLimite = Number(c.credit_limite) || 0;
-  const creditUtilise = Number(c.credit_utilise) || 0;
+  // Chaque champ est lu dans les deux formes : camelCase quand l'API sérialise
+  // une entité, snake_case quand la réponse vient d'une requête SQL brute.
+  // Ne lire que le snake_case laissait ces valeurs vides en permanence.
+  const creditLimite = Number(c.creditLimite ?? c.credit_limite) || 0;
+  const creditUtilise = Number(c.creditUtilise ?? c.credit_utilise) || 0;
 
   let adresse = { rue: '', ville: 'Dakar', codePostal: '', pays: 'Sénégal' };
   if (c.adresse) {
@@ -30,28 +33,36 @@ function mapBackendToClient(c: any): Client {
     }
   }
 
-  const nomComplet = c.nom_complet || [c.nom, c.prenom].filter(Boolean).join(' ') || c.raison_sociale || '';
+  // L'API sérialise les entités en camelCase : ne lire que le snake_case
+  // laissait `nomComplet` vide et faisait tomber l'affichage sur le seul nom
+  // de famille. Les deux formes sont acceptées, selon l'endpoint appelé.
+  const raisonSociale = c.raisonSociale ?? c.raison_sociale;
+  const nomComplet =
+    c.nomComplet || c.nom_complet ||
+    [c.prenom, c.nom].filter(Boolean).join(' ') || raisonSociale || '';
+
   return {
     id: String(c.id),
-    code: c.num_compte || `CLT-${String(c.id).padStart(3, '0')}`,
-    nom: c.nom || (c.type === 'particulier' ? nomComplet.split(' ')[0] : c.raison_sociale) || nomComplet || `Client #${c.id}`,
-    prenom: c.prenom || (c.type === 'particulier' ? nomComplet.split(' ').slice(1).join(' ') : undefined),
-    raisonSociale: c.raison_sociale || (c.type === 'entreprise' ? c.nom_complet : undefined),
+    code: c.numCompte || c.num_compte || `CLT-${String(c.id).padStart(3, '0')}`,
+    nom: c.nom || (c.type === 'particulier' ? nomComplet.split(' ').slice(-1)[0] : raisonSociale) || nomComplet || `Client #${c.id}`,
+    prenom: c.prenom || (c.type === 'particulier' ? nomComplet.split(' ').slice(0, -1).join(' ') : undefined),
+    raisonSociale: raisonSociale || (c.type === 'entreprise' ? nomComplet : undefined),
     type: c.type || 'particulier',
     email: c.email || '',
     telephone: c.telephone || '',
-    telephoneSecondaire: c.telephone_secondaire,
+    telephoneSecondaire: c.telephoneSecondaire ?? c.telephone_secondaire,
     adresse,
     categorie: c.categorie || 'B',
     credit: {
       limite: creditLimite,
       utilise: creditUtilise,
-      disponible: Number(c.credit_disponible) || Math.max(0, creditLimite - creditUtilise),
+      disponible: Number(c.creditDisponible ?? c.credit_disponible)
+        || Math.max(0, creditLimite - creditUtilise),
     },
-    banquePartenaire: c.banque_partenaire || 'Autre',
-    numeroCompte: c.num_compte,
+    banquePartenaire: c.banquePartenaire || c.banque_partenaire || 'Autre',
+    numeroCompte: c.numCompte ?? c.num_compte,
     statut: c.statut || 'actif',
-    dateCreation: c.created_at?.split('T')[0] || c.created_at || '',
+    dateCreation: (c.createdAt ?? c.created_at)?.split?.('T')[0] || c.createdAt || c.created_at || '',
     totalAchats: Number(c.total_achats) || 0,
     nombreCommandes: Number(c.nombre_commandes) || 0,
     dernierAchat: c.dernier_achat || undefined,

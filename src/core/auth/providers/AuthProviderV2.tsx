@@ -78,12 +78,14 @@ function norm(s: string) {
 
 // ─── Détection du rôle depuis un tableau de titres backend ───────────────────
 function detectRoleKey(roleTitles: string[]): RoleKey {
-  const n = roleTitles.map(norm);
-  if (n.some((r) => r === "admin" || r === "super_admin")) return "admin";
-  if (n.some((r) => r === "responsable commercial" || r === "responsable_commercial")) return "responsable_commercial";
-  if (n.some((r) => r === "logistique" || r === "logistic")) return "logistique";
-  if (n.some((r) => r === "comptabilite" || r === "comptable")) return "comptabilite";
-  if (n.some((r) => r === "commercial" || r === "commerciale" || r === "vendeur" || r === "vendeuse" || r === "sales")) return "commercial";
+  const normalizedRoles = roleTitles.map((role) => norm(role));
+  const hasRole = (values: string[]) => normalizedRoles.some((role) => values.includes(role));
+
+  if (hasRole(["admin", "super_admin"])) return "admin";
+  if (hasRole(["responsable commercial", "responsable_commercial"])) return "responsable_commercial";
+  if (hasRole(["logistique", "logistic"])) return "logistique";
+  if (hasRole(["comptabilite", "comptable"])) return "comptabilite";
+  if (hasRole(["commercial", "commerciale", "vendeur", "vendeuse", "sales"])) return "commercial";
   return "default";
 }
 
@@ -98,13 +100,14 @@ function buildUserObject(
 ): User {
   const roleKey = detectRoleKey(roles);
   const config  = ROLE_CONFIG[roleKey];
+  
 
   return {
     id,
     email,
     name,
     roles,
-    customPermissions: config.permissions as any,
+    customPermissions: config.permissions as never,
     moduleAccess: ALL_MODULE_IDS.map((moduleId) => ({
       moduleId,
       enabled: (config.modules as string[]).includes(moduleId),

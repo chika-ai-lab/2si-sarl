@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import BonFournisseurPDF from "../components/BonFournisseurPDF";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -22,6 +24,7 @@ import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { apiClient } from "@/modules/commercial/services/apiClient";
+import { useListePaginee } from "@/hooks/useListePaginee";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +32,9 @@ interface CFLigne {
   id: number;
   designation: string | null;
   articleId: number | null;
+  /** Frais portés par la ligne — l'en-tête n'en est que la somme. */
+  fraisExpedition: number;
+  autresCharges: number;
   quantite: number;
   prix: number;
   montant: number;
@@ -78,21 +84,23 @@ export default function CommandesFournisseursPage() {
   const [openId, setOpenId]         = useState<number | null>(null);
   const [loading, setLoading]       = useState<string | null>(null);
   const [printCf, setPrintCf]       = useState<CF | null>(null);
-  // frais locaux : cfId → { fraisExpedition, autresCharges }
+  // Saisie en cours, indexée par identifiant de LIGNE (et non de commande).
   const [localFrais, setLocalFrais] = useState<Record<number, { fraisExpedition: string; autresCharges: string }>>({});
 
-  const { data: res, isLoading, refetch, error } = useQuery({
-    queryKey: ["commandes-fournisseurs"],
-    queryFn: async () => {
-      const r = await apiClient.get<any>("/commande-fournisseurs", { per_page: 200 });
-      // API returns { data: [], meta: {} } or flat array
-      const list = Array.isArray(r) ? r : (r?.data ?? []);
-      return list as CF[];
-    },
+  const {
+    items: all,
+    total: totalCf,
+    resteACharger,
+    chargerSuite,
+    chargementSuite,
+    isLoading,
+    refetch,
+    error,
+  } = useListePaginee<CF>(["commandes-fournisseurs"], "/commande-fournisseurs", {
+    taille: 50,
     staleTime: 0,
-    refetchOnMount: 'always',
+    refetchOnMount: "always",
   });
-  const all: CF[] = res ?? [];
 
   if (error) console.error('[CF] query error:', error);
 
@@ -152,20 +160,31 @@ export default function CommandesFournisseursPage() {
     }
   };
 
-  // ── Sauvegarder frais ────────────────────────────────────────────────
+  // ── Sauvegarder les frais, ligne par ligne ───────────────────────────
+  // Un seul appel pour toute la commande : le serveur écrit les lignes puis
+  // recale l'en-tête sur leur somme, dans la même transaction.
   const handleSaveFrais = async (cf: CF) => {
-    const frais = localFrais[cf.id];
-    if (!frais) return;
+    const modifiees = (cf.lignes ?? []).filter((l) => localFrais[l.id]);
+    if (!modifiees.length) return;
+
     setLoading(`${cf.id}-frais`);
     try {
-      await apiClient.put(`/commande-fournisseurs/${cf.id}`, {
-        frais_expedition: Number(frais.fraisExpedition) || 0,
-        autres_charges:   Number(frais.autresCharges)   || 0,
+      await apiClient.put(`/commande-fournisseurs/${cf.id}/frais`, {
+        lignes: modifiees.map((l) => ({
+          id: l.id,
+          frais_expedition: Number(localFrais[l.id]?.fraisExpedition) || 0,
+          autres_charges:   Number(localFrais[l.id]?.autresCharges)   || 0,
+        })),
       });
-      toast({ title: "Frais enregistrés" });
+      setLocalFrais((p) => {
+        const suite = { ...p };
+        for (const l of modifiees) delete suite[l.id];
+        return suite;
+      });
+      toast({ title: `Frais enregistrés sur ${modifiees.length} ligne(s)` });
       qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
-    } catch {
-      toast({ title: "Erreur", variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e?.message, variant: "destructive" });
     } finally {
       setLoading(null);
     }
@@ -173,8 +192,9 @@ export default function CommandesFournisseursPage() {
 
   // ── Générer facture depuis CF ─────────────────────────────────────────
   const handleGenererFacture = async (cf: CF) => {
-    // Sauvegarder les frais s'ils ont été modifiés
-    if (localFrais[cf.id]) await handleSaveFrais(cf);
+    // Les frais saisis et non encore enregistrés doivent partir avant la
+    // facture, sinon celle-ci serait établie sur un montant incomplet.
+    if ((cf.lignes ?? []).some((l) => localFrais[l.id])) await handleSaveFrais(cf);
 
     setLoading(`${cf.id}-facture`);
     try {
@@ -202,6 +222,16 @@ export default function CommandesFournisseursPage() {
     {/* Dialog Bon Fournisseur */}
     <Dialog open={!!printCf} onOpenChange={(o) => !o && setPrintCf(null)}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+        {/* Le document porte son propre en-tête visuel ; le titre et la
+            description restent nécessaires aux lecteurs d'écran. */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>
+            Bon de commande fournisseur {printCf ? `CF-${String(printCf.id).padStart(4, "0")}` : ""}
+          </DialogTitle>
+          <DialogDescription>
+            Aperçu imprimable du bon de commande destiné au fournisseur.
+          </DialogDescription>
+        </DialogHeader>
         {printCf && <BonFournisseurPDF cf={printCf} onClose={() => setPrintCf(null)} />}
       </DialogContent>
     </Dialog>
@@ -215,6 +245,13 @@ export default function CommandesFournisseursPage() {
           </h1>
           <p className="text-muted-foreground mt-1">
             Suivi des achats · {formatCurrency(montantRecu)} reçu / {formatCurrency(montantTotal)} total
+            {/* Les montants portent sur ce qui est chargé : le dire évite de
+                laisser croire à un total consolidé. */}
+            {resteACharger && (
+              <span className="block text-xs">
+                sur les {all.length} commandes chargées — {totalCf} au total
+              </span>
+            )}
           </p>
         </div>
         <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
@@ -395,92 +432,110 @@ export default function CommandesFournisseursPage() {
                 {/* ── Détail lignes (accordéon) ── */}
                 {isOpen && cf.lignes?.length > 0 && (
                   <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
-                    {/* Tableau articles */}
+                    {/* Tableau articles — les frais se saisissent ici, ligne par ligne :
+                        chaque ligne part chez un client différent, souvent dans une
+                        autre ville, et doit lui être refacturée séparément. */}
+                    <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-0">
                           <TableHead className="h-7 text-xs">Désignation</TableHead>
-                          <TableHead className="h-7 text-xs text-right w-16">Qté</TableHead>
+                          <TableHead className="h-7 text-xs text-right w-14">Qté</TableHead>
                           <TableHead className="h-7 text-xs text-right w-28">Prix unit.</TableHead>
                           <TableHead className="h-7 text-xs text-right w-28">Montant</TableHead>
+                          <TableHead className="h-7 text-xs text-right w-32">Frais expédition</TableHead>
+                          <TableHead className="h-7 text-xs text-right w-32">Autres charges</TableHead>
+                          <TableHead className="h-7 text-xs text-right w-32">Total ligne</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {cf.lignes.map((l) => (
-                          <TableRow key={l.id} className="border-0 hover:bg-transparent">
-                            <TableCell className="py-1.5 text-sm">
-                              {l.designation || `Article #${l.articleId}`}
-                            </TableCell>
-                            <TableCell className="py-1.5 text-sm text-right">{l.quantite}</TableCell>
-                            <TableCell className="py-1.5 text-sm text-right">{formatCurrency(Number(l.prix))}</TableCell>
-                            <TableCell className="py-1.5 text-sm text-right font-medium">{formatCurrency(Number(l.montant))}</TableCell>
-                          </TableRow>
-                        ))}
+                        {cf.lignes.map((l) => {
+                          const saisie = localFrais[l.id];
+                          const frais  = Number(saisie?.fraisExpedition ?? l.fraisExpedition ?? 0) || 0;
+                          const autres = Number(saisie?.autresCharges   ?? l.autresCharges   ?? 0) || 0;
+                          const majPossible = !cf.factureId;
+                          return (
+                            <TableRow key={l.id} className="border-0 hover:bg-transparent">
+                              <TableCell className="py-1.5 text-sm">
+                                {l.designation || `Article #${l.articleId}`}
+                              </TableCell>
+                              <TableCell className="py-1.5 text-sm text-right tabular-nums">{l.quantite}</TableCell>
+                              <TableCell className="py-1.5 text-sm text-right tabular-nums">{formatCurrency(Number(l.prix))}</TableCell>
+                              <TableCell className="py-1.5 text-sm text-right tabular-nums">{formatCurrency(Number(l.montant))}</TableCell>
+                              <TableCell className="py-1 text-right">
+                                <input
+                                  type="number" min="0" step="1"
+                                  aria-label={`Frais d'expédition — ${l.designation ?? `ligne ${l.id}`}`}
+                                  disabled={!majPossible}
+                                  className="w-28 text-sm text-right border rounded px-2 py-1 bg-background tabular-nums focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                  value={saisie?.fraisExpedition ?? String(Number(l.fraisExpedition ?? 0))}
+                                  onChange={(e) => setLocalFrais((p) => ({
+                                    ...p,
+                                    [l.id]: {
+                                      fraisExpedition: e.target.value,
+                                      autresCharges: p[l.id]?.autresCharges ?? String(Number(l.autresCharges ?? 0)),
+                                    },
+                                  }))}
+                                />
+                              </TableCell>
+                              <TableCell className="py-1 text-right">
+                                <input
+                                  type="number" min="0" step="1"
+                                  aria-label={`Autres charges — ${l.designation ?? `ligne ${l.id}`}`}
+                                  disabled={!majPossible}
+                                  className="w-28 text-sm text-right border rounded px-2 py-1 bg-background tabular-nums focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                  value={saisie?.autresCharges ?? String(Number(l.autresCharges ?? 0))}
+                                  onChange={(e) => setLocalFrais((p) => ({
+                                    ...p,
+                                    [l.id]: {
+                                      fraisExpedition: p[l.id]?.fraisExpedition ?? String(Number(l.fraisExpedition ?? 0)),
+                                      autresCharges: e.target.value,
+                                    },
+                                  }))}
+                                />
+                              </TableCell>
+                              <TableCell className="py-1.5 text-sm text-right font-medium tabular-nums">
+                                {formatCurrency(Number(l.montant) + frais + autres)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
+                    </div>
 
-                    {/* Frais + total général */}
+                    {/* Récapitulatif — sommes des lignes, jamais saisi directement */}
                     <div className="rounded-lg border bg-background p-4 space-y-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Frais & récapitulatif</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Récapitulatif</p>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Frais expédition */}
-                        <div className="space-y-1">
-                          <label className="text-xs text-muted-foreground">Frais d'expédition (FCFA)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            className="w-full text-sm border rounded px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                            value={localFrais[cf.id]?.fraisExpedition ?? String(Number(cf.fraisExpedition ?? 0))}
-                            onChange={(e) => setLocalFrais((prev) => ({
-                              ...prev,
-                              [cf.id]: { fraisExpedition: e.target.value, autresCharges: prev[cf.id]?.autresCharges ?? String(Number(cf.autresCharges ?? 0)) },
-                            }))}
-                          />
-                        </div>
-                        {/* Autres charges */}
-                        <div className="space-y-1">
-                          <label className="text-xs text-muted-foreground">Autres charges (FCFA)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            className="w-full text-sm border rounded px-3 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                            value={localFrais[cf.id]?.autresCharges ?? String(Number(cf.autresCharges ?? 0))}
-                            onChange={(e) => setLocalFrais((prev) => ({
-                              ...prev,
-                              [cf.id]: { fraisExpedition: prev[cf.id]?.fraisExpedition ?? String(Number(cf.fraisExpedition ?? 0)), autresCharges: e.target.value },
-                            }))}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Récap montants */}
-                      <div className="border-t pt-3 space-y-1 text-sm">
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Sous-total articles</span>
-                          <span>{formatCurrency(montantLignes)}</span>
-                        </div>
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Frais d'expédition</span>
-                          <span>{formatCurrency(Number(localFrais[cf.id]?.fraisExpedition ?? cf.fraisExpedition ?? 0))}</span>
-                        </div>
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Autres charges</span>
-                          <span>{formatCurrency(Number(localFrais[cf.id]?.autresCharges ?? cf.autresCharges ?? 0))}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-base border-t pt-1">
-                          <span>Total TTC</span>
-                          <span>
-                            {formatCurrency(
-                              montantLignes
-                              + Number(localFrais[cf.id]?.fraisExpedition ?? cf.fraisExpedition ?? 0)
-                              + Number(localFrais[cf.id]?.autresCharges   ?? cf.autresCharges   ?? 0)
-                            )}
-                          </span>
-                        </div>
-                      </div>
+                      {(() => {
+                        const totalFrais = cf.lignes.reduce((s, l) =>
+                          s + (Number(localFrais[l.id]?.fraisExpedition ?? l.fraisExpedition ?? 0) || 0), 0);
+                        const totalAutres = cf.lignes.reduce((s, l) =>
+                          s + (Number(localFrais[l.id]?.autresCharges ?? l.autresCharges ?? 0) || 0), 0);
+                        return (
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between text-muted-foreground">
+                              <span>Sous-total articles</span>
+                              <span className="tabular-nums">{formatCurrency(montantLignes)}</span>
+                            </div>
+                            <div className="flex justify-between text-muted-foreground">
+                              <span>Frais d'expédition <span className="text-xs">(somme des lignes)</span></span>
+                              <span className="tabular-nums">{formatCurrency(totalFrais)}</span>
+                            </div>
+                            <div className="flex justify-between text-muted-foreground">
+                              <span>Autres charges <span className="text-xs">(somme des lignes)</span></span>
+                              <span className="tabular-nums">{formatCurrency(totalAutres)}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-base border-t pt-1">
+                              <span>Total TTC</span>
+                              <span className="tabular-nums">
+                                {formatCurrency(montantLignes + totalFrais + totalAutres)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Actions */}
                       <div className="flex justify-end gap-2 pt-1">
@@ -515,6 +570,21 @@ export default function CommandesFournisseursPage() {
               </Card>
             );
           })}
+
+          {resteACharger && (
+            <div className="flex flex-col items-center gap-2 pt-6">
+              <Button
+                variant="outline"
+                disabled={chargementSuite}
+                onClick={() => chargerSuite()}
+              >
+                {chargementSuite ? "Chargement…" : "Charger les commandes suivantes"}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                {all.length} sur {totalCf}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

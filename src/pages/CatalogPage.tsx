@@ -24,7 +24,15 @@ export default function CatalogPage() {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const { products: apiProducts, categories: apiCategories, loading: apiLoading } = useMarketplaceProducts();
+  const {
+    products: apiProducts,
+    categories: apiCategories,
+    loading: apiLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    total,
+  } = useMarketplaceProducts();
 
   const {
     filters,
@@ -32,6 +40,7 @@ export default function CatalogPage() {
     clearFilters,
     filteredProducts,
     activeFilterCount,
+    marquesDisponibles,
     totalProducts,
   } = useProductFilters(apiProducts);
 
@@ -84,6 +93,7 @@ export default function CatalogPage() {
                   clearFilters={clearFilters}
                   activeFilterCount={activeFilterCount}
                   apiCategories={apiCategories}
+                  marques={marquesDisponibles}
                 />
               </div>
             </aside>
@@ -104,11 +114,10 @@ export default function CatalogPage() {
                       updateFilters={updateFilters}
                       clearFilters={clearFilters}
                       activeFilterCount={activeFilterCount}
-                      minPrice={0}
-                      maxPrice={0}
                       filteredCount={filteredProducts.length}
                       totalCount={totalProducts}
                       apiCategories={apiCategories}
+                      marques={marquesDisponibles}
                     />
                   </div>
 
@@ -200,7 +209,7 @@ export default function CatalogPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16">
+                <div className="text-center py-16" data-vide>
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
                     <Search className="h-8 w-8 text-muted-foreground" />
                   </div>
@@ -215,6 +224,26 @@ export default function CatalogPage() {
                       Réinitialiser les filtres
                     </Button>
                   )}
+                </div>
+              )}
+
+              {/* Chargement par lots — le catalogue arrivait auparavant d'un bloc.
+                  Les filtres s'appliquent à ce qui est chargé : on annonce donc
+                  clairement ce qui reste à charger plutôt que de le taire. */}
+              {hasNextPage && (
+                <div className="flex flex-col items-center gap-2 pt-10">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    disabled={isFetchingNextPage}
+                    onClick={() => fetchNextPage()}
+                  >
+                    {isFetchingNextPage ? "Chargement…" : "Voir plus de produits"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    {apiProducts.length} produit{apiProducts.length > 1 ? "s" : ""} affiché
+                    {apiProducts.length > 1 ? "s" : ""} sur {total}
+                  </p>
                 </div>
               )}
             </div>

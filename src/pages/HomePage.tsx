@@ -104,7 +104,7 @@ export default function HomePage() {
             <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
               <AlertCircle className="h-8 w-8 text-destructive/60" />
               <p className="text-sm">{error}</p>
-              <Button variant="outline" size="sm" onClick={refetch}>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
                 <RefreshCcw className="h-4 w-4 mr-2" />
                 Réessayer
               </Button>
@@ -283,7 +283,9 @@ export default function HomePage() {
               },
               {
                 icon: TrendingUp,
-                stat: "0%",
+                // Plus aucune allégation de taux ni de frais : la durée est un
+                // fait vérifiable, contrairement à un « 0 % » jamais confirmé.
+                stat: "6-24",
                 labelKey: "home.trust.stats.interest",
                 descKey: "home.trust.stats.interestDesc",
               },

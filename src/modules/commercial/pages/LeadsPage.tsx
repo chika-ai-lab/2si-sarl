@@ -206,7 +206,7 @@ function LeadRow({ lead, onAction }: { lead: Lead; onAction: () => void }) {
                   {lead.frais_expedition ? <p className="text-xs">Expédition : {formatCfa(lead.frais_expedition)}</p> : null}
                   {lead.duree_paiement ? (
                     <p className="text-xs">
-                      Plan : {lead.duree_paiement} mois · {formatCfa(Math.round(lead.prix_vente / lead.duree_paiement))}/mois
+                      Plan : {lead.duree_paiement} mois · {formatCfa(Math.round(lead.prix_vente / lead.duree_paiement))} par mois
                     </p>
                   ) : null}
                   {lead.devis_envoye_at ? (
@@ -473,7 +473,7 @@ function DevisDialog({ lead, open, onClose, onSaved }: {
                     }`}
                   >
                     <p className="font-bold text-sm">{plan.duree} mois</p>
-                    <p className="text-xs text-muted-foreground">{formatCfa(plan.mensualite)}/mois</p>
+                    <p className="text-xs text-muted-foreground">{formatCfa(plan.mensualite)} par mois</p>
                   </button>
                 ))}
               </div>

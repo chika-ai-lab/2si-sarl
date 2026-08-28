@@ -214,7 +214,7 @@ export function FactureDocument({ data }: { data: FactureData }) {
               {[6, 12, 24].map((d) => (
                 <View key={d} style={[s.planItem, d === data.commande.duree_paiement ? { borderColor: GREEN, backgroundColor: LIGHT_GREEN } : {}]}>
                   <Text style={s.planDuree}>{d} mois</Text>
-                  <Text style={s.planMens}>{fcfa(Math.round(data.total_ttc / d))}/mois</Text>
+                  <Text style={s.planMens}>{fcfa(Math.round(data.total_ttc / d))} par mois</Text>
                 </View>
               ))}
             </View>

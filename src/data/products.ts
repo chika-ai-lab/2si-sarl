@@ -41,6 +41,7 @@ export interface Product {
   relatedProducts?: string[]; // Product IDs
   promoCode?: string; // Promo code like "christmas", "newyear", etc.
   banque?: string; // Banque partenaire pour le financement (CBAO, CMS, etc.)
+  marque?: string; // Marque du produit — alimente le filtre catalogue
   // Mensualités arrêtées par le métier et stockées en base (colonnes
   // mensualite_12 / mensualite_24). Elles priment sur tout calcul côté front.
   mensualite12?: number;

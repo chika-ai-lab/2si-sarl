@@ -3,7 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ConfigProvider } from "@/providers/ConfigProvider";
 import { I18nProvider } from "@/providers/I18nProvider";
@@ -33,11 +39,11 @@ import { Loader2 } from "lucide-react";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime:            1000 * 60 * 2,  // 2 min — revalide si stale au montage
-      gcTime:               1000 * 60 * 10, // 10 min — libère les entrées non utilisées
-      retry:                1,
+      staleTime: 1000 * 60 * 2, // 2 min — revalide si stale au montage
+      gcTime: 1000 * 60 * 10, // 10 min — libère les entrées non utilisées
+      retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount:       true,           // refetch uniquement si les données ont expiré
+      refetchOnMount: true, // refetch uniquement si les données ont expiré
     },
   },
 });
@@ -47,7 +53,13 @@ const queryClient = new QueryClient({
  * frontière en échec est remontée à neuf dès qu'on navigue ailleurs, sinon
  * l'état d'erreur resterait collé après le changement de page.
  */
-function Guard({ label, children }: { label: string; children: React.ReactNode }) {
+function Guard({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   const { pathname } = useLocation();
   return (
     <ErrorBoundary key={pathname} label={label}>
@@ -64,7 +76,8 @@ function MainApp() {
   useSSE();
 
   useEffect(() => {
-    const isDashboardDomain = window.location.hostname === "dashboard.sen-services.com";
+    const isDashboardDomain =
+      window.location.hostname === "dashboard.sen-services.com";
     const isAdminPath = location.pathname.startsWith("/admin");
     const isLoginPath = location.pathname === "/login";
 
@@ -87,7 +100,11 @@ function MainApp() {
   }, []);
 
   // Show maintenance page for public routes if enabled
-  if (isInMaintenance && !window.location.pathname.startsWith("/admin") && window.location.pathname !== "/login") {
+  if (
+    isInMaintenance &&
+    !window.location.pathname.startsWith("/admin") &&
+    window.location.pathname !== "/login"
+  ) {
     return <MaintenancePage />;
   }
 
@@ -99,13 +116,62 @@ function MainApp() {
       {/* Public Routes — chaque page a sa propre frontière d'erreur : un plantage
           sur l'une n'empêche pas de naviguer vers les autres. La clé sur le
           pathname réarme la frontière dès qu'on change de page. */}
-      <Route path="/" element={<Guard label="l'accueil"><HomePage /></Guard>} />
-      <Route path="/catalog" element={<Guard label="le catalogue"><CatalogPage /></Guard>} />
-      <Route path="/product/:id" element={<Guard label="la fiche produit"><ProductDetailPage /></Guard>} />
-      <Route path="/wishlist" element={<Guard label="les favoris"><WishlistPage /></Guard>} />
-      <Route path="/cart" element={<Guard label="le panier"><CartPage /></Guard>} />
-      <Route path="/order" element={<Guard label="la commande"><OrderPage /></Guard>} />
-      <Route path="/login" element={<Guard label="la connexion"><LoginPage /></Guard>} />
+      <Route
+        path="/"
+        element={
+          <Guard label="l'accueil">
+            <HomePage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/catalog"
+        element={
+          <Guard label="le catalogue">
+            <CatalogPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/product/:id"
+        element={
+          <Guard label="la fiche produit">
+            <ProductDetailPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/wishlist"
+        element={
+          <Guard label="les favoris">
+            <WishlistPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <Guard label="le panier">
+            <CartPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/order"
+        element={
+          <Guard label="la commande">
+            <OrderPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <Guard label="la connexion">
+            <LoginPage />
+          </Guard>
+        }
+      />
 
       {/* Admin Routes - Dynamic with Modules */}
       <Route
@@ -122,10 +188,15 @@ function MainApp() {
             // Combine basePath with route path
             // basePath: "/admin/crm", route.path: "/"  -> "crm"
             // basePath: "/admin/crm", route.path: "/customers"  -> "crm/customers"
-            const moduleBase = module.basePath.replace("/admin", "").replace(/^\//, "");
-            const routePath = route.path === "/"
-              ? moduleBase
-              : [moduleBase, route.path.replace(/^\//, "")].filter(Boolean).join("/");
+            const moduleBase = module.basePath
+              .replace("/admin", "")
+              .replace(/^\//, "");
+            const routePath =
+              route.path === "/"
+                ? moduleBase
+                : [moduleBase, route.path.replace(/^\//, "")]
+                    .filter(Boolean)
+                    .join("/");
 
             return (
               <Route
@@ -151,7 +222,7 @@ function MainApp() {
                 }
               />
             );
-          })
+          }),
         )}
 
         {/* 404 inside admin layout */}

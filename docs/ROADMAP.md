@@ -22,6 +22,7 @@
 ## 🗺️ Plan Complet - Phases 2 à 5
 
 ### Phase 2: Intégration et Routing Dynamique 🔄
+
 **Durée estimée**: 2-3 jours
 **Objectif**: Activer l'architecture V2 dans l'application et créer le routing dynamique
 
@@ -52,6 +53,7 @@
   - Composant pour router les modules
   - Support du lazy loading
   - Gestion des erreurs de chargement
+
   ```tsx
   <ModuleRouter module={crmModule} />
   ```
@@ -63,9 +65,10 @@
   - Affichage d'erreur 403 personnalisé
 
 - [ ] **Mettre à jour App.tsx avec routes dynamiques**
+
   ```tsx
   <Route path="/admin" element={<AdminLayoutV2 />}>
-    {activeModules.map(module => (
+    {activeModules.map((module) => (
       <Route
         key={module.id}
         path={`${module.basePath}/*`}
@@ -99,6 +102,7 @@
   - Tester toutes les fonctionnalités existantes
 
 **Livrable Phase 2**:
+
 - Architecture V2 active en production
 - Routing dynamique fonctionnel
 - Tests de non-régression passés
@@ -106,6 +110,7 @@
 ---
 
 ### Phase 3: Migration des Modules V1 🔧
+
 **Durée estimée**: 1-2 semaines
 **Objectif**: Migrer toutes les pages existantes vers la structure modulaire
 
@@ -153,9 +158,15 @@
 - [ ] **Ajouter route detail dans config**
   ```tsx
   routes: [
-    { path: "/customers", component: lazy(() => import("./pages/CustomersListPage")) },
-    { path: "/customers/:id", component: lazy(() => import("./pages/CustomerDetailPage")) }
-  ]
+    {
+      path: "/customers",
+      component: lazy(() => import("./pages/CustomersListPage")),
+    },
+    {
+      path: "/customers/:id",
+      component: lazy(() => import("./pages/CustomerDetailPage")),
+    },
+  ];
   ```
 
 #### 3.3 Module Orders (Commandes)
@@ -251,6 +262,7 @@
   - Nettoyer les imports inutilisés
 
 **Livrable Phase 3**:
+
 - Tous les modules V1 migrés vers structure V2
 - Anciens fichiers supprimés
 - Tests de non-régression passés
@@ -258,6 +270,7 @@
 ---
 
 ### Phase 4: Couche API et Backend 🌐
+
 **Durée estimée**: 1-2 semaines
 **Objectif**: Intégrer un vrai backend et remplacer les mocks
 
@@ -279,6 +292,7 @@
   - Fichier: `src/core/api/endpoints.ts`
   - Constantes pour tous les endpoints
   - Organisation par module
+
   ```tsx
   export const API_ENDPOINTS = {
     auth: { login: "/auth/login", ... },
@@ -330,11 +344,12 @@
 
 - [ ] **CRM Hooks**
   - `modules/crm/hooks/useCustomers.ts`
+
   ```tsx
   export function useCustomers() {
     return useQuery({
-      queryKey: ['customers'],
-      queryFn: () => crmApi.customers.getAll()
+      queryKey: ["customers"],
+      queryFn: () => crmApi.customers.getAll(),
     });
   }
 
@@ -343,8 +358,8 @@
     return useMutation({
       mutationFn: crmApi.customers.create,
       onSuccess: () => {
-        queryClient.invalidateQueries(['customers']);
-      }
+        queryClient.invalidateQueries(["customers"]);
+      },
     });
   }
   ```
@@ -391,6 +406,7 @@
   - Auto-refresh avant expiration
 
 **Livrable Phase 4**:
+
 - Backend intégré et fonctionnel
 - Mocks remplacés par vrais appels API
 - React Query configuré
@@ -399,6 +415,7 @@
 ---
 
 ### Phase 5: Système de Rôles Complet 👥
+
 **Durée estimée**: 1 semaine
 **Objectif**: Créer l'interface de gestion des rôles et permissions
 
@@ -407,6 +424,7 @@
 - [ ] **Créer roles.config.ts**
   - Fichier: `src/config/roles.config.ts`
   - Définir tous les rôles système
+
   ```tsx
   export const SYSTEM_ROLES: Record<SystemRole, Role> = {
     super_admin: { permissions: ["*:*:*"], ... },
@@ -418,13 +436,19 @@
 - [ ] **Créer permissions.config.ts**
   - Fichier: `src/config/permissions.config.ts`
   - Définir toutes les permissions par module
+
   ```tsx
   export const PERMISSIONS_REGISTRY = {
     CRM: [
-      { id: "crm_customer_read", module: "CRM", resource: "CUSTOMER", action: "READ" },
+      {
+        id: "crm_customer_read",
+        module: "CRM",
+        resource: "CUSTOMER",
+        action: "READ",
+      },
       // ...
-    ]
-  }
+    ],
+  };
   ```
 
 - [ ] **Créer un utilitaire de résolution des permissions**
@@ -513,6 +537,7 @@
   - Vérifier que les wildcards fonctionnent
 
 **Livrable Phase 5**:
+
 - Module Users complet et fonctionnel
 - Gestion des rôles et permissions
 - Tests de tous les rôles passés
@@ -520,6 +545,7 @@
 ---
 
 ### Phase 6: Modules V2 (Nouveaux) 🆕
+
 **Durée estimée**: 2-3 semaines
 **Objectif**: Créer les nouveaux modules V2
 
@@ -539,11 +565,12 @@
 
 - [ ] **Créer les types**
   - `modules/suppliers/types/Supplier.ts`
+
   ```tsx
   interface Supplier {
     id: string;
     name: string;
-    contact: { email, phone };
+    contact: { email; phone };
     address: Address;
     products: string[]; // IDs produits
     orders: string[]; // IDs commandes fournisseur
@@ -595,6 +622,7 @@
   - `modules/settings/types/Commission.ts`
 
 **Livrable Phase 6**:
+
 - 3 nouveaux modules V2 créés et fonctionnels
 - APIs intégrées
 - Tests passés
@@ -602,6 +630,7 @@
 ---
 
 ### Phase 7: Optimisations et Améliorations 🚀
+
 **Durée estimée**: 1 semaine
 **Objectif**: Optimiser les performances et l'UX
 
@@ -691,6 +720,7 @@
   - Tests de non-régression
 
 **Livrable Phase 7**:
+
 - Performance optimisée
 - UX améliorée
 - Tests automatisés en place
@@ -698,6 +728,7 @@
 ---
 
 ### Phase 8: Documentation et Déploiement 📚
+
 **Durée estimée**: 3-5 jours
 **Objectif**: Finaliser la documentation et déployer
 
@@ -764,6 +795,7 @@
   - Plan de rollback
 
 **Livrable Phase 8**:
+
 - Documentation complète
 - Pipeline CI/CD actif
 - Application déployée en production
@@ -772,16 +804,16 @@
 
 ## 📅 Timeline Globale
 
-| Phase | Durée | Début | Fin |
-|-------|-------|-------|-----|
-| **Phase 1** ✅ | 3 jours | Terminé | Terminé |
-| **Phase 2** | 2-3 jours | Semaine 1 | Semaine 1 |
-| **Phase 3** | 1-2 semaines | Semaine 1-2 | Semaine 3 |
-| **Phase 4** | 1-2 semaines | Semaine 3-4 | Semaine 5 |
-| **Phase 5** | 1 semaine | Semaine 5 | Semaine 6 |
-| **Phase 6** | 2-3 semaines | Semaine 6 | Semaine 9 |
-| **Phase 7** | 1 semaine | Semaine 9 | Semaine 10 |
-| **Phase 8** | 3-5 jours | Semaine 10 | Semaine 10 |
+| Phase          | Durée        | Début       | Fin        |
+| -------------- | ------------ | ----------- | ---------- |
+| **Phase 1** ✅ | 3 jours      | Terminé     | Terminé    |
+| **Phase 2**    | 2-3 jours    | Semaine 1   | Semaine 1  |
+| **Phase 3**    | 1-2 semaines | Semaine 1-2 | Semaine 3  |
+| **Phase 4**    | 1-2 semaines | Semaine 3-4 | Semaine 5  |
+| **Phase 5**    | 1 semaine    | Semaine 5   | Semaine 6  |
+| **Phase 6**    | 2-3 semaines | Semaine 6   | Semaine 9  |
+| **Phase 7**    | 1 semaine    | Semaine 9   | Semaine 10 |
+| **Phase 8**    | 3-5 jours    | Semaine 10  | Semaine 10 |
 
 **Durée totale estimée**: 10-12 semaines (2,5-3 mois)
 
@@ -790,16 +822,19 @@
 ## 🎯 Priorités
 
 ### Must Have (Critique)
+
 - Phase 2: Intégration V2
 - Phase 3: Migration modules
 - Phase 4: Backend API
 - Phase 5: Gestion rôles
 
 ### Should Have (Important)
+
 - Phase 6: Nouveaux modules V2
 - Phase 7: Optimisations
 
 ### Nice to Have (Optionnel)
+
 - Phase 8: Documentation avancée
 - Tests E2E exhaustifs
 
@@ -825,6 +860,7 @@ main
 ```
 
 **Workflow**:
+
 1. Créer une branche par phase/module
 2. Développer et tester dans la branche
 3. PR vers `main` avec review
@@ -850,7 +886,7 @@ main
 ### Performance
 
 - **Lazy loading** pour tous les modules
-- **Code splitting** dès le début
+- **Code splitting** A partir de le début
 - **Monitoring** des performances en production
 
 ### Sécurité
@@ -877,6 +913,7 @@ Pour un développement optimal:
 ## 📞 Support et Questions
 
 Pour toute question sur le roadmap:
+
 - Consulter `/docs/ARCHITECTURE_V2.md`
 - Consulter `/docs/MIGRATION_GUIDE.md`
 - Ouvrir une issue GitHub avec label `roadmap`

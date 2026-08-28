@@ -127,7 +127,7 @@ export function DevisDialog({ lead, open, onClose, onSaved }: {
                       ? "border-primary bg-primary/10 ring-1 ring-primary"
                       : "border-border hover:border-primary/50"}`}>
                     <p className="font-bold text-sm">{plan.duree} mois</p>
-                    <p className="text-xs text-muted-foreground">{formatCfa(plan.mensualite)}/mois</p>
+                    <p className="text-xs text-muted-foreground">{formatCfa(plan.mensualite)} par mois</p>
                   </button>
                 ))}
               </div>

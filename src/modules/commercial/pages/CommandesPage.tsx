@@ -70,7 +70,9 @@ import {
   ShoppingCart,
   Plus,
   Loader2,
+  Truck,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
 import { useCommandes } from "../hooks/useCommandes";
 import { useClients } from "../hooks/useClients";
@@ -145,6 +147,7 @@ const PAIEMENT_CONFIG: Record<string, { label: string; color: string }> = {
 
 export function CommandesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab]     = useState<"a_valider" | "a_livrer" | "en_cours" | "terminees">("a_valider");
   const [page, setPage]               = useState(1);
@@ -724,9 +727,12 @@ export function CommandesPage() {
                                 </DropdownMenuItem>
                               )}
                               {activeTab === "a_livrer" && (
-                                <DropdownMenuItem onClick={() => handleStatut(commande.id, "livree")}>
-                                  <Package className="mr-2 h-4 w-4 text-blue-600" />
-                                  Créer bon de livraison
+                                // La livraison se confirme depuis le bordereau, pas d'ici :
+                                // cette entrée appelait un endpoint que le serveur refuse
+                                // désormais. On renvoie vers l'écran qui sait le faire.
+                                <DropdownMenuItem onClick={() => navigate("/admin/achats/livraisons")}>
+                                  <Truck className="mr-2 h-4 w-4 text-blue-600" />
+                                  Suivre en livraison
                                 </DropdownMenuItem>
                               )}
                               {activeTab === "en_cours" && (

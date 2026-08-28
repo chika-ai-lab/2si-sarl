@@ -2,6 +2,8 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useCommande, useChangeCommandeStatut, useDeleteCommande, useUpdateCommande } from "../hooks/useCommandes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HistoriqueTimeline } from "@/components/business/HistoriqueTimeline";
+import { PaiementCommande } from "../components/PaiementCommande";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,11 +41,19 @@ const PAIEMENT_STATUT: Record<string, { label: string; color: string }> = {
   complet:    { label: "Payé",       color: "bg-green-100 text-green-800" },
 };
 
-const TRANSITIONS: Record<CommandeStatut, CommandeStatut[]> = {
-  brouillon:  ["en_attente", "annulee"],
-  en_attente: ["validee", "annulee"],
-  validee:    ["en_cours", "annulee"],
-  en_cours:   ["livree", "annulee"],
+/**
+ * Doit rester le miroir de `common/commande-status.util.ts` côté serveur, qui
+ * refuse désormais les transitions incohérentes.
+ *
+ * `expediee` et `livree` n'y figurent pas volontairement : ces deux états sont
+ * posés par le bordereau de livraison, jamais demandés depuis cet écran. Les
+ * proposer produirait un bouton qui échoue.
+ */
+const TRANSITIONS: Record<string, CommandeStatut[]> = {
+  brouillon:  ["validee", "annulee"],
+  validee:    ["brouillon", "en_cours", "annulee"],
+  en_cours:   ["annulee"],
+  expediee:   [],
   livree:     [],
   annulee:    [],
 };
@@ -381,6 +391,12 @@ export default function CommandeDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Encaissements — le statut de paiement se déduit d'eux, il ne se saisit pas. */}
+        {id && <PaiementCommande commandeId={id} />}
+
+        {/* Chronologie du dossier — qui a fait quoi, et quand. */}
+        {id && <HistoriqueTimeline entite="commande_client" entiteId={id} />}
       </div>
     </>
   );

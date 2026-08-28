@@ -27,6 +27,7 @@ import { formatCurrency } from "@/lib/currency";
 import { toast } from "@/hooks/use-toast";
 import { BonCommandesService, BonCommande } from "../services/bon-commandes.service";
 import { apiClient } from "@/modules/commercial/services/apiClient";
+import { nomClient as formatNomClient } from "@/lib/client-nom";
 
 // ─── Combobox fournisseur avec recherche ──────────────────────────────────────
 
@@ -195,11 +196,7 @@ export default function BonCommandesPage() {
     const map: Record<number, { clientNom: string; adresse: string }> = {};
     for (const c of commandesRaw) {
       const cl = c.client;
-      const clientNom = cl
-        ? (cl.nom_complet ||
-           `${cl.nom ?? ""} ${cl.prenom ?? ""}`.trim() ||
-           cl.raison_sociale || cl.name || "")
-        : "";
+      const clientNom = cl ? formatNomClient(cl, cl.name ?? "") : "";
       const adresse =
         c.adresse_livraison ||
         c.adresseLivraison ||

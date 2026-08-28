@@ -78,11 +78,11 @@
     "quantity": "Quantity",
     "description": "Description",
     "specifications": "Specifications",
-    "fromPerMonth": "from {amount}/month",
+    "fromPerMonth": "From {amount} per month",
     "reference": "Ref.",
     "category": "Category",
     "startingFrom": "From",
-    "perMonth": "/month",
+    "perMonth": " per month",
     "overMonths": "Spread over {months} instalments",
     "financingAvailable": "Financing available",
     "financingWith": "{bank} financing"
@@ -108,11 +108,11 @@
     "selectPlan": "Choose your payment duration",
     "monthly": "per month",
     "total": "Total to pay",
-    "interest": "including financing charges",
-    "noInterest": "No additional charges",
+    "interest": "Details given by your adviser",
+    "noInterest": "Terms set out in your quote",
     "plans": {
       "6months": "6 months",
-      "6months.description": "Settled in 6 instalments, with no additional charges",
+      "6months.description": "The shortest term, settled in 6 instalments",
       "12months": "12 months",
       "12months.description": "The right balance between duration and instalment",
       "24months": "24 months",
@@ -208,8 +208,8 @@
         "approvalDesc": "The vast majority of applications succeed",
         "delay": "Response Time",
         "delayDesc": "A client adviser calls you back",
-        "interest": "Additional charges",
-        "interestDesc": "On the 6-instalment plan"
+        "interest": "Payment terms",
+        "interestDesc": "From 6 to 24 instalments, your choice"
       }
     },
     "cta": {
@@ -256,7 +256,7 @@
   },
   "trustBadges": {
     "secure": "Secure direct debit",
-    "interest": "0 charges over 6 instalments",
+    "interest": "Pay in instalments",
     "approval": "Answer within 24h",
     "shipping": "Delivery across Senegal",
     "warranty": "Manufacturer warranty included"
@@ -269,7 +269,7 @@
   },
   "productDetails": {
     "from": "From",
-    "perMonth": "/month",
+    "perMonth": " per month",
     "onlyLeft": "Only {count} left",
     "addToWishlist": "Add to Wishlist",
     "removeFromWishlist": "Remove from Wishlist"

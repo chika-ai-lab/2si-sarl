@@ -22,7 +22,7 @@ const PAYMENT_PLANS: PaymentPlan[] = [
     months: 6,
     label: "6 mois",
     interestRate: 0,
-    description: "Sans frais supplémentaires",
+    description: "La durée la plus courte",
   },
   {
     months: 12,
@@ -123,12 +123,8 @@ export function PaymentCalculator({ price, className }: PaymentCalculatorProps) 
                 {price.toLocaleString("fr-FR")} FCFA
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Frais de financement</span>
-              <span className="font-medium text-foreground">
-                {(totalPayment - price).toLocaleString("fr-FR")} FCFA
-              </span>
-            </div>
+            {/* Ni taux ni frais affichés : les conditions sont communiquées par
+                le chargé de clientèle, jamais annoncées par la vitrine. */}
             <div className="h-px bg-border my-2" />
             <div className="flex justify-between text-base">
               <span className="font-semibold text-foreground">Total à payer</span>

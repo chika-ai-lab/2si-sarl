@@ -111,11 +111,10 @@ const NAV_LOGISTIQUE: NavigationItem[] = [
   { label: "Bons de Commande",       path: "/admin/achats/bon-commandes",   icon: "ClipboardList", section: "logistique", order: 1 },
   { label: "Commandes Fournisseurs", path: "/admin/achats/commandes",       icon: "ShoppingCart",  section: "logistique", order: 2 },
   { label: "Livraisons",             path: "/admin/achats/livraisons",      icon: "Truck",         section: "logistique", order: 3 },
-  { label: "Bordereaux (BL)",        path: "/admin/achats/bordereaux",      icon: "FileText",      section: "logistique", order: 4 },
-  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",      section: "logistique", order: 5 },
-  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",     section: "logistique", order: 6 },
-  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",         section: "logistique", order: 7 },
-  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",        section: "logistique", order: 8 },
+  { label: "Catalogue",              path: "/admin/commercial/catalogue",   icon: "BookOpen",      section: "logistique", order: 4 },
+  { label: "Fournisseurs",           path: "/admin/achats/fournisseurs",    icon: "Building2",     section: "logistique", order: 5 },
+  { label: "Clients",                path: "/admin/commercial/clients",     icon: "Users",         section: "logistique", order: 6 },
+  { label: "SAV",                    path: "/admin/commercial/sav",         icon: "Wrench",        section: "logistique", order: 7 },
 ];
 
 const NAV_COMPTABILITE: NavigationItem[] = [
@@ -140,6 +139,16 @@ const NAV_ADMIN: NavigationItem[] = [
  * Admin → tout, groupé par rôle.
  * Autres → uniquement leur section + tableau de bord.
  */
+/** Une même page ne doit apparaître qu'une fois : la première déclaration gagne. */
+function dedupeParChemin(items: NavigationItem[]): NavigationItem[] {
+  const vus = new Set<string>();
+  return items.filter((item) => {
+    if (vus.has(item.path)) return false;
+    vus.add(item.path);
+    return true;
+  });
+}
+
 export function getModuleNavigation(user: User | null): NavigationItem[] {
   if (!user) return [];
 
@@ -152,14 +161,21 @@ export function getModuleNavigation(user: User | null): NavigationItem[] {
   const isComptable           = rolesLower.some(r => ["comptabilite", "comptable"].includes(r));
 
   if (isAdmin) {
-    return [
+    // L'admin cumule les navigations de tous les rôles, et plusieurs entrées
+    // pointent vers la même page : Clients apparaissait sous Commercial,
+    // Logistique et Comptabilité, Factures sous deux sections, etc.
+    //
+    // Chaque écran ne doit figurer qu'une fois. La première section qui le
+    // déclare le garde — c'est celle du métier qui en est propriétaire, l'ordre
+    // de concaténation ci-dessous allant du plus amont au plus aval.
+    return dedupeParChemin([
       ...NAV_GENERAL,
       ...NAV_COMMERCIAL_ADMIN,
       ...NAV_LOGISTIQUE,
       ...NAV_COMPTABILITE,
       ...NAV_PRODUITS,
       ...NAV_ADMIN,
-    ];
+    ]);
   }
 
   if (isResponsableComm) return [...NAV_GENERAL, ...NAV_COMMERCIAL_ADMIN];

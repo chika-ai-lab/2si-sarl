@@ -31,21 +31,25 @@ const still = { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0 } };
 // Fade up : titres et blocs de section
 export const fadeUpVariant: Variants = {
   hidden: prefersReducedMotion() ? still : { opacity: 0, y: 12 },
-  visible: prefersReducedMotion() ? still : {
-    opacity: 1,
-    y: 0,
-    transition: { duration: DUR(), ease: EASE },
-  },
+  visible: prefersReducedMotion()
+    ? still
+    : {
+        opacity: 1,
+        y: 0,
+        transition: { duration: DUR(), ease: EASE },
+      },
 };
 
 // Fade in with scale
 export const fadeInScaleVariant: Variants = {
   hidden: prefersReducedMotion() ? still : { opacity: 0, scale: 0.99 },
-  visible: prefersReducedMotion() ? still : {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: DUR(), ease: EASE },
-  },
+  visible: prefersReducedMotion()
+    ? still
+    : {
+        opacity: 1,
+        scale: 1,
+        transition: { duration: DUR(), ease: EASE },
+      },
 };
 
 // Conteneur de grille : les enfants apparaissent dans l'ordre du DOM, vite.
@@ -55,41 +59,49 @@ export const staggerContainerVariant: Variants = {
   hidden: { opacity: 1 }, // le conteneur ne clignote pas, seuls les enfants animent
   visible: {
     opacity: 1,
-    transition: prefersReducedMotion() ? { duration: 0 } : {
-      staggerChildren: 0.035,
-      delayChildren: 0,
-    },
+    transition: prefersReducedMotion()
+      ? { duration: 0 }
+      : {
+          staggerChildren: 0.035,
+          delayChildren: 0,
+        },
   },
 };
 
 // Élément de grille
 export const staggerItemVariant: Variants = {
   hidden: prefersReducedMotion() ? still : { opacity: 0, y: 8 },
-  visible: prefersReducedMotion() ? still : {
-    opacity: 1,
-    y: 0,
-    transition: { duration: DUR(), ease: EASE },
-  },
+  visible: prefersReducedMotion()
+    ? still
+    : {
+        opacity: 1,
+        y: 0,
+        transition: { duration: DUR(), ease: EASE },
+      },
 };
 
 // Slide in from left
 export const slideInLeftVariant: Variants = {
   hidden: prefersReducedMotion() ? still : { opacity: 0, x: -14 },
-  visible: prefersReducedMotion() ? still : {
-    opacity: 1,
-    x: 0,
-    transition: { duration: DUR(), ease: EASE },
-  },
+  visible: prefersReducedMotion()
+    ? still
+    : {
+        opacity: 1,
+        x: 0,
+        transition: { duration: DUR(), ease: EASE },
+      },
 };
 
 // Slide in from right
 export const slideInRightVariant: Variants = {
   hidden: prefersReducedMotion() ? still : { opacity: 0, x: 14 },
-  visible: prefersReducedMotion() ? still : {
-    opacity: 1,
-    x: 0,
-    transition: { duration: DUR(), ease: EASE },
-  },
+  visible: prefersReducedMotion()
+    ? still
+    : {
+        opacity: 1,
+        x: 0,
+        transition: { duration: DUR(), ease: EASE },
+      },
 };
 
 // Bounce badge animation - keep full fade for badges (they're small)

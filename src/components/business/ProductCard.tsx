@@ -343,16 +343,20 @@ function BankBadge({ banque, className }: { banque: string; className?: string }
 }
 
 /**
- * Argument de vente principal de la carte : la plus petite mensualité connue,
- * mise en avant plutôt que le prix comptant. Quand aucune mensualité n'est
- * disponible on annonce seulement que le produit est finançable — jamais un
- * montant inventé, le chiffre ferme restant celui du devis.
+ * Prix de vente en tête, mensualité d'appel juste en dessous.
+ *
+ * Le prix répond à la première question — « combien ça coûte » — et la
+ * mensualité à la seconde — « est-ce à ma portée ». Les deux chiffres viennent
+ * de la base : aucun n'est calculé ici, et si l'un manque, il n'est pas affiché
+ * plutôt qu'estimé.
  */
 function FinancingPitch({ product }: { product: Product }) {
   const { t } = useTranslation();
   const starting = getStartingMonthly(product);
+  const prix = Number(product.price) || 0;
 
-  if (!starting) {
+  // Ni prix ni mensualité : on annonce seulement que le produit est finançable.
+  if (!prix && !starting) {
     return (
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <CreditCard className="h-4 w-4 text-primary shrink-0" />
@@ -369,20 +373,29 @@ function FinancingPitch({ product }: { product: Product }) {
   return (
     <div className="flex items-end justify-between gap-2 flex-1 min-w-0">
       <div className="min-w-0">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("product.startingFrom")}
-        </span>
-        <div className="flex items-baseline gap-1">
-          <span className="text-xl font-bold text-primary leading-tight">
-            {formatCurrency(starting.amount)}
-          </span>
-          <span className="text-sm font-semibold text-primary/80">
+        {prix > 0 && (
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-xl font-bold text-foreground leading-tight tabular-nums">
+              {formatCurrency(prix)}
+            </span>
+            {product.compareAtPrice && Number(product.compareAtPrice) > prix && (
+              <span className="text-xs text-muted-foreground line-through tabular-nums">
+                {formatCurrency(Number(product.compareAtPrice))}
+              </span>
+            )}
+          </div>
+        )}
+
+        {starting && (
+          <p className="text-[13px] text-primary font-semibold mt-0.5">
+            {t("product.startingFrom")}{" "}
+            <span className="tabular-nums">{formatCurrency(starting.amount)}</span>
             {t("product.perMonth")}
-          </span>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          {t("product.overMonths", { months: starting.months })}
-        </p>
+            <span className="block text-[11px] font-normal text-muted-foreground">
+              {t("product.overMonths", { months: starting.months })}
+            </span>
+          </p>
+        )}
       </div>
       {product.banque && <BankBadge banque={product.banque} />}
     </div>

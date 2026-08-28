@@ -40,7 +40,7 @@
     "or": "ou",
     "register": "S'inscrire",
     "searchPlaceholder": "Rechercher un produit...",
-    "announcement": "Particuliers et entreprises : payez en 6, 12 ou 24 mensualités"
+    "announcement": "Salariés CBAO et Crédit Mutuel : payez en 6, 12 ou 24 mensualités"
   },
   "catalog": {
     "title": "Notre Catalogue",
@@ -78,11 +78,11 @@
     "quantity": "Quantité",
     "description": "Description",
     "specifications": "Caractéristiques",
-    "fromPerMonth": "à partir de {amount}/mois",
+    "fromPerMonth": "À partir de {amount} par mois",
     "reference": "Réf.",
     "category": "Catégorie",
-    "startingFrom": "Dès",
-    "perMonth": "/mois",
+    "startingFrom": "À partir de",
+    "perMonth": " par mois",
     "overMonths": "Étalé sur {months} mensualités",
     "financingAvailable": "Financement possible",
     "financingWith": "Financement {bank}"
@@ -108,11 +108,11 @@
     "selectPlan": "Choisissez votre durée de paiement",
     "monthly": "par mois",
     "total": "Total à régler",
-    "interest": "dont frais de financement",
-    "noInterest": "Sans frais supplémentaires",
+    "interest": "Détail communiqué par votre conseiller",
+    "noInterest": "Conditions précisées dans votre devis",
     "plans": {
       "6months": "6 mois",
-      "6months.description": "Réglé en 6 mensualités, sans frais supplémentaires",
+      "6months.description": "La durée la plus courte, réglée en 6 mensualités",
       "12months": "12 mois",
       "12months.description": "Le bon équilibre entre durée et mensualité",
       "24months": "24 mois",
@@ -178,7 +178,7 @@
   "home": {
     "hero": {
       "title": "Équipez-vous maintenant, payez en plusieurs fois",
-      "subtitle": "Pour les particuliers comme pour les entreprises"
+      "subtitle": "Des offres sur mesure pour les salariés"
     },
     "promo": {
       "title": "De 6 à 24 mensualités, à votre rythme",
@@ -203,13 +203,13 @@
       "subtitle": "Un financement clair, du premier appel à la dernière mensualité",
       "stats": {
         "clients": "Clients équipés",
-        "clientsDesc": "Particuliers et entreprises nous font confiance",
+        "clientsDesc": "Salariés et entreprises nous font confiance",
         "approval": "Taux d'approbation",
         "approvalDesc": "La grande majorité des dossiers aboutit",
         "delay": "Délai de réponse",
         "delayDesc": "Un chargé de clientèle vous rappelle",
-        "interest": "Frais supplémentaires",
-        "interestDesc": "Sur la formule 6 mensualités"
+        "interest": "Durées de paiement",
+        "interestDesc": "De 6 à 24 mensualités, au choix"
       }
     },
     "cta": {
@@ -221,14 +221,14 @@
   },
   "eligibility": {
     "title": "Suis-je éligible ?",
-    "subtitle": "Les conditions sont simples et la réponse est rapide. Choisissez votre situation.",
+    "subtitle": "Nos offres sont conçues sur mesure pour les salariés dont le salaire est domicilié à la CBAO ou au Crédit Mutuel du Sénégal. Choisissez votre situation.",
     "conditionsTitle": "Conditions d'éligibilité",
     "documentsTitle": "Pièces à fournir",
     "particulier": {
-      "tab": "Je suis un particulier",
+      "tab": "Je suis salarié",
       "title": "Salariés et fonctionnaires",
-      "description": "Équipez votre foyer sans attendre d'avoir la somme entière : téléphone, téléviseur, électroménager, mobilier. Vos mensualités sont prélevées sur votre compte domicilié.",
-      "condition1": "Être titulaire d'un compte avec domiciliation de salaire chez CBAO ou CMS",
+      "description": "Équipez votre foyer sans attendre d'avoir la somme entière : téléphone, téléviseur, électroménager, mobilier. Vos mensualités sont prélevées sur le compte où vous percevez votre salaire.",
+      "condition1": "Être titulaire d'un compte avec domiciliation de salaire à la CBAO ou au Crédit Mutuel du Sénégal",
       "condition2": "Justifier d'au moins 1 an d'ancienneté pour les salariés du secteur privé",
       "condition3": "Être titulaire de son poste pour les fonctionnaires",
       "document1": "Une photocopie de votre carte nationale d'identité",
@@ -237,12 +237,12 @@
       "documentsNote": "D'autres pièces peuvent être demandées selon votre dossier."
     },
     "pro": {
-      "tab": "Je suis un professionnel",
+      "tab": "Je suis une entreprise",
       "title": "Entreprises, commerces et institutions",
       "description": "Équipez vos bureaux et vos équipes sans immobiliser votre trésorerie : informatique, mobilier, outillage, véhicules. Une seule mensualité, une seule facture.",
       "condition1": "Être une structure légalement enregistrée au Sénégal",
       "condition2": "Justifier d'au moins 1 an d'activité",
-      "condition3": "Disposer d'un compte bancaire au nom de la structure chez CBAO ou CMS",
+      "condition3": "Disposer d'un compte bancaire au nom de la structure à la CBAO ou au Crédit Mutuel du Sénégal",
       "document1": "Registre de commerce et NINEA",
       "document2": "Vos 3 derniers relevés bancaires",
       "document3": "Une pièce d'identité du gérant ou du représentant légal",
@@ -256,7 +256,7 @@
   },
   "trustBadges": {
     "secure": "Prélèvement sécurisé",
-    "interest": "0 frais sur 6 mensualités",
+    "interest": "Paiement en plusieurs fois",
     "approval": "Réponse sous 24h",
     "shipping": "Livraison partout au Sénégal",
     "warranty": "Garantie constructeur incluse"
@@ -268,8 +268,8 @@
     "outOfStock": "Indisponible"
   },
   "productDetails": {
-    "from": "Dès",
-    "perMonth": "/mois",
+    "from": "À partir de",
+    "perMonth": " par mois",
     "onlyLeft": "Plus que {count} disponible(s)",
     "addToWishlist": "Ajouter aux favoris",
     "removeFromWishlist": "Retirer des favoris"

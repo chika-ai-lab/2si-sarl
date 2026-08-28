@@ -33,10 +33,6 @@ export const achatsModuleConfig: ModuleConfig = {
             component: lazy(() => import("./pages/LivraisonsPage")),
         },
         {
-            path: "bordereaux",
-            component: lazy(() => import("./pages/BLPage")),
-        },
-        {
             path: "fournisseurs",
             component: lazy(() => import("./pages/FournisseursPage")),
         },
@@ -65,18 +61,11 @@ export const achatsModuleConfig: ModuleConfig = {
             order: 3,
         },
         {
-            label: "Bordereaux (BL)",
-            path: "/admin/achats/bordereaux",
-            icon: "FileText",
-            section: "achats",
-            order: 4,
-        },
-        {
             label: "Fournisseurs",
             path: "/admin/achats/fournisseurs",
             icon: "Building2",
             section: "achats",
-            order: 5,
+            order: 4,
         },
     ],
 
