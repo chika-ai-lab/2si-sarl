@@ -84,8 +84,36 @@ export default function CommandesFournisseursPage() {
   const [openId, setOpenId]         = useState<number | null>(null);
   const [loading, setLoading]       = useState<string | null>(null);
   const [printCf, setPrintCf]       = useState<CF | null>(null);
-  // Saisie en cours, indexée par identifiant de LIGNE (et non de commande).
-  const [localFrais, setLocalFrais] = useState<Record<number, { fraisExpedition: string; autresCharges: string }>>({});
+  /**
+   * Saisie en cours, indexée par identifiant de LIGNE (et non de commande).
+   *
+   * Les champs sont partiels et stockés en chaîne : un champ absent signifie
+   * « non touché », ce qui laisse la valeur du serveur faire foi. Stocker des
+   * nombres obligerait à choisir une valeur pour un champ vidé en cours de
+   * frappe, et le curseur sauterait à chaque caractère.
+   */
+  type SaisieLigne = { quantite: string; prix: string; fraisExpedition: string; autresCharges: string };
+  const [localLignes, setLocalLignes] = useState<Record<number, Partial<SaisieLigne>>>({});
+
+  const majSaisie = (ligneId: number, champ: keyof SaisieLigne, valeur: string) =>
+    setLocalLignes((p) => ({ ...p, [ligneId]: { ...p[ligneId], [champ]: valeur } }));
+
+  /**
+   * Valeurs effectives d'une ligne : la saisie en cours l'emporte sur le
+   * serveur. Une seule fonction sert la ligne, le récapitulatif et
+   * l'enregistrement — sans quoi le total affiché finirait par diverger de ce
+   * qui part réellement.
+   */
+  const valeursLigne = (l: CFLigne) => {
+    const s = localLignes[l.id];
+    const quantite = Number(s?.quantite ?? l.quantite) || 0;
+    const prix     = Number(s?.prix ?? l.prix) || 0;
+    const frais    = Number(s?.fraisExpedition ?? l.fraisExpedition ?? 0) || 0;
+    const autres   = Number(s?.autresCharges ?? l.autresCharges ?? 0) || 0;
+    // Le montant suit toujours ses composants ; le serveur le recalcule de son
+    // côté, cet affichage n'en est que le reflet immédiat.
+    return { quantite, prix, montant: prix * quantite, frais, autres };
+  };
 
   const {
     items: all,
@@ -160,28 +188,55 @@ export default function CommandesFournisseursPage() {
     }
   };
 
-  // ── Sauvegarder les frais, ligne par ligne ───────────────────────────
-  // Un seul appel pour toute la commande : le serveur écrit les lignes puis
-  // recale l'en-tête sur leur somme, dans la même transaction.
-  const handleSaveFrais = async (cf: CF) => {
-    const modifiees = (cf.lignes ?? []).filter((l) => localFrais[l.id]);
+  // ── Enregistrer les lignes modifiées ─────────────────────────────────
+  // Un seul appel pour toute la commande : le serveur écrit les lignes,
+  // recalcule chaque montant, puis recale l'en-tête sur leur somme, dans la
+  // même transaction.
+  const handleSaveLignes = async (cf: CF) => {
+    const modifiees = (cf.lignes ?? []).filter((l) => localLignes[l.id]);
     if (!modifiees.length) return;
+
+    /* Un champ vidé en cours de frappe vaut 0 : parti tel quel, il reviendrait
+       en erreur serveur après un aller-retour. On nomme la ligne fautive tout
+       de suite plutôt que d'afficher « Quantité invalide » sans dire laquelle. */
+    const fautive = modifiees.find((l) => {
+      const v = valeursLigne(l);
+      return !Number.isInteger(v.quantite) || v.quantite < 1 || v.prix < 0;
+    });
+    if (fautive) {
+      toast({
+        variant: "destructive",
+        title: "Ligne incomplète",
+        description:
+          `${fautive.designation ?? `Ligne #${fautive.id}`} : la quantité doit être un entier d'au moins 1, ` +
+          "et le prix ne peut pas être négatif.",
+      });
+      return;
+    }
 
     setLoading(`${cf.id}-frais`);
     try {
-      await apiClient.put(`/commande-fournisseurs/${cf.id}/frais`, {
-        lignes: modifiees.map((l) => ({
-          id: l.id,
-          frais_expedition: Number(localFrais[l.id]?.fraisExpedition) || 0,
-          autres_charges:   Number(localFrais[l.id]?.autresCharges)   || 0,
-        })),
+      await apiClient.put(`/commande-fournisseurs/${cf.id}/lignes`, {
+        lignes: modifiees.map((l) => {
+          const v = valeursLigne(l);
+          return {
+            id: l.id,
+            quantite: v.quantite,
+            prix: v.prix,
+            frais_expedition: v.frais,
+            autres_charges: v.autres,
+            // `montant` n'est volontairement pas transmis : le serveur le
+            // recalcule, et deux sources pour une même valeur finissent
+            // toujours par diverger.
+          };
+        }),
       });
-      setLocalFrais((p) => {
+      setLocalLignes((p) => {
         const suite = { ...p };
         for (const l of modifiees) delete suite[l.id];
         return suite;
       });
-      toast({ title: `Frais enregistrés sur ${modifiees.length} ligne(s)` });
+      toast({ title: `${modifiees.length} ligne(s) enregistrée(s)` });
       qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
     } catch (e: any) {
       toast({ title: "Erreur", description: e?.message, variant: "destructive" });
@@ -192,9 +247,9 @@ export default function CommandesFournisseursPage() {
 
   // ── Générer facture depuis CF ─────────────────────────────────────────
   const handleGenererFacture = async (cf: CF) => {
-    // Les frais saisis et non encore enregistrés doivent partir avant la
-    // facture, sinon celle-ci serait établie sur un montant incomplet.
-    if ((cf.lignes ?? []).some((l) => localFrais[l.id])) await handleSaveFrais(cf);
+    // Les modifications saisies et non encore enregistrées doivent partir avant
+    // la facture, sinon celle-ci serait établie sur un montant périmé.
+    if ((cf.lignes ?? []).some((l) => localLignes[l.id])) await handleSaveLignes(cf);
 
     setLoading(`${cf.id}-facture`);
     try {
@@ -301,7 +356,9 @@ export default function CommandesFournisseursPage() {
         <div className="space-y-2">
           {filtered.map((cf) => {
             const isOpen = openId === cf.id;
-            const montantLignes = cf.lignes?.reduce((s, l) => s + Number(l.montant), 0) ?? 0;
+            // Sous-total calculé sur les valeurs effectives : sinon le
+            // récapitulatif resterait figé pendant qu'on modifie les lignes.
+            const montantLignes = cf.lignes?.reduce((s, l) => s + valeursLigne(l).montant, 0) ?? 0;
 
             return (
               <Card key={cf.id} className={isOpen ? "ring-2 ring-indigo-400" : ""}>
@@ -450,52 +507,70 @@ export default function CommandesFournisseursPage() {
                       </TableHeader>
                       <TableBody>
                         {cf.lignes.map((l) => {
-                          const saisie = localFrais[l.id];
-                          const frais  = Number(saisie?.fraisExpedition ?? l.fraisExpedition ?? 0) || 0;
-                          const autres = Number(saisie?.autresCharges   ?? l.autresCharges   ?? 0) || 0;
+                          const saisie = localLignes[l.id];
+                          const v = valeursLigne(l);
+                          // Une commande déjà facturée n'est plus modifiable :
+                          // le serveur le refuse aussi, l'écran ne fait que le
+                          // dire plus tôt.
                           const majPossible = !cf.factureId;
+                          const nom = l.designation ?? `ligne ${l.id}`;
+                          const champ =
+                            "text-sm text-right border rounded px-2 py-1 bg-background tabular-nums " +
+                            "focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50";
                           return (
                             <TableRow key={l.id} className="border-0 hover:bg-transparent">
                               <TableCell className="py-1.5 text-sm">
                                 {l.designation || `Article #${l.articleId}`}
                               </TableCell>
-                              <TableCell className="py-1.5 text-sm text-right tabular-nums">{l.quantite}</TableCell>
-                              <TableCell className="py-1.5 text-sm text-right tabular-nums">{formatCurrency(Number(l.prix))}</TableCell>
-                              <TableCell className="py-1.5 text-sm text-right tabular-nums">{formatCurrency(Number(l.montant))}</TableCell>
                               <TableCell className="py-1 text-right">
                                 <input
-                                  type="number" min="0" step="1"
-                                  aria-label={`Frais d'expédition — ${l.designation ?? `ligne ${l.id}`}`}
+                                  type="number" min="1" step="1"
+                                  aria-label={`Quantité — ${nom}`}
                                   disabled={!majPossible}
-                                  className="w-28 text-sm text-right border rounded px-2 py-1 bg-background tabular-nums focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                                  value={saisie?.fraisExpedition ?? String(Number(l.fraisExpedition ?? 0))}
-                                  onChange={(e) => setLocalFrais((p) => ({
-                                    ...p,
-                                    [l.id]: {
-                                      fraisExpedition: e.target.value,
-                                      autresCharges: p[l.id]?.autresCharges ?? String(Number(l.autresCharges ?? 0)),
-                                    },
-                                  }))}
+                                  className={`w-14 ${champ}`}
+                                  value={saisie?.quantite ?? String(l.quantite)}
+                                  onChange={(e) => majSaisie(l.id, "quantite", e.target.value)}
                                 />
                               </TableCell>
                               <TableCell className="py-1 text-right">
                                 <input
                                   type="number" min="0" step="1"
-                                  aria-label={`Autres charges — ${l.designation ?? `ligne ${l.id}`}`}
+                                  aria-label={`Prix unitaire — ${nom}`}
                                   disabled={!majPossible}
-                                  className="w-28 text-sm text-right border rounded px-2 py-1 bg-background tabular-nums focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                                  className={`w-28 ${champ}`}
+                                  value={saisie?.prix ?? String(Number(l.prix))}
+                                  onChange={(e) => majSaisie(l.id, "prix", e.target.value)}
+                                />
+                              </TableCell>
+                              {/* Montant : produit du prix par la quantité. Il
+                                  reste en lecture seule — le rendre saisissable
+                                  permettrait un total sans rapport avec ses
+                                  composants. */}
+                              <TableCell className="py-1.5 text-sm text-right tabular-nums text-muted-foreground">
+                                {formatCurrency(v.montant)}
+                              </TableCell>
+                              <TableCell className="py-1 text-right">
+                                <input
+                                  type="number" min="0" step="1"
+                                  aria-label={`Frais d'expédition — ${nom}`}
+                                  disabled={!majPossible}
+                                  className={`w-28 ${champ}`}
+                                  value={saisie?.fraisExpedition ?? String(Number(l.fraisExpedition ?? 0))}
+                                  onChange={(e) => majSaisie(l.id, "fraisExpedition", e.target.value)}
+                                />
+                              </TableCell>
+                              <TableCell className="py-1 text-right">
+                                <input
+                                  type="number" min="0" step="1"
+                                  aria-label={`Autres charges — ${nom}`}
+                                  disabled={!majPossible}
+                                  className={`w-28 ${champ}`}
                                   value={saisie?.autresCharges ?? String(Number(l.autresCharges ?? 0))}
-                                  onChange={(e) => setLocalFrais((p) => ({
-                                    ...p,
-                                    [l.id]: {
-                                      fraisExpedition: p[l.id]?.fraisExpedition ?? String(Number(l.fraisExpedition ?? 0)),
-                                      autresCharges: e.target.value,
-                                    },
-                                  }))}
+                                  onChange={(e) => majSaisie(l.id, "autresCharges", e.target.value)}
                                 />
                               </TableCell>
                               <TableCell className="py-1.5 text-sm text-right font-medium tabular-nums">
-                                {formatCurrency(Number(l.montant) + frais + autres)}
+                                {formatCurrency(v.montant + v.frais + v.autres)}
                               </TableCell>
                             </TableRow>
                           );
@@ -509,10 +584,8 @@ export default function CommandesFournisseursPage() {
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Récapitulatif</p>
 
                       {(() => {
-                        const totalFrais = cf.lignes.reduce((s, l) =>
-                          s + (Number(localFrais[l.id]?.fraisExpedition ?? l.fraisExpedition ?? 0) || 0), 0);
-                        const totalAutres = cf.lignes.reduce((s, l) =>
-                          s + (Number(localFrais[l.id]?.autresCharges ?? l.autresCharges ?? 0) || 0), 0);
+                        const totalFrais = cf.lignes.reduce((s, l) => s + valeursLigne(l).frais, 0);
+                        const totalAutres = cf.lignes.reduce((s, l) => s + valeursLigne(l).autres, 0);
                         return (
                           <div className="space-y-1 text-sm">
                             <div className="flex justify-between text-muted-foreground">
@@ -542,11 +615,15 @@ export default function CommandesFournisseursPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={loading === `${cf.id}-frais`}
-                          onClick={() => handleSaveFrais(cf)}
+                          disabled={
+                            !!cf.factureId
+                            || loading === `${cf.id}-frais`
+                            || !(cf.lignes ?? []).some((l) => localLignes[l.id])
+                          }
+                          onClick={() => handleSaveLignes(cf)}
                         >
                           {loading === `${cf.id}-frais` ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                          Enregistrer les frais
+                          Enregistrer les modifications
                         </Button>
                         <Button
                           size="sm"
