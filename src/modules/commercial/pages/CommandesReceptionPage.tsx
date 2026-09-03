@@ -184,11 +184,16 @@ function FluxPipeline({
 }: {
   nbCommandes: number; nbBDC: number; nbCF: number; nbLivraisons: number;
 }) {
+  /* Les libellés nomment l'unité comptée.
+     Trois de ces étapes comptent des COMMANDES, la troisième compte des
+     DOCUMENTS fournisseurs : « Bons de commande : 19 » laissait croire à
+     19 bons alors que l'écran BDC en affiche 11 — ce sont 19 commandes
+     placées dans un bon. */
   const steps = [
-    { label: "Commandes reçues", count: nbCommandes, icon: ShoppingCart, color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200", active: true },
-    { label: "Bons de commande", count: nbBDC,       icon: ClipboardList, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", active: nbBDC > 0 },
-    { label: "Cmd. fournisseurs", count: nbCF,       icon: FileText,      color: "text-blue-600",  bg: "bg-blue-50",  border: "border-blue-200",  active: nbCF > 0 },
-    { label: "Livraisons",        count: nbLivraisons,icon: Truck,        color: "text-green-600", bg: "bg-green-50", border: "border-green-200", active: nbLivraisons > 0 },
+    { label: "Commandes reçues",   count: nbCommandes,  icon: ShoppingCart,  color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200", active: true },
+    { label: "Cmd. en bon",        count: nbBDC,        icon: ClipboardList, color: "text-amber-600",  bg: "bg-amber-50",  border: "border-amber-200",  active: nbBDC > 0 },
+    { label: "Doc. fournisseurs",  count: nbCF,         icon: FileText,      color: "text-blue-600",   bg: "bg-blue-50",   border: "border-blue-200",   active: nbCF > 0 },
+    { label: "Cmd. livrées",       count: nbLivraisons, icon: Truck,         color: "text-green-600",  bg: "bg-green-50",  border: "border-green-200",  active: nbLivraisons > 0 },
   ];
 
   return (
@@ -656,12 +661,16 @@ export default function CommandesReceptionPage() {
         </div>
       </div>
 
-      {/* Pipeline flux de traitement */}
+      {/* Pipeline flux de traitement.
+          `nbLivraisons` était figé à 0 : l'étape n'avait jamais été branchée et
+          affichait « 0 Livraisons » à côté d'un onglet « Livrées 9 ». Il vient
+          désormais de `stats.livrees`, qui alimente déjà cet onglet — les deux
+          ne peuvent plus diverger. */}
       <FluxPipeline
         nbCommandes={commandes.length}
         nbBDC={alreadyInBdc.size}
         nbCF={cfList.length}
-        nbLivraisons={0}
+        nbLivraisons={stats.livrees}
       />
 
       {/* Tabs + filtres */}

@@ -34,7 +34,11 @@ function mapBackendToAccreditif(a: any): Accreditif {
     montant: Number(a.montant) || 0,
     devise: (a.devise || 'FCFA') as 'FCFA' | 'EUR' | 'USD',
     clientId: a.client_id ? String(a.client_id) : undefined,
-    commandeIds: a.commande_id ? [String(a.commande_id)] : [],
+    /* L'entité API porte UNE commande (`commande_id`), pas une liste : le
+       tableau produit ici n'avait aucun lecteur et contredisait le type. Le
+       DTO de création garde `commandeIds` — il n'en envoie déjà que le premier
+       élément — pour ne pas toucher au chemin d'écriture. */
+    commandeId: a.commande_id ? String(a.commande_id) : undefined,
     dateEmission: a.date_emission || '',
     dateExpiration: a.date_expiration || '',
     documents,

@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { API_ENDPOINTS } from './api.config';
 import { apiClient } from './apiClient';
+import { formatAdresse, serialiserAdresse } from '@/lib/adresse';
 
 // ============================================
 // MAPPING
@@ -24,14 +25,9 @@ function mapBackendToClient(c: any): Client {
   const creditLimite = Number(c.creditLimite ?? c.credit_limite) || 0;
   const creditUtilise = Number(c.creditUtilise ?? c.credit_utilise) || 0;
 
-  let adresse = { rue: '', ville: 'Dakar', codePostal: '', pays: 'Sénégal' };
-  if (c.adresse) {
-    try {
-      adresse = typeof c.adresse === 'string' ? JSON.parse(c.adresse) : c.adresse;
-    } catch {
-      adresse.rue = c.adresse;
-    }
-  }
+  // Lecture tolérante : la production est normalisée en texte, mais une
+  // sauvegarde ancienne peut encore porter l'objet JSON d'autrefois.
+  const adresse = formatAdresse(c.adresse);
 
   // L'API sérialise les entités en camelCase : ne lire que le snake_case
   // laissait `nomComplet` vide et faisait tomber l'affichage sur le seul nom
@@ -85,7 +81,7 @@ function mapClientToBackend(data: CreateClientDTO | UpdateClientDTO): Record<str
     email: data.email,
     telephone: data.telephone,
     telephone_secondaire: (data as any).telephoneSecondaire,
-    adresse: JSON.stringify((data as any).adresse || {}),
+    adresse: serialiserAdresse((data as any).adresse),
     categorie: (data as any).categorie,
     statut: (data as any).statut,
     banque_partenaire: (data as any).banquePartenaire,

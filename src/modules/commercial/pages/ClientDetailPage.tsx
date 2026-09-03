@@ -26,6 +26,7 @@ import {
   ShoppingCart, TrendingUp, Edit, Trash2, CheckCircle, XCircle, AlertTriangle,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { formatAdresse } from "@/lib/adresse";
 import type { UpdateClientDTO, ClientStatut, ClientCategorie, BanquePartenaire } from "../types";
 
 const STATUT_CONFIG = {
@@ -67,7 +68,7 @@ export default function ClientDetailPage() {
       email: client.email,
       telephone: client.telephone,
       telephoneSecondaire: client.telephoneSecondaire,
-      adresse: { ...(client.adresse ?? {}) },
+      adresse: client.adresse ?? "",
       categorie: client.categorie,
       creditLimite: credit.limite,
       banquePartenaire: client.banquePartenaire,
@@ -180,23 +181,12 @@ export default function ClientDetailPage() {
 
             <div className="col-span-2 space-y-2">
               <Label>Adresse</Label>
+              {/* Texte libre : voir lib/adresse.ts. */}
               <Input
-                placeholder="Rue"
-                value={form.adresse?.rue ?? ""}
-                onChange={(e) => setForm({ ...form, adresse: { ...form.adresse!, rue: e.target.value } })}
+                placeholder="Quartier, rue, repère — ex. POSTE THIAROYE, Dakar"
+                value={form.adresse ?? ""}
+                onChange={(e) => setForm({ ...form, adresse: e.target.value })}
               />
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  placeholder="Ville"
-                  value={form.adresse?.ville ?? ""}
-                  onChange={(e) => setForm({ ...form, adresse: { ...form.adresse!, ville: e.target.value } })}
-                />
-                <Input
-                  placeholder="Pays"
-                  value={form.adresse?.pays ?? ""}
-                  onChange={(e) => setForm({ ...form, adresse: { ...form.adresse!, pays: e.target.value } })}
-                />
-              </div>
             </div>
 
             <div className="col-span-2">
@@ -336,9 +326,7 @@ export default function ClientDetailPage() {
               {client.adresse && (
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <span>
-                    {[client.adresse.rue, client.adresse.ville, client.adresse.codePostal, client.adresse.pays].filter(Boolean).join(", ")}
-                  </span>
+                  <span>{formatAdresse(client.adresse)}</span>
                 </div>
               )}
               {client.notes && (

@@ -28,6 +28,7 @@ import { toast } from "@/hooks/use-toast";
 import { BonCommandesService, BonCommande } from "../services/bon-commandes.service";
 import { apiClient } from "@/modules/commercial/services/apiClient";
 import { nomClient as formatNomClient } from "@/lib/client-nom";
+import { formatAdresse } from "@/lib/adresse";
 
 // ─── Combobox fournisseur avec recherche ──────────────────────────────────────
 
@@ -197,10 +198,14 @@ export default function BonCommandesPage() {
     for (const c of commandesRaw) {
       const cl = c.client;
       const clientNom = cl ? formatNomClient(cl, cl.name ?? "") : "";
+      /* `clients.adresse` contient tantôt du texte, tantôt un objet JSON
+         sérialisé par le back-office. Concaténée brute, la seconde forme
+         s'affichait telle quelle sur le bon de commande :
+         {"rue":"","ville":"Dakar","codePostal":"","pays":"Sénégal"} */
       const adresse =
-        c.adresse_livraison ||
-        c.adresseLivraison ||
-        (cl ? [cl.adresse, cl.quartier, cl.ville].filter(Boolean).join(", ") : "") ||
+        formatAdresse(c.adresse_livraison) ||
+        formatAdresse(c.adresseLivraison) ||
+        (cl ? [formatAdresse(cl.adresse), cl.quartier, cl.ville].filter(Boolean).join(", ") : "") ||
         "";
       map[c.id] = { clientNom, adresse };
     }
@@ -355,14 +360,23 @@ export default function BonCommandesPage() {
         </Button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
+      {/* KPIs.
+          « En cours » manquait : les cartes annonçaient 11 bons au total puis
+          n'en détaillaient que 6, les 5 bons en cours n'apparaissant nulle
+          part. Les quatre états couvrent désormais le total, et le nombre de
+          colonnes suit le nombre de cartes réellement affichées — la carte
+          « Brouillons » étant masquée pour la logistique. */}
+      {(() => {
+        const kpis = [
           { label: "Total BDC",   value: stats.total,      icon: ClipboardList, color: "text-gray-600" },
           { label: "Brouillons",  value: stats.brouillons, icon: Clock,         color: "text-amber-600", hide: isLogistique && !isAdmin },
           { label: "Transmis",    value: stats.transmis,   icon: Send,          color: "text-blue-600" },
+          { label: "En cours",    value: stats.enCours,    icon: Loader2,       color: "text-indigo-600" },
           { label: "Terminés",    value: stats.termine,    icon: CheckCircle2,  color: "text-green-600" },
-        ].filter((s) => !s.hide).map(({ label, value, icon: Icon, color }) => (
+        ].filter((s) => !s.hide);
+        return (
+      <div className={`grid grid-cols-2 gap-4 ${kpis.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
+        {kpis.map(({ label, value, icon: Icon, color }) => (
           <Card key={label}>
             <CardContent className="p-4 flex items-center gap-3">
               <Icon className={`h-8 w-8 ${color}`} />
@@ -374,6 +388,8 @@ export default function BonCommandesPage() {
           </Card>
         ))}
       </div>
+        );
+      })()}
 
       {/* Filtres — onglets statut + recherche */}
       <div className="space-y-2">

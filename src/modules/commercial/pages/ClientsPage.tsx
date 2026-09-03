@@ -82,7 +82,7 @@ const EMPTY_FORM: CreateClientDTO = {
   type: "particulier",
   email: "",
   telephone: "",
-  adresse: { rue: "", ville: "Dakar", codePostal: "", pays: "Sénégal" },
+  adresse: "",
   categorie: "B",
   creditLimite: 0,
   banquePartenaire: "Autre",
@@ -214,38 +214,14 @@ function ClientForm({
       {/* Adresse */}
       <div className="col-span-2 space-y-2">
         <Label>Adresse</Label>
+        {/* Un seul champ : l'adresse est du texte libre. Les trois champs
+            Rue/Ville/Pays sérialisaient un objet JSON dans une colonne texte,
+            que l'application terrain affichait tel quel. */}
         <Input
-          placeholder="Rue"
-          value={(form as any).adresse?.rue ?? ""}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              adresse: { ...(form as any).adresse, rue: e.target.value },
-            })
-          }
+          placeholder="Quartier, rue, repère — ex. POSTE THIAROYE, Dakar"
+          value={(form as any).adresse ?? ""}
+          onChange={(e) => setForm({ ...form, adresse: e.target.value })}
         />
-        <div className="grid grid-cols-2 gap-2">
-          <Input
-            placeholder="Ville"
-            value={(form as any).adresse?.ville ?? ""}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                adresse: { ...(form as any).adresse, ville: e.target.value },
-              })
-            }
-          />
-          <Input
-            placeholder="Pays"
-            value={(form as any).adresse?.pays ?? ""}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                adresse: { ...(form as any).adresse, pays: e.target.value },
-              })
-            }
-          />
-        </div>
       </div>
 
       {/* Notes */}
@@ -328,7 +304,7 @@ export function ClientsPage() {
       email: client.email,
       telephone: client.telephone,
       telephoneSecondaire: client.telephoneSecondaire,
-      adresse: { ...client.adresse },
+      adresse: client.adresse ?? "",
       categorie: client.categorie,
       creditLimite: client.credit.limite,
       banquePartenaire: client.banquePartenaire,

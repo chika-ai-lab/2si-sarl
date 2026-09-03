@@ -57,6 +57,41 @@ import {
 import type { AccreditifStatut, BanquePartenaire, Accreditif } from "../types";
 import { toast } from "@/hooks/use-toast";
 
+/**
+ * Apparence d'un statut d'accréditif.
+ *
+ * Sortie du composant : elle ne dépend d'aucun état, et sa reconstruction à
+ * chaque rendu n'apportait rien.
+ *
+ * `ouvert` est la valeur PAR DÉFAUT de la colonne côté API — et celle sur
+ * laquelle porte la requête d'alertes d'expiration. Elle manquait ici : la
+ * page consultait `statusConfig[statut].color` sur un statut inconnu et
+ * plantait entièrement. Un seul accréditif en production, au statut `ouvert`,
+ * suffisait à rendre l'écran inaccessible.
+ */
+const STATUTS: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+  ouvert:     { label: "Ouvert",     color: "bg-blue-100 text-blue-800",     icon: Clock       },
+  en_attente: { label: "En attente", color: "bg-yellow-100 text-yellow-800", icon: Clock       },
+  approuve:   { label: "Approuvé",   color: "bg-green-100 text-green-800",   icon: CheckCircle },
+  execute:    { label: "Exécuté",    color: "bg-blue-100 text-blue-800",     icon: CheckCircle },
+  expire:     { label: "Expiré",     color: "bg-gray-100 text-gray-800",     icon: XCircle     },
+  annule:     { label: "Annulé",     color: "bg-red-100 text-red-800",       icon: XCircle     },
+};
+
+const STATUT_INCONNU = { color: "bg-gray-100 text-gray-800", icon: AlertCircle };
+
+/**
+ * Apparence d'un statut, sans jamais échouer.
+ *
+ * Un statut absent de la table s'affiche tel quel plutôt que de faire tomber
+ * l'écran : une valeur inattendue est une information à montrer, pas une
+ * raison de priver l'utilisateur de toute la page.
+ */
+function statutAccreditif(statut: string | null | undefined) {
+  if (!statut) return { label: "—", ...STATUT_INCONNU };
+  return STATUTS[statut] ?? { label: statut.replace(/_/g, " "), ...STATUT_INCONNU };
+}
+
 export function AccreditifPage() {
   const { t } = useTranslation();
 
@@ -104,35 +139,6 @@ export function AccreditifPage() {
   const createAccreditif = useCreateAccreditif();
   const changeStatut = useChangeAccreditifStatut();
   const uploadDocument = useUploadDocument();
-
-  // Configuration des statuts
-  const statusConfig = {
-    en_attente: {
-      label: "En attente",
-      color: "bg-yellow-100 text-yellow-800",
-      icon: Clock,
-    },
-    approuve: {
-      label: "Approuvé",
-      color: "bg-green-100 text-green-800",
-      icon: CheckCircle,
-    },
-    execute: {
-      label: "Exécuté",
-      color: "bg-blue-100 text-blue-800",
-      icon: CheckCircle,
-    },
-    expire: {
-      label: "Expiré",
-      color: "bg-gray-100 text-gray-800",
-      icon: XCircle,
-    },
-    annule: {
-      label: "Annulé",
-      color: "bg-red-100 text-red-800",
-      icon: XCircle,
-    },
-  };
 
   // Créer un accréditif
   const handleCreateAccreditif = async () => {
@@ -182,7 +188,7 @@ export function AccreditifPage() {
       if (result.success) {
         toast({
           title: "Statut mis à jour",
-          description: `Accréditif ${result.data?.reference} - ${statusConfig[statut].label}`,
+          description: `Accréditif ${result.data?.reference} - ${statutAccreditif(statut).label}`,
         });
       }
     } catch (error) {
@@ -325,9 +331,9 @@ export function AccreditifPage() {
               {selectedAccreditif && (
                 <Badge
                   variant="outline"
-                  className={statusConfig[selectedAccreditif.statut].color}
+                  className={statutAccreditif(selectedAccreditif.statut).color}
                 >
-                  {statusConfig[selectedAccreditif.statut].label}
+                  {statutAccreditif(selectedAccreditif.statut).label}
                 </Badge>
               )}
             </DialogTitle>
@@ -598,9 +604,9 @@ export function AccreditifPage() {
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={statusConfig[accreditif.statut].color}
+                            className={statutAccreditif(accreditif.statut).color}
                           >
-                            {statusConfig[accreditif.statut].label}
+                            {statutAccreditif(accreditif.statut).label}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">

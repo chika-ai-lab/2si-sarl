@@ -37,7 +37,9 @@ export interface Client {
   email: string;
   telephone: string;
   telephoneSecondaire?: string;
-  adresse: Adresse;
+  /* Texte libre : c'est le format canonique retenu pour `clients.adresse`, et
+     la production a été normalisée en conséquence. Voir lib/adresse.ts. */
+  adresse: string;
 
   // Commercial
   categorie: ClientCategorie;
@@ -63,7 +65,7 @@ export interface CreateClientDTO {
   email: string;
   telephone: string;
   telephoneSecondaire?: string;
-  adresse: Adresse;
+  adresse: string;
   categorie: ClientCategorie;
   creditLimite: number;
   banquePartenaire: BanquePartenaire;
@@ -254,7 +256,13 @@ export interface BonLivraison {
 // ACCRÉDITIF
 // ============================================
 
+/**
+ * `ouvert` est la valeur par défaut de la colonne côté API, et celle sur
+ * laquelle porte la requête d'alertes d'expiration. Elle manquait ici : tout
+ * accréditif créé normalement portait donc un statut que le typage ignorait.
+ */
 export type AccreditifStatut =
+  | 'ouvert'
   | 'en_attente'
   | 'approuve'
   | 'execute'
@@ -279,9 +287,14 @@ export interface Accreditif {
   commandeId?: string;
   clientId: string;
 
-  // Banque
+  /* Les deux banques et le numéro sont nommés d'après ce que l'API renvoie
+     réellement (`numero_accreditif`, `banque_beneficiaire`, cf.
+     accreditifs.service.ts). Le type déclarait `numeroCreditif` — une coquille —
+     et ignorait la banque bénéficiaire, alors que l'écran affiche les deux :
+     TypeScript signalait ces trois erreurs sans que personne ne les corrige. */
   banqueEmettrice: BanquePartenaire;
-  numeroCreditif: string;
+  banqueBeneficiaire: string;
+  numeroAccreditif: string;
 
   // Montants
   montant: number;
