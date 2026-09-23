@@ -226,8 +226,8 @@ export default function UsersPage() {
   const lastInscription =
     users.length > 0
       ? users.reduce((latest, u) =>
-          new Date(u.createdAt) > new Date(latest.created_at) ? u : latest
-        ).created_at
+          new Date(u.createdAt) > new Date(latest.createdAt) ? u : latest
+        ).createdAt
       : null;
 
   const getInitials = (name: string) => {

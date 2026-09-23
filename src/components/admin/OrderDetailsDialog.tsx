@@ -174,7 +174,7 @@ export function OrderDetailsDialog({
             </div>
             <div className="flex justify-between pt-2 border-t border-border">
               <span className="font-semibold">Total</span>
-              <span className="font-bold text-lg">{formatCurrency(order.total || order.amount || 0)}</span>
+              <span className="font-bold text-lg">{formatCurrency(order.total || 0)}</span>
             </div>
           </div>
 

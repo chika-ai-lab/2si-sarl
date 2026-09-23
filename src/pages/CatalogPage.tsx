@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Grid3X3, List, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,16 @@ export default function CatalogPage() {
     hasNextPage,
     isFetchingNextPage,
     total,
-  } = useMarketplaceProducts();
+  } = useMarketplaceProducts(undefined, { tailleLot: 200 });
+
+  /* Le catalogue entier est chargé, pas seulement sa première page : les
+     filtres, la recherche et le compteur travaillent sur ce qui est en
+     mémoire. Par lots de 24, ils ne voyaient que 24 des 210 articles — le
+     compteur affichait « 24 / 24 » et une recherche sur un article de la
+     page 5 répondait « Aucun produit trouvé ». */
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const {
     filters,
@@ -138,7 +147,10 @@ export default function CatalogPage() {
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   {/* Results Count */}
                   <div className="text-sm text-muted-foreground whitespace-nowrap">
-                    {filteredProducts.length} / {totalProducts} produit
+                    {/* Le dénominateur est le total serveur, pas ce qui est
+                        déjà chargé : pendant le chargement, « 200 / 210 »
+                        dit la vérité là où « 200 / 200 » la cachait. */}
+                    {filteredProducts.length} / {Math.max(total, totalProducts)} produit
                     {filteredProducts.length !== 1 ? "s" : ""}
                   </div>
 
@@ -227,24 +239,12 @@ export default function CatalogPage() {
                 </div>
               )}
 
-              {/* Chargement par lots — le catalogue arrivait auparavant d'un bloc.
-                  Les filtres s'appliquent à ce qui est chargé : on annonce donc
-                  clairement ce qui reste à charger plutôt que de le taire. */}
+              {/* Les lots suivants arrivent seuls (voir l'effet plus haut) :
+                  on annonce simplement ce qui est encore en route. */}
               {hasNextPage && (
-                <div className="flex flex-col items-center gap-2 pt-10">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    disabled={isFetchingNextPage}
-                    onClick={() => fetchNextPage()}
-                  >
-                    {isFetchingNextPage ? "Chargement…" : "Voir plus de produits"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    {apiProducts.length} produit{apiProducts.length > 1 ? "s" : ""} affiché
-                    {apiProducts.length > 1 ? "s" : ""} sur {total}
-                  </p>
-                </div>
+                <p className="pt-10 text-center text-xs text-muted-foreground">
+                  Chargement du catalogue… {apiProducts.length} sur {total}
+                </p>
               )}
             </div>
           </div>

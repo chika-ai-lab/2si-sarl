@@ -2,7 +2,9 @@
  * Service pour les rapports commerciaux — connecté au backend GestEMC
  */
 
-import type { ApiResponse } from "@/types/api";
+// `@/types/api` n'existe pas : le type vit, comme pour les autres services du
+// module, dans ../types.
+import type { ApiResponse } from "../types";
 import { API_ENDPOINTS } from './api.config';
 import { apiClient } from './apiClient';
 

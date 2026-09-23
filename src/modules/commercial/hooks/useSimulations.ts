@@ -73,6 +73,7 @@ export function useCreateSimulation() {
       fraisAdditionnels?: number;
       validiteJours?: number;
       notes?: string;
+      tvaActive?: boolean;
     }) => simulationsService.createSimulation(data),
     onSuccess: () => {
       // Invalider les listes pour forcer le rechargement

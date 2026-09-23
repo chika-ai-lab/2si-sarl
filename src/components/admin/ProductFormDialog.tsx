@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { categories } from "@/data/products";
+import { useTranslation } from "@/providers/I18nProvider";
 
 const productSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -60,6 +61,7 @@ export function ProductFormDialog({
 }: ProductFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { t } = useTranslation();
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -172,7 +174,10 @@ export function ProductFormDialog({
                       <SelectContent>
                         {categories.filter(cat => cat.id !== "all").map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
+                            {/* Les catégories ne portent qu'une clé de
+                                traduction : `cat.name` n'existait pas, et la
+                                liste s'affichait vide. */}
+                            {t(cat.labelKey)}
                           </SelectItem>
                         ))}
                       </SelectContent>

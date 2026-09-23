@@ -72,8 +72,16 @@ export default function OrderPage() {
 
     setIsSubmitting(true);
     try {
+      // Champs repris un à un : sans mode strict, z.infer rend tout optionnel,
+      // alors que zod a déjà garanti leur présence à la validation.
       const result = await soumettreDemandeMarketplace({
-        ...data,
+        nom:               data.nom ?? "",
+        prenom:            data.prenom,
+        email:             data.email ?? "",
+        telephone:         data.telephone ?? "",
+        localisation:      data.localisation ?? "",
+        canal_acquisition: data.canal_acquisition,
+        message:           data.message,
         duree_paiement: selectedPlan?.months,
         articles: items.map((item) => ({
           id:       parseInt(item.id),

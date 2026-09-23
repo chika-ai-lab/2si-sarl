@@ -14,8 +14,11 @@ import type {
 } from "../services/rapports.service";
 import { formatCurrency } from "@/lib/currency";
 
-// Couleurs du thème
-const COLORS = {
+// Couleurs du thème. Typées en triplets RVB : inférées en `number[]`, elles
+// ne pouvaient être ni étalées dans setFillColor(r, g, b) ni passées comme
+// `Color` à autoTable — 31 erreurs de compilation pour une seule cause.
+type RVB = [number, number, number];
+const COLORS: Record<"primary" | "secondary" | "success" | "danger" | "warning" | "light" | "dark", RVB> = {
   primary: [37, 99, 235], // bleu
   secondary: [100, 116, 139], // gris
   success: [22, 163, 74], // vert

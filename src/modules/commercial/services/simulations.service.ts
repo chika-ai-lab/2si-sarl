@@ -142,8 +142,13 @@ export async function createSimulation(data: {
   fraisAdditionnels?: number;
   validiteJours?: number;
   notes?: string;
+  /* L'écran de simulation permet de désactiver la TVA. Ce choix était
+     ignoré ici : le total enregistré — et le PDF du devis — était toujours
+     recalculé à 18 %, soit 18 % de plus que le total affiché au commercial. */
+  tvaActive?: boolean;
 }): Promise<ApiResponse<Simulation>> {
-  const calculs = calculerTotalSimulation(data.produits, 0.18, data.fraisAdditionnels || 0);
+  const tauxTVA = data.tvaActive === false ? 0 : 0.18;
+  const calculs = calculerTotalSimulation(data.produits, tauxTVA, data.fraisAdditionnels || 0);
 
   const payload = {
     client_id: data.clientId,

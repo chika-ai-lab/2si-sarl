@@ -360,8 +360,12 @@ export interface Simulation {
   conditionsPaiement: ConditionsPaiement;
   echeancier?: Echeance[];
 
-  // Métadonnées
+  // Métadonnées — champs que le service renseigne déjà depuis l'API
+  // (derniereModification, validiteJours, notes) mais que le type ignorait.
   dateCreation: string;
+  derniereModification?: string;
+  validiteJours?: number;
+  notes?: string;
   creePar: string;
   statut: SimulationStatut;
   commandeId?: string;

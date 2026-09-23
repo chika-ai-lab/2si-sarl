@@ -95,7 +95,14 @@ const TAILLE_LOT = 24;
  * que les appelants qui n'ont besoin que des premiers éléments — la page
  * d'accueil et ses vedettes — n'aient rien à changer.
  */
-export function useMarketplaceProducts(searchQuery?: string) {
+export function useMarketplaceProducts(
+  searchQuery?: string,
+  options: { tailleLot?: number } = {},
+) {
+  // Le serveur plafonne per_page à 200. Le catalogue public en demande autant
+  // (voir CatalogPage) : 24 par lot laissait filtres, recherche et compteur ne
+  // porter que sur la première page.
+  const tailleLot = options.tailleLot ?? TAILLE_LOT;
   const {
     data,
     isLoading,
@@ -105,12 +112,12 @@ export function useMarketplaceProducts(searchQuery?: string) {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["marketplace", "articles", searchQuery ?? ""],
+    queryKey: ["marketplace", "articles", searchQuery ?? "", tailleLot],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams({
         page: String(pageParam),
-        per_page: String(TAILLE_LOT),
+        per_page: String(tailleLot),
       });
       if (searchQuery) params.set("search", searchQuery);
       return fetchWithRetry(`${API_BASE}/public/articles?${params}`);
