@@ -4,12 +4,26 @@ import { Button } from "@/components/ui/button";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SEO } from "@/components/SEO";
 import { ProductCard } from "@/components/business/ProductCard";
+import { useEffect } from "react";
 import { useWishlist } from "@/providers/WishlistProvider";
 import { useMarketplaceProducts } from "@/hooks/useMarketplaceProducts";
 
 export default function WishlistPage() {
   const { items: wishlistIds, clearWishlist } = useWishlist();
-  const { products, loading } = useMarketplaceProducts();
+  // Tout le catalogue (même lots que CatalogPage) : un favori au-delà du premier
+  // lot de 24 n'apparaissait pas.
+  const {
+    products,
+    loading: chargementInitial,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useMarketplaceProducts(undefined, { tailleLot: 200 });
+  const loading = chargementInitial || hasNextPage || isFetchingNextPage;
+
+  useEffect(() => {
+    if (!chargementInitial && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [chargementInitial, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
   const inStockCount = wishlistProducts.filter((p) => p.inStock).length;

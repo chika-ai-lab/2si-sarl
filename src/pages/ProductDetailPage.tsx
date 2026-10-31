@@ -41,7 +41,16 @@ export default function ProductDetailPage() {
   // La fiche charge le produit depuis le backend (même source que le catalogue).
   // Auparavant elle cherchait dans le jeu de démo statique : les ids réels
   // (ex. 30125) n'y figuraient pas, d'où la redirection systématique vers /catalog.
-  const { products: allProducts, loading } = useMarketplaceProducts();
+  // Même taille de lot que CatalogPage : la fiche réutilise le cache du
+  // catalogue. Avec les 24 articles par défaut, tout produit au-delà du premier
+  // lot était introuvable et renvoyait vers /catalog.
+  const {
+    products: allProducts,
+    loading: chargementInitial,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useMarketplaceProducts(undefined, { tailleLot: 200 });
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   // "plan-12" correspond au defaultPlanId de la config (une durée est ainsi
@@ -49,11 +58,15 @@ export default function ProductDetailPage() {
   const [selectedPlanId, setSelectedPlanId] = useState<string>("plan-12");
 
   const product = allProducts.find((p) => p.id === id) ?? null;
+  // Tant que le produit n'est pas trouvé et qu'il reste des lots, on continue de chercher.
+  const loading = chargementInitial || (!product && (hasNextPage || isFetchingNextPage));
 
   useEffect(() => {
-    // On ne redirige qu'une fois le catalogue chargé et le produit vraiment absent.
-    if (!loading && id && !product) navigate("/catalog");
-  }, [loading, id, product, navigate]);
+    if (chargementInitial || isFetchingNextPage || product || !id) return;
+    if (hasNextPage) fetchNextPage();
+    // On ne redirige qu'une fois tout le catalogue parcouru et le produit vraiment absent.
+    else navigate("/catalog", { replace: true });
+  }, [chargementInitial, isFetchingNextPage, hasNextPage, fetchNextPage, id, product, navigate]);
 
   if (loading) {
     return (
