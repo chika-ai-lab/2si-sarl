@@ -37,6 +37,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   const body = await response.json().catch(() => ({}));
 
+  // Mot de passe provisoire pas encore changé : l'API bloque tout le reste.
+  if (response.status === 403 && body.code === 'PASSWORD_CHANGE_REQUIRED') {
+    if (window.location.pathname !== '/changer-mot-de-passe') {
+      window.location.href = '/changer-mot-de-passe';
+    }
+    throw new Error(body.message);
+  }
+
   if (!response.ok) {
     throw new Error(body.message || `Erreur ${response.status}`);
   }

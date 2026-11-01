@@ -79,6 +79,20 @@ interface RoleOption {
   title: string;
 }
 
+/** Réponse de POST /users et POST /users/:id/reset-password. */
+interface ResultatMotDePasseProvisoire {
+  user: BackendUser;
+  whatsapp: { envoye: boolean; raison?: string };
+  /** Présent seulement si WhatsApp n'a pas pu transmettre le mot de passe. */
+  motDePasseProvisoire?: string;
+}
+
+/** « +221771234567 » → « 77 123 45 67 ». */
+function formaterTelephone(tel?: string | null): string {
+  const m = tel?.match(/^\+221(\d{2})(\d{3})(\d{2})(\d{2})$/);
+  return m ? `${m[1]} ${m[2]} ${m[3]} ${m[4]}` : (tel ?? "");
+}
+
 interface AgenceOption {
   id: number;
   agence: string;
@@ -88,7 +102,6 @@ const EMPTY_FORM = {
   name: "",
   email: "",
   telephone: "",
-  password: "",
   roleIds: [] as number[],
   agenceId: null as number | null,
 };
@@ -104,6 +117,9 @@ export default function UsersPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [resetConfirm, setResetConfirm] = useState<BackendUser | null>(null);
+  // Mot de passe que WhatsApp n'a pas pu transmettre : l'admin doit le communiquer.
+  const [aTransmettre, setATransmettre] = useState<{ nom: string; motDePasse: string; raison?: string } | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -132,12 +148,34 @@ export default function UsersPage() {
     loadData();
   }, []);
 
+  const chiffresRecherche = search.replace(/\D/g, "");
   const filtered = users.filter(
     (u) =>
       !search ||
       u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      (!!chiffresRecherche && (u.telephone ?? "").includes(chiffresRecherche))
   );
+
+  /** WhatsApp envoyé : simple confirmation. Sinon, on montre le mot de passe à transmettre. */
+  const signalerMotDePasse = (r: ResultatMotDePasseProvisoire, action: string) => {
+    if (r.whatsapp.envoye) {
+      toast({ title: action, description: `Mot de passe provisoire envoyé par WhatsApp à ${r.user.name}.` });
+    } else if (r.motDePasseProvisoire) {
+      setATransmettre({ nom: r.user.name, motDePasse: r.motDePasseProvisoire, raison: r.whatsapp.raison });
+    }
+  };
+
+  const handleResetPassword = async (user: BackendUser) => {
+    setResetConfirm(null);
+    try {
+      const r = await apiClient.post<ResultatMotDePasseProvisoire>(`/users/${user.id}/reset-password`);
+      signalerMotDePasse(r, "Mot de passe réinitialisé");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Une erreur est survenue";
+      toast({ title: "Erreur", description: message, variant: "destructive" });
+    }
+  };
 
   const openCreate = () => {
     setEditId(null);
@@ -150,8 +188,7 @@ export default function UsersPage() {
     setForm({
       name: user.name,
       email: user.email,
-      telephone: user.telephone ?? "",
-      password: "",
+      telephone: formaterTelephone(user.telephone),
       roleIds: user.roles.map((r) => Number(r.id)),
       agenceId: user.agenceId ?? null,
     });
@@ -169,12 +206,8 @@ export default function UsersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.email.trim()) {
-      toast({ title: "Nom et email requis", variant: "destructive" });
-      return;
-    }
-    if (!editId && !form.password.trim()) {
-      toast({ title: "Mot de passe requis", variant: "destructive" });
+    if (!form.name.trim() || !form.telephone.trim()) {
+      toast({ title: "Nom et téléphone requis", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -188,13 +221,14 @@ export default function UsersPage() {
         });
         toast({ title: "Utilisateur modifié avec succès" });
       } else {
-        await apiClient.post("/users", {
+        const r = await apiClient.post<ResultatMotDePasseProvisoire>("/users", {
           name: form.name,
-          email: form.email,
-          password: form.password,
+          telephone: form.telephone,
+          ...(form.email.trim() ? { email: form.email.trim() } : {}),
           roles: form.roleIds,
+          agenceId: form.agenceId ?? undefined,
         });
-        toast({ title: "Utilisateur créé avec succès" });
+        signalerMotDePasse(r, "Utilisateur créé");
       }
       setIsDialogOpen(false);
       loadData();
@@ -265,6 +299,54 @@ export default function UsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Reset password confirmation */}
+      <AlertDialog open={resetConfirm !== null} onOpenChange={(open) => !open && setResetConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réinitialiser le mot de passe ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {resetConfirm?.name} recevra un mot de passe provisoire par WhatsApp au{" "}
+              {formaterTelephone(resetConfirm?.telephone)} et devra le changer à sa prochaine connexion.
+              Son mot de passe actuel cessera de fonctionner.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => resetConfirm && handleResetPassword(resetConfirm)}>
+              Réinitialiser
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Mot de passe provisoire non transmis par WhatsApp */}
+      <Dialog open={aTransmettre !== null} onOpenChange={(open) => !open && setATransmettre(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>WhatsApp n'a pas pu envoyer le mot de passe</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            {aTransmettre?.raison && <p className="text-muted-foreground">{aTransmettre.raison}</p>}
+            <p>Communiquez ce mot de passe provisoire à {aTransmettre?.nom}. Il ne sera plus affiché ensuite.</p>
+            <p className="font-mono text-lg tracking-wider text-center border rounded-md py-2 select-all">
+              {aTransmettre?.motDePasse}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (aTransmettre) navigator.clipboard?.writeText(aTransmettre.motDePasse);
+                toast({ title: "Copié" });
+              }}
+            >
+              Copier
+            </Button>
+            <Button onClick={() => setATransmettre(null)}>J'ai transmis le mot de passe</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Create/Edit dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md">
@@ -287,31 +369,38 @@ export default function UsersPage() {
             </div>
 
             <div>
-              <Label htmlFor="u-email">Email *</Label>
-              <Input
-                id="u-email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                placeholder="email@exemple.com"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
               <Label htmlFor="u-tel">
                 <Phone className="inline h-3.5 w-3.5 mr-1" />
-                Téléphone
+                Téléphone WhatsApp *
               </Label>
               <Input
                 id="u-tel"
                 type="tel"
+                inputMode="tel"
                 value={form.telephone}
                 onChange={(e) => setForm((p) => ({ ...p, telephone: e.target.value }))}
-                placeholder="77 000 00 00"
+                placeholder="77 123 45 67"
                 className="mt-1"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Sert d'identifiant de connexion.
+                {!editId && " Le mot de passe provisoire est envoyé sur ce numéro par WhatsApp."}
+              </p>
             </div>
+
+            {!editId && (
+              <div>
+                <Label htmlFor="u-email">Email</Label>
+                <Input
+                  id="u-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="Facultatif"
+                  className="mt-1"
+                />
+              </div>
+            )}
 
             <div>
               <Label>
@@ -333,23 +422,6 @@ export default function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            {!editId && (
-              <div>
-                <Label htmlFor="u-password">
-                  <Key className="inline h-3.5 w-3.5 mr-1" />
-                  Mot de passe *
-                </Label>
-                <Input
-                  id="u-password"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                  placeholder="••••••••"
-                  className="mt-1"
-                />
-              </div>
-            )}
 
             <div>
               <Label>Rôles</Label>
@@ -514,7 +586,7 @@ export default function UsersPage() {
                         <TableCell className="text-sm text-muted-foreground">
                           {user.telephone ? (
                             <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />{user.telephone}
+                              <Phone className="h-3 w-3" />{formaterTelephone(user.telephone)}
                             </span>
                           ) : (
                             <span className="text-muted-foreground/50">—</span>
@@ -555,6 +627,12 @@ export default function UsersPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => openEdit(user)}>
                                 <Edit className="mr-2 h-4 w-4" />Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={!user.telephone}
+                                onClick={() => setResetConfirm(user)}
+                              >
+                                <Key className="mr-2 h-4 w-4" />Réinitialiser le mot de passe
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem

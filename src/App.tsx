@@ -23,6 +23,11 @@ import WishlistPage from "./pages/WishlistPage";
 import CartPage from "./pages/CartPage";
 import OrderPage from "./pages/OrderPage";
 import { LoginPage } from "./pages/LoginPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+
+/** Pages d'authentification, accessibles sur le domaine dashboard comme sur le site. */
+const AUTH_PATHS = ["/login", "/changer-mot-de-passe", "/mot-de-passe-oublie"];
 import { MaintenancePage } from "./pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
 import NotFoundAdminPage from "./components/layout/NotFoundAdminPage";
@@ -79,7 +84,7 @@ function MainApp() {
     const isDashboardDomain =
       window.location.hostname === "dashboard.sen-services.com";
     const isAdminPath = location.pathname.startsWith("/admin");
-    const isLoginPath = location.pathname === "/login";
+    const isLoginPath = AUTH_PATHS.includes(location.pathname);
 
     if (isDashboardDomain && !isAdminPath && !isLoginPath) {
       navigate("/admin/dashboard", { replace: true });
@@ -103,7 +108,7 @@ function MainApp() {
   if (
     isInMaintenance &&
     !window.location.pathname.startsWith("/admin") &&
-    window.location.pathname !== "/login"
+    !AUTH_PATHS.includes(window.location.pathname)
   ) {
     return <MaintenancePage />;
   }
@@ -169,6 +174,22 @@ function MainApp() {
         element={
           <Guard label="la connexion">
             <LoginPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/changer-mot-de-passe"
+        element={
+          <Guard label="le changement de mot de passe">
+            <ChangePasswordPage />
+          </Guard>
+        }
+      />
+      <Route
+        path="/mot-de-passe-oublie"
+        element={
+          <Guard label="la réinitialisation du mot de passe">
+            <ForgotPasswordPage />
           </Guard>
         }
       />

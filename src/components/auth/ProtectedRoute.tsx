@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { isAuthenticated, isAdmin, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication
@@ -26,6 +26,11 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Mot de passe provisoire : rien d'autre n'est accessible avant de l'avoir changé
+  if (user?.mustChangePassword) {
+    return <Navigate to="/changer-mot-de-passe" state={{ from: location }} replace />;
   }
 
   // Check admin requirement

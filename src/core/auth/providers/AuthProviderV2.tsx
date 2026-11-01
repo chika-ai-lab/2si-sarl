@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 const AUTH_STORAGE_KEY = "2si-auth-user";
+const API_URL = import.meta.env.VITE_API_URL || "https://api.sen-services.com/api/v2";
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
@@ -126,7 +127,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (telephone: string, password: string) => Promise<void>;
+  /** Résout avec `mustChangePassword` : vrai si le mot de passe provisoire doit être changé. */
+  login: (telephone: string, password: string) => Promise<{ mustChangePassword: boolean }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => void;
   updateUser: (user: User) => void;
   isAdmin: () => boolean;
@@ -192,14 +195,37 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   const queryClient             = useQueryClient();
 
   useEffect(() => {
-    setUser(loadUserFromStorage());
+    const stored = loadUserFromStorage();
+    setUser(stored);
     setLoading(false);
+
+    // Une session ouverte avant l'obligation de changement ne porte pas le
+    // drapeau : /auth/me reste accessible et dit si le mot de passe est provisoire.
+    const token = localStorage.getItem("auth-token");
+    if (!stored || !token) return;
+    fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (res) => {
+        if (res.status === 401) {
+          setUser(null);
+          saveUserToStorage(null);
+          localStorage.removeItem("auth-token");
+          return;
+        }
+        if (!res.ok) return;
+        const me = await res.json();
+        const mustChangePassword = !!me.mustChangePassword;
+        if (mustChangePassword !== !!stored.mustChangePassword) {
+          const updated = { ...stored, mustChangePassword };
+          setUser(updated);
+          saveUserToStorage(updated);
+        }
+      })
+      .catch(() => { /* hors ligne : on garde la session locale */ });
   }, []);
 
-  const login = async (telephone: string, password: string): Promise<void> => {
+  const login = async (telephone: string, password: string): Promise<{ mustChangePassword: boolean }> => {
     setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "https://api.sen-services.com/api/v2";
       const response = await fetch(`${API_URL}/auth/login`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -228,7 +254,12 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
         backendUser.name,
         backendUser.email,
         roleTitles,
-        { lastLogin: new Date().toISOString(), createdAt: backendUser.created_at },
+        {
+          lastLogin: new Date().toISOString(),
+          createdAt: backendUser.created_at,
+          phone: backendUser.telephone ?? undefined,
+          mustChangePassword: !!data.must_change_password,
+        },
       );
 
       // Vider le cache avant de charger les données du nouvel utilisateur
@@ -237,9 +268,29 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
       setUser(user);
       saveUserToStorage(user);
 
-      toast({ title: "Connexion réussie", description: `Bienvenue, ${user.name}` });
+      if (!user.mustChangePassword) {
+        toast({ title: "Connexion réussie", description: `Bienvenue, ${user.name}` });
+      }
+      return { mustChangePassword: !!user.mustChangePassword };
     } finally {
       setLoading(false);
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    const token = localStorage.getItem("auth-token");
+    const response = await fetch(`${API_URL}/auth/change-password`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body:    JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.message || "Impossible de modifier le mot de passe");
+
+    if (user) {
+      const updated = { ...user, mustChangePassword: false };
+      setUser(updated);
+      saveUserToStorage(updated);
     }
   };
 
@@ -247,7 +298,6 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
     try {
       const token = localStorage.getItem("auth-token");
       if (token) {
-        const API_URL = import.meta.env.VITE_API_URL || "https://api.sen-services.com/api/v2";
         await fetch(`${API_URL}/auth/logout`, {
           method:  "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -278,7 +328,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, updateUser, isAdmin }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, changePassword, logout, updateUser, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

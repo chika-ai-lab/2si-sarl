@@ -25,6 +25,9 @@ export interface User {
 
   // Version du schéma de permissions — permet de détecter les sessions obsolètes
   permissionsVersion?: number;
+
+  // Mot de passe provisoire : l'API refuse tout (403) tant qu'il n'est pas changé
+  mustChangePassword?: boolean;
 }
 
 export interface UserModuleAccess {

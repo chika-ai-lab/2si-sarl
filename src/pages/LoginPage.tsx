@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,8 +15,8 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Lock, Phone, Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
-  telephone: z.string().min(6, "Identifiant invalide").trim(),
-  password:  z.string().min(6, "Au moins 6 caractères").trim(),
+  telephone: z.string().trim().refine((v) => v.replace(/\D/g, "").length >= 9, "Numéro de téléphone invalide"),
+  password:  z.string().min(1, "Mot de passe requis"),
 });
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -51,8 +51,12 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await login(data.telephone, data.password);
-      navigate(from, { replace: true });
+      const { mustChangePassword } = await login(data.telephone, data.password);
+      if (mustChangePassword) {
+        navigate("/changer-mot-de-passe", { replace: true, state: { from: { pathname: from } } });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err: any) {
       toast({ title: "Identifiants incorrects", description: err.message, variant: "destructive" });
     } finally {
@@ -99,11 +103,11 @@ export function LoginPage() {
                     name="telephone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Email ou Téléphone</FormLabel>
+                        <FormLabel className="text-xs">Téléphone</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input {...field} type="text" placeholder="email@exemple.com" className="pl-9 h-9 text-sm" disabled={isLoading} autoComplete="username" />
+                            <Input {...field} type="tel" inputMode="tel" placeholder="77 123 45 67" className="pl-9 h-9 text-sm" disabled={isLoading} autoComplete="username" />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
@@ -149,6 +153,11 @@ export function LoginPage() {
                   >
                     {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Connexion...</> : "Se connecter"}
                   </Button>
+                  <p className="text-center">
+                    <Link to="/mot-de-passe-oublie" className="text-xs text-muted-foreground hover:text-foreground">
+                      Mot de passe oublié ?
+                    </Link>
+                  </p>
                 </form>
               </Form>
 
