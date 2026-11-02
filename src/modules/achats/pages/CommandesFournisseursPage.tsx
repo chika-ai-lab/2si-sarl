@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,6 +131,23 @@ export default function CommandesFournisseursPage() {
   });
 
   if (error) console.error('[CF] query error:', error);
+
+  // Arrivée depuis un bon de commande (?cf=ID ou ?bdc=ID) : on ouvre la
+  // commande concernée pour enchaîner directement sur la saisie des frais.
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    const cfId = Number(params.get("cf"));
+    const bdcId = Number(params.get("bdc"));
+    if ((!cfId && !bdcId) || all.length === 0) return;
+    const cible = all.find((c) => (cfId ? c.id === cfId : c.bonCommandeId === bdcId));
+    if (!cible) return;
+    setFilterEtat("tous");
+    setOpenId(cible.id);
+    setParams({}, { replace: true });
+    requestAnimationFrame(() =>
+      document.getElementById(`cf-${cible.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }, [all, params, setParams]);
 
   // Tabs
   const TABS = [
@@ -361,7 +378,7 @@ export default function CommandesFournisseursPage() {
             const montantLignes = cf.lignes?.reduce((s, l) => s + valeursLigne(l).montant, 0) ?? 0;
 
             return (
-              <Card key={cf.id} className={isOpen ? "ring-2 ring-indigo-400" : ""}>
+              <Card key={cf.id} id={`cf-${cf.id}`} className={`scroll-mt-20 ${isOpen ? "ring-2 ring-indigo-400" : ""}`}>
                 {/* ── Ligne principale ── */}
                 <div
                   className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-muted/30 rounded-lg"

@@ -18,8 +18,9 @@ import {
 import {
   ClipboardList, RefreshCcw, ChevronDown, ChevronRight,
   Zap, CheckCircle2, Clock, Truck, AlertCircle, Loader2, ChevronsUpDown, Check,
-  Send, Trash2, Search,
+  Send, Trash2, Search, ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 
 const BDC_PAGE_SIZE = 15;
@@ -99,9 +100,90 @@ function statutBadge(s: string) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+/** Ce qui reste à faire, dans l'ordre, une fois les commandes fournisseurs créées. */
+const ETAPES_APRES_GENERATION = [
+  { titre: "Saisir les frais", detail: "Dans chaque commande fournisseur, renseignez les frais d'expédition et autres charges par ligne, puis « Enregistrer les modifications »." },
+  { titre: "Générer la facture fournisseur", detail: "Bouton « Générer Facture » de la commande : le montant final (articles + frais) est figé." },
+  { titre: "Valider et envoyer", detail: "« Valider » confirme la commande ; « Imprimer » produit le bon à transmettre au fournisseur." },
+  { titre: "Réceptionner la marchandise", detail: "À l'arrivée, « Reçu ✓ » : un bon de livraison est créé pour chaque client. En cas de problème, « Non reçu »." },
+  { titre: "Livrer les clients", detail: "Dans Livraisons, expédiez puis confirmez la remise de chaque bon de livraison." },
+];
+
+function ProchainesEtapes({ termine, message, commandes, ouvrir, livraisons }: {
+  termine: boolean;
+  message?: string;
+  commandes: { id: number; libelle: string }[];
+  ouvrir: (cfId?: number) => void;
+  livraisons: () => void;
+}) {
+  if (termine) {
+    return (
+      <div className="rounded-md border border-green-200 bg-green-50 p-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-green-800 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          Marchandise reçue : il reste à livrer les clients.
+        </p>
+        <Button size="sm" variant="outline" onClick={livraisons}>
+          <Truck className="h-4 w-4 mr-2" />Voir les livraisons
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-green-200 bg-green-50/60 p-4 space-y-3">
+      <div>
+        <p className="text-sm font-medium text-green-800 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          {message ?? "Commandes fournisseurs générées."}
+        </p>
+        {commandes.map((cf) => (
+          <p key={cf.id} className="text-xs text-green-700 pl-6">• {cf.libelle}</p>
+        ))}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Prochaines étapes</p>
+        <ol className="space-y-2">
+          {ETAPES_APRES_GENERATION.map((e, i) => (
+            <li key={e.titre} className="flex gap-3">
+              <span
+                className={`h-5 w-5 shrink-0 rounded-full text-[11px] font-semibold flex items-center justify-center ${
+                  i === 0 ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {i + 1}
+              </span>
+              <div className="text-sm leading-snug">
+                <span className={i === 0 ? "font-medium text-foreground" : "text-foreground/80"}>{e.titre}</span>
+                <span className="block text-xs text-muted-foreground">{e.detail}</span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-1">
+        {commandes.length > 1 ? (
+          commandes.map((cf) => (
+            <Button key={cf.id} size="sm" onClick={() => ouvrir(cf.id)} className="bg-green-600 hover:bg-green-700">
+              Ouvrir CF #{cf.id}<ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          ))
+        ) : (
+          <Button size="sm" onClick={() => ouvrir(commandes[0]?.id)} className="bg-green-600 hover:bg-green-700">
+            Saisir les frais de la commande fournisseur<ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function BonCommandesPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const rolesLower = (user?.roles ?? []).map((r) => r.toLowerCase().trim());
   const isCommercial        = rolesLower.some((r) => ["commercial", "vendeur", "vendeuse", "sales"].includes(r));
@@ -147,7 +229,10 @@ export default function BonCommandesPage() {
       const r = await apiClient.get<any>("/clients", { per_page: 500 });
       return r.data ?? r ?? [];
     },
-    staleTime: 1000 * 60 * 10,
+    // Rechargée à chaque ouverture : un BDC porte souvent un client créé
+    // quelques minutes plus tôt, qu'un cache affichait « Client #id ».
+    staleTime: 0,
+    refetchOnMount: "always",
   });
   const clientMap: Record<number, string> = Object.fromEntries(
     clientsRaw.map((c: any) => [
@@ -190,7 +275,8 @@ export default function BonCommandesPage() {
       const r = await apiClient.get<any>("/commande-clients", { per_page: 500 });
       return (Array.isArray(r) ? r : r?.data ?? []) as any[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const commandeMap = useMemo(() => {
@@ -322,7 +408,7 @@ export default function BonCommandesPage() {
     try {
       const result = await BonCommandesService.generer(bdc.id);
       setGenResult((prev) => ({ ...prev, [bdc.id]: result }));
-      toast({ title: `${result.commandes.length} commande(s) fournisseur créée(s)`, description: "Renseignez les frais dans Commandes Fournisseurs puis générez les factures." });
+      toast({ title: `${result.commandes.length} commande(s) fournisseur créée(s)`, description: "Suivez les prochaines étapes affichées sous le bon de commande." });
       refetch();
       qc.invalidateQueries({ queryKey: ["commandes-fournisseurs"] });
     } catch (e: any) {
@@ -679,19 +765,20 @@ export default function BonCommandesPage() {
                         </Table>
                       </div>
 
-                      {/* Résultat génération */}
-                      {result && (
-                        <div className="rounded-md bg-green-50 border border-green-200 p-3 space-y-1">
-                          <p className="text-sm font-medium text-green-800 flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4" />
-                            {result.message}
-                          </p>
-                          {result.commandes.map((cf: any) => (
-                            <p key={cf.id} className="text-xs text-green-700 pl-6">
-                              • CF #{cf.id} — {fournMap[cf.fournisseurId] || `Fournisseur #${cf.fournisseurId}`} — {formatCurrency(cf.montant)}
-                            </p>
-                          ))}
-                        </div>
+                      {/* Commandes fournisseurs générées : la suite du parcours */}
+                      {(result || bdc.statut === "en_cours" || bdc.statut === "termine") && (
+                        <ProchainesEtapes
+                          termine={bdc.statut === "termine"}
+                          message={result?.message}
+                          commandes={(result?.commandes ?? []).map((cf: any) => ({
+                            id: cf.id,
+                            libelle: `CF #${cf.id} — ${fournMap[cf.fournisseurId] || `Fournisseur #${cf.fournisseurId}`} — ${formatCurrency(cf.montant)}`,
+                          }))}
+                          ouvrir={(cfId) => navigate(
+                            cfId ? `/admin/achats/commandes?cf=${cfId}` : `/admin/achats/commandes?bdc=${bdc.id}`,
+                          )}
+                          livraisons={() => navigate("/admin/achats/livraisons")}
+                        />
                       )}
 
                       {/* Actions */}
