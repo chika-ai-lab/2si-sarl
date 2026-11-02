@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Megaphone, RefreshCcw, Plus, Loader2, Send, Tag, Info, Wallet, AlertTriangle, CheckCircle2, Users,
+  Megaphone, RefreshCcw, Plus, Loader2, Send, Tag, Info, Wallet, AlertTriangle, CheckCircle2, Users, ImagePlus, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { apiClient } from "../services/apiClient";
+import { televerserImage } from "@/lib/televersement";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -419,10 +420,7 @@ function NouvelleCampagne({ options, onFermer, onCreee }: {
                   placeholder="Objet (facultatif, affiché en gras)" className="h-9" />
                 <Textarea id="cp-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={8} maxLength={3500} />
                 <p className="text-[11px] text-muted-foreground text-right tabular-nums">{message.length}/3500</p>
-                {type !== "relance" && (
-                  <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Image (facultatif) : adresse https://… d'une photo en ligne" className="h-9" />
-                )}
+                {type !== "relance" && <ImageCampagne url={imageUrl} onChange={setImageUrl} />}
               </section>
             </div>
 
@@ -489,6 +487,49 @@ function NouvelleCampagne({ options, onFermer, onCreee }: {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+/** Image jointe facultative : téléversée sur le serveur, le message en devient la légende. */
+function ImageCampagne({ url, onChange }: { url: string; onChange: (u: string) => void }) {
+  const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  const choisir = async (f?: File) => {
+    if (!f) return;
+    setErreur(null);
+    setEnvoi(true);
+    try {
+      onChange(await televerserImage(f));
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "Envoi impossible.");
+    } finally {
+      setEnvoi(false);
+    }
+  };
+
+  if (url) {
+    return (
+      <div className="flex items-center gap-3 rounded-lg border p-2">
+        <img src={url} alt="" className="h-14 w-14 rounded object-cover bg-muted" />
+        <p className="text-xs text-muted-foreground flex-1">Image jointe : le message s'affichera en légende.</p>
+        <Button type="button" size="sm" variant="ghost" onClick={() => onChange("")}>
+          <X className="h-4 w-4 mr-1" />Retirer
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-1">
+      <label className="flex items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-3 text-sm cursor-pointer hover:bg-muted/40">
+        <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={envoi}
+          onChange={(e) => { choisir(e.target.files?.[0]); e.target.value = ""; }} />
+        {envoi
+          ? <><Loader2 className="h-4 w-4 animate-spin" />Envoi de l'image…</>
+          : <><ImagePlus className="h-4 w-4 text-muted-foreground" />Ajouter une image <span className="text-muted-foreground">(facultatif)</span></>}
+      </label>
+      {erreur && <p className="text-xs text-destructive">{erreur}</p>}
+    </div>
   );
 }
 
