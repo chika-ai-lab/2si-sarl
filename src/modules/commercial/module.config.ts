@@ -92,6 +92,13 @@ function filterRoutesByFeatureFlags() {
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       enabled: true,
     },
+    // Campagnes WhatsApp (promotion, information, relance de paiement)
+    {
+      path: "/campagnes",
+      component: lazy(() => import("./pages/CampagnesPage")),
+      requiresPermission: ["COMMERCIAL:CAMPAGNES:WRITE"] as any,
+      enabled: true,
+    },
     {
       path: "/compta",
       component: lazy(() => import("../orders/pages/InvoicesPage")),
@@ -138,6 +145,15 @@ function filterNavigationByFeatureFlags() {
       section: "sales",
       requiresPermission: ["COMMERCIAL:ORDERS:READ"],
       order: 16,
+      enabled: true,
+    },
+    {
+      label: "Campagnes",
+      path: "/admin/commercial/campagnes",
+      icon: "Megaphone",
+      section: "sales",
+      requiresPermission: ["COMMERCIAL:CAMPAGNES:WRITE"] as any,
+      order: 9,
       enabled: true,
     },
     {
