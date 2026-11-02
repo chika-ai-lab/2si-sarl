@@ -74,6 +74,67 @@ function StatutBadge({ etat }: { etat: string }) {
   );
 }
 
+/**
+ * Ce que la logistique doit faire maintenant sur cette commande. Le parcours :
+ * frais → facture fournisseur → validation → réception (crée les BL) → livraison.
+ */
+function ProchaineEtapeCF({ cf, livraisons }: { cf: CF; livraisons: () => void }) {
+  const fraisSaisis = (cf.lignes ?? []).some(
+    (l) => Number(l.fraisExpedition) > 0 || Number(l.autresCharges) > 0,
+  );
+  const enAttente = !["validé", "reçu", "non_reçu"].includes(cf.etat);
+
+  let etape: { n: number; titre: string; detail: string; ton: "action" | "attente" | "fini" | "alerte" };
+  if (!cf.factureId && !fraisSaisis) {
+    etape = { n: 1, ton: "action", titre: "Saisir les frais",
+      detail: "Renseignez les frais d'expédition et autres charges de chaque ligne ci-dessous, puis « Enregistrer les modifications »." };
+  } else if (!cf.factureId) {
+    etape = { n: 2, ton: "action", titre: "Générer la facture fournisseur",
+      detail: "Vérifiez le récapitulatif puis « Générer Facture » : les montants seront figés." };
+  } else if (enAttente) {
+    etape = { n: 3, ton: "action", titre: "Valider et envoyer au fournisseur",
+      detail: "« Valider » confirme la commande ; « Imprimer » produit le bon à transmettre au fournisseur." };
+  } else if (cf.etat === "validé") {
+    etape = { n: 4, ton: "attente", titre: "Réceptionner la marchandise",
+      detail: "À l'arrivée de la marchandise, cliquez « Reçu ✓ » : un bon de livraison sera créé pour chaque client. Si elle n'arrive pas, « Non reçu »." };
+  } else if (cf.etat === "non_reçu") {
+    etape = { n: 4, ton: "alerte", titre: "Marchandise non reçue",
+      detail: "Relancez le fournisseur. Dès qu'elle arrive, cliquez « Reçu ✓ » pour créer les bons de livraison." };
+  } else {
+    etape = { n: 5, ton: "fini", titre: "Livrer les clients",
+      detail: "Marchandise reçue, les bons de livraison sont créés : expédiez puis confirmez chaque remise dans Livraisons." };
+  }
+
+  const couleurs = {
+    action:  "border-indigo-200 bg-indigo-50 text-indigo-900",
+    attente: "border-blue-200 bg-blue-50 text-blue-900",
+    alerte:  "border-amber-200 bg-amber-50 text-amber-900",
+    fini:    "border-green-200 bg-green-50 text-green-900",
+  }[etape.ton];
+
+  return (
+    <div className={`rounded-md border p-3 flex flex-wrap items-center justify-between gap-3 ${couleurs}`}>
+      <div className="flex gap-3 min-w-0">
+        <span className="h-6 w-6 shrink-0 rounded-full bg-white/80 border text-xs font-semibold flex items-center justify-center">
+          {etape.n}
+        </span>
+        <div className="text-sm leading-snug min-w-0">
+          <p className="font-medium">
+            <span className="text-xs font-normal opacity-70">Prochaine étape {etape.n}/5 · </span>
+            {etape.titre}
+          </p>
+          <p className="text-xs opacity-80">{etape.detail}</p>
+        </div>
+      </div>
+      {etape.n === 5 && (
+        <Button size="sm" variant="outline" className="bg-white" onClick={livraisons}>
+          <Truck className="h-4 w-4 mr-2" />Ouvrir les livraisons
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CommandesFournisseursPage() {
@@ -434,7 +495,8 @@ export default function CommandesFournisseursPage() {
                         </TooltipContent>
                       </Tooltip>
                     )}
-                    {cf.etat === "validé" && (
+                    {/* « non_reçu » n'est pas une impasse : la marchandise peut arriver en retard. */}
+                    {(cf.etat === "validé" || cf.etat === "non_reçu") && (
                       <>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -451,6 +513,7 @@ export default function CommandesFournisseursPage() {
                             Confirmer la réception de la marchandise — crée automatiquement un bon de livraison par client
                           </TooltipContent>
                         </Tooltip>
+                        {cf.etat === "validé" && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -467,6 +530,7 @@ export default function CommandesFournisseursPage() {
                             Signaler que la marchandise n'a pas été reçue (retard, litige, erreur fournisseur)
                           </TooltipContent>
                         </Tooltip>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -506,6 +570,7 @@ export default function CommandesFournisseursPage() {
                 {/* ── Détail lignes (accordéon) ── */}
                 {isOpen && cf.lignes?.length > 0 && (
                   <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
+                    <ProchaineEtapeCF cf={cf} livraisons={() => navigate("/admin/achats/livraisons")} />
                     {/* Tableau articles — les frais se saisissent ici, ligne par ligne :
                         chaque ligne part chez un client différent, souvent dans une
                         autre ville, et doit lui être refacturée séparément. */}
