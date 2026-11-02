@@ -28,7 +28,6 @@ import { HistoriqueTimeline } from "@/components/business/HistoriqueTimeline";
 import { VirtualList } from "@/components/business/VirtualList";
 import { nomClient as formatNomClient } from "@/lib/client-nom";
 import { ParcoursBandeau } from "@/components/business/ParcoursBandeau";
-import { useNavigate } from "react-router-dom";
 
 /**
  * Livraisons — écran unique du parcours.
@@ -60,7 +59,6 @@ interface ClientLite {
 
 export function LivraisonsPage() {
   const qc = useQueryClient();
-  const navigate = useNavigate();
 
   const [file, setFile]     = useState<FileId>("a_expedier");
   const [search, setSearch] = useState("");
@@ -201,7 +199,6 @@ export function LivraisonsPage() {
               onAnnuler={() => setMotif({ bl, variante: "annule" })}
               onImprimer={() => setImprimeId(bl.id)}
               onHistorique={() => setHistoriqueId(bl.id)}
-              onEncaisser={() => navigate("/admin/commercial/commandes")}
             />
           )}
         />
@@ -351,8 +348,8 @@ function LignesBordereau({ blId }: { blId: number }) {
   );
 }
 
-/** Bandeau de parcours d'un bordereau : expédition, livraison, puis encaissement. */
-function BandeauBL({ bl, onEncaisser }: { bl: Bordereau; onEncaisser: () => void }) {
+/** Bandeau de parcours d'un bordereau : expédition puis livraison. */
+function BandeauBL({ bl }: { bl: Bordereau }) {
   switch (bl.etat) {
     case "en_attente":
       return <ParcoursBandeau etape="Expédition" ton="a_faire"
@@ -364,9 +361,8 @@ function BandeauBL({ bl, onEncaisser }: { bl: Bordereau; onEncaisser: () => void
       return <ParcoursBandeau etape="Livraison" ton="attente"
         consigne="En route. À la remise, cliquez « Confirmer la livraison » et indiquez qui a reçu. En cas de problème : menu ⋯, « Signaler un échec »." />;
     case "livre":
-      return <ParcoursBandeau etape="Encaissement" ton="a_faire"
-        consigne="Livré. La livraison ne solde rien : enregistrez les versements du client dans sa commande."
-        action={{ label: "Encaisser", onClick: onEncaisser }} />;
+      return <ParcoursBandeau etape="Livraison" ton="termine"
+        consigne={bl.recuPar ? `Remis à ${bl.recuPar}. Le parcours logistique de cette commande est terminé.` : "Livré. Le parcours logistique de cette commande est terminé."} />;
     default:
       return <ParcoursBandeau etape="Expédition" ton="alerte"
         consigne="Bordereau annulé : il ne sera pas livré." />;
@@ -375,7 +371,7 @@ function BandeauBL({ bl, onEncaisser }: { bl: Bordereau; onEncaisser: () => void
 
 function LigneBordereau({
   bl, client, telephone, busy, ouvert, onToggle,
-  onExpedier, onLivrer, onEchec, onAnnuler, onImprimer, onHistorique, onEncaisser,
+  onExpedier, onLivrer, onEchec, onAnnuler, onImprimer, onHistorique,
 }: {
   bl: Bordereau;
   client: string;
@@ -389,7 +385,6 @@ function LigneBordereau({
   onAnnuler: () => void;
   onImprimer: () => void;
   onHistorique: () => void;
-  onEncaisser: () => void;
 }) {
   const statut = BL_STATUT[bl.etat];
 
@@ -495,7 +490,7 @@ function LigneBordereau({
     {/* Même place que sur les bons et commandes fournisseurs : bandeau de parcours, puis le détail. */}
     {ouvert && (
       <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
-        <BandeauBL bl={bl} onEncaisser={onEncaisser} />
+        <BandeauBL bl={bl} />
         <LignesBordereau blId={bl.id} />
       </div>
     )}

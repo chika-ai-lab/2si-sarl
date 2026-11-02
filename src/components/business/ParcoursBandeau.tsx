@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Parcours logistique d'une commande, du bon de commande à l'encaissement.
+ * Parcours logistique d'une commande, du bon de commande à la remise au client.
  * Le même bandeau apparaît sur chaque page du parcours (bons de commande,
  * commandes fournisseurs, livraisons), toujours au même endroit : en tête du
  * détail déplié. L'utilisateur apprend à le lire une fois.
@@ -15,7 +15,6 @@ export const PARCOURS = [
   "Réception",
   "Expédition",
   "Livraison",
-  "Encaissement",
 ] as const;
 
 export type EtapeParcours = (typeof PARCOURS)[number];
