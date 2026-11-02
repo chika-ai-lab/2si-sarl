@@ -44,6 +44,7 @@ import {
   Square,
   MoreVertical,
   Building2,
+  Send,
 } from "lucide-react";
 import {
   Select,
@@ -72,6 +73,8 @@ interface BackendUser {
   agenceId?: number;
   agence?: { id: number; agence: string };
   roles: { id: number; title: string }[];
+  /** Mot de passe provisoire jamais changé : le compte n'est pas encore activé. */
+  mustChangePassword?: boolean;
 }
 
 interface RoleOption {
@@ -118,8 +121,11 @@ export default function UsersPage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [resetConfirm, setResetConfirm] = useState<BackendUser | null>(null);
-  // Mot de passe que WhatsApp n'a pas pu transmettre : l'admin doit le communiquer.
-  const [aTransmettre, setATransmettre] = useState<{ nom: string; motDePasse: string; raison?: string } | null>(null);
+  // Mots de passe que WhatsApp n'a pas pu transmettre : l'admin doit les communiquer.
+  const [aTransmettre, setATransmettre] = useState<{ nom: string; motDePasse: string; raison?: string }[]>([]);
+  // Comptes à inviter, en attente de confirmation.
+  const [inviteConfirm, setInviteConfirm] = useState<number[] | null>(null);
+  const [inviting, setInviting] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -162,7 +168,36 @@ export default function UsersPage() {
     if (r.whatsapp.envoye) {
       toast({ title: action, description: `Mot de passe provisoire envoyé par WhatsApp à ${r.user.name}.` });
     } else if (r.motDePasseProvisoire) {
-      setATransmettre({ nom: r.user.name, motDePasse: r.motDePasseProvisoire, raison: r.whatsapp.raison });
+      setATransmettre([{ nom: r.user.name, motDePasse: r.motDePasseProvisoire, raison: r.whatsapp.raison }]);
+    }
+  };
+
+  /** Comptes au mot de passe jamais changé, joignables par WhatsApp. */
+  const aInviter = users.filter((u) => u.mustChangePassword && u.telephone);
+
+  const handleInviter = async (ids: number[]) => {
+    setInviteConfirm(null);
+    setInviting(true);
+    try {
+      const r = await apiClient.post<{
+        invites: number;
+        total: number;
+        resultats: { name: string; envoye: boolean; raison?: string; motDePasseProvisoire?: string }[];
+      }>("/users/invitations", { ids });
+      toast({
+        title: `${r.invites} invitation(s) envoyée(s) par WhatsApp`,
+        description: r.invites < r.total ? `${r.total - r.invites} n'ont pas pu partir.` : undefined,
+      });
+      setATransmettre(
+        r.resultats
+          .filter((x) => !x.envoye && x.motDePasseProvisoire)
+          .map((x) => ({ nom: x.name, motDePasse: x.motDePasseProvisoire!, raison: x.raison })),
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Une erreur est survenue";
+      toast({ title: "Erreur", description: message, variant: "destructive" });
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -319,30 +354,67 @@ export default function UsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Mot de passe provisoire non transmis par WhatsApp */}
-      <Dialog open={aTransmettre !== null} onOpenChange={(open) => !open && setATransmettre(null)}>
+      {/* Invitation par WhatsApp : tous les comptes à activer, ou un seul */}
+      <AlertDialog open={inviteConfirm !== null} onOpenChange={(open) => !open && setInviteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {inviteConfirm?.length === 1 ? "Envoyer l'invitation ?" : `Inviter ${inviteConfirm?.length ?? 0} utilisateur(s) ?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Chacun recevra par WhatsApp un mot de passe provisoire, à changer à la première connexion.
+                  Un mot de passe déjà reçu cessera de fonctionner.
+                </p>
+                <ul className="max-h-40 overflow-y-auto text-xs space-y-0.5">
+                  {users
+                    .filter((u) => inviteConfirm?.includes(u.id))
+                    .map((u) => <li key={u.id}>{u.name} · {formaterTelephone(u.telephone)}</li>)}
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => inviteConfirm && handleInviter(inviteConfirm)}>
+              Envoyer par WhatsApp
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Mots de passe provisoires que WhatsApp n'a pas pu envoyer */}
+      <Dialog open={aTransmettre.length > 0} onOpenChange={(open) => !open && setATransmettre([])}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>WhatsApp n'a pas pu envoyer le mot de passe</DialogTitle>
+            <DialogTitle>WhatsApp n'a pas pu envoyer {aTransmettre.length > 1 ? "ces mots de passe" : "le mot de passe"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 text-sm">
-            {aTransmettre?.raison && <p className="text-muted-foreground">{aTransmettre.raison}</p>}
-            <p>Communiquez ce mot de passe provisoire à {aTransmettre?.nom}. Il ne sera plus affiché ensuite.</p>
-            <p className="font-mono text-lg tracking-wider text-center border rounded-md py-2 select-all">
-              {aTransmettre?.motDePasse}
-            </p>
+            <p>Communiquez-les vous-même. Ils ne seront plus affichés ensuite.</p>
+            <ul className="space-y-2 max-h-72 overflow-y-auto">
+              {aTransmettre.map((t) => (
+                <li key={t.nom} className="border rounded-md px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium">{t.nom}</span>
+                    <span className="font-mono tracking-wider select-all">{t.motDePasse}</span>
+                  </div>
+                  {t.raison && <p className="text-xs text-muted-foreground mt-0.5">{t.raison}</p>}
+                </li>
+              ))}
+            </ul>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
-                if (aTransmettre) navigator.clipboard?.writeText(aTransmettre.motDePasse);
+                navigator.clipboard?.writeText(aTransmettre.map((t) => `${t.nom} : ${t.motDePasse}`).join("\n"));
                 toast({ title: "Copié" });
               }}
             >
               Copier
             </Button>
-            <Button onClick={() => setATransmettre(null)}>J'ai transmis le mot de passe</Button>
+            <Button onClick={() => setATransmettre([])}>J'ai transmis les mots de passe</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -483,6 +555,15 @@ export default function UsersPage() {
               <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Actualiser
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setInviteConfirm(aInviter.map((u) => u.id))}
+              disabled={loading || inviting || aInviter.length === 0}
+              title={aInviter.length === 0 ? "Aucun compte à inviter : renseignez d'abord les numéros" : undefined}
+            >
+              {inviting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Inviter par WhatsApp ({aInviter.length})
+            </Button>
             <Button onClick={openCreate}>
               <UserPlus className="h-4 w-4 mr-2" />
               Nouvel utilisateur
@@ -557,6 +638,7 @@ export default function UsersPage() {
                     <TableHead>Téléphone</TableHead>
                     <TableHead>Agence</TableHead>
                     <TableHead>Rôles</TableHead>
+                    <TableHead>Accès</TableHead>
                     <TableHead>Inscription</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -565,7 +647,7 @@ export default function UsersPage() {
                   {filtered.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="text-center py-8 text-muted-foreground"
                       >
                         Aucun utilisateur trouvé.
@@ -614,6 +696,15 @@ export default function UsersPage() {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {!user.telephone ? (
+                            <Badge variant="outline" className="text-xs text-muted-foreground">Sans numéro</Badge>
+                          ) : user.mustChangePassword ? (
+                            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-800 border-amber-200">À activer</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-800 border-emerald-200">Actif</Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(user.createdAt).toLocaleDateString("fr-FR")}
                         </TableCell>
@@ -628,12 +719,21 @@ export default function UsersPage() {
                               <DropdownMenuItem onClick={() => openEdit(user)}>
                                 <Edit className="mr-2 h-4 w-4" />Modifier
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                disabled={!user.telephone}
-                                onClick={() => setResetConfirm(user)}
-                              >
-                                <Key className="mr-2 h-4 w-4" />Réinitialiser le mot de passe
-                              </DropdownMenuItem>
+                              {user.mustChangePassword ? (
+                                <DropdownMenuItem
+                                  disabled={!user.telephone}
+                                  onClick={() => setInviteConfirm([user.id])}
+                                >
+                                  <Send className="mr-2 h-4 w-4" />Envoyer l'invitation
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  disabled={!user.telephone}
+                                  onClick={() => setResetConfirm(user)}
+                                >
+                                  <Key className="mr-2 h-4 w-4" />Réinitialiser le mot de passe
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
