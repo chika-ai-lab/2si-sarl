@@ -17,7 +17,9 @@ export default function ChangePasswordPage() {
   const { user, isAuthenticated, isLoading, changePassword, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [actuel, setActuel] = useState("");
+  // Mot de passe provisoire tout juste saisi à la connexion : inutile de le redemander.
+  const provisoire: string | undefined = (location.state as any)?.provisoire;
+  const [actuel, setActuel] = useState(provisoire ?? "");
   const [nouveau, setNouveau] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
@@ -54,12 +56,22 @@ export default function ChangePasswordPage() {
       subtitle={obligatoire ? "Le mot de passe reçu par WhatsApp est provisoire." : undefined}
     >
       <form onSubmit={onSubmit} className="space-y-3">
-        <div className="space-y-1">
-          <Label htmlFor="mdp-actuel" className="text-xs">
-            {obligatoire ? "Mot de passe provisoire" : "Mot de passe actuel"}
-          </Label>
-          <PasswordInput id="mdp-actuel" value={actuel} onChange={setActuel} disabled={envoi} autoComplete="current-password" />
-        </div>
+        {!provisoire && (
+          <div className="space-y-1">
+            <Label htmlFor="mdp-actuel" className="text-xs">
+              {obligatoire ? "Mot de passe provisoire (reçu par WhatsApp)" : "Mot de passe actuel"}
+            </Label>
+            {/* Pas de remplissage automatique : le navigateur proposerait l'ancien mot de passe. */}
+            <PasswordInput
+              id="mdp-actuel"
+              value={actuel}
+              onChange={setActuel}
+              disabled={envoi}
+              autoComplete={obligatoire ? "off" : "current-password"}
+              placeholder={obligatoire ? "Celui du dernier message WhatsApp" : undefined}
+            />
+          </div>
+        )}
         <div className="space-y-1">
           <Label htmlFor="mdp-nouveau" className="text-xs">Nouveau mot de passe</Label>
           <PasswordInput id="mdp-nouveau" value={nouveau} onChange={setNouveau} disabled={envoi} autoComplete="new-password" />

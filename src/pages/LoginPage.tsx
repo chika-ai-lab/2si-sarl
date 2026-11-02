@@ -53,7 +53,13 @@ export function LoginPage() {
     try {
       const { mustChangePassword } = await login(data.telephone, data.password);
       if (mustChangePassword) {
-        navigate("/changer-mot-de-passe", { replace: true, state: { from: { pathname: from } } });
+        // Le mot de passe provisoire vient d'être saisi : on le passe à l'écran
+        // suivant (état de navigation, en mémoire seulement) pour ne pas le
+        // redemander.
+        navigate("/changer-mot-de-passe", {
+          replace: true,
+          state: { from: { pathname: from }, provisoire: data.password },
+        });
       } else {
         navigate(from, { replace: true });
       }
