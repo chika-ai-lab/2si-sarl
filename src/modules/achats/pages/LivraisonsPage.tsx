@@ -27,6 +27,8 @@ import BLFicheExpeditionPDF from "../components/BLFicheExpeditionPDF";
 import { HistoriqueTimeline } from "@/components/business/HistoriqueTimeline";
 import { VirtualList } from "@/components/business/VirtualList";
 import { nomClient as formatNomClient } from "@/lib/client-nom";
+import { ParcoursBandeau } from "@/components/business/ParcoursBandeau";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Livraisons — écran unique du parcours.
@@ -58,6 +60,7 @@ interface ClientLite {
 
 export function LivraisonsPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [file, setFile]     = useState<FileId>("a_expedier");
   const [search, setSearch] = useState("");
@@ -198,6 +201,7 @@ export function LivraisonsPage() {
               onAnnuler={() => setMotif({ bl, variante: "annule" })}
               onImprimer={() => setImprimeId(bl.id)}
               onHistorique={() => setHistoriqueId(bl.id)}
+              onEncaisser={() => navigate("/admin/commercial/commandes")}
             />
           )}
         />
@@ -296,25 +300,25 @@ function LignesBordereau({ blId }: { blId: number }) {
   });
 
   if (isLoading) {
-    return <div className="px-4 pb-4 space-y-1.5">
+    return <div className="space-y-1.5">
       {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-7" />)}
     </div>;
   }
   if (error) {
-    return <p className="px-4 pb-4 text-sm text-destructive">
+    return <p className="text-sm text-destructive">
       Impossible de charger le contenu de ce bordereau.
     </p>;
   }
 
   const produits = data?.produits ?? [];
   if (produits.length === 0) {
-    return <p className="px-4 pb-4 text-sm text-muted-foreground">
+    return <p className="text-sm text-muted-foreground">
       Aucun produit rattaché à ce bordereau.
     </p>;
   }
 
   return (
-    <div className="border-t bg-muted/20 px-4 py-3">
+    <div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[380px]">
           <thead>
@@ -347,9 +351,31 @@ function LignesBordereau({ blId }: { blId: number }) {
   );
 }
 
+/** Bandeau de parcours d'un bordereau : expédition, livraison, puis encaissement. */
+function BandeauBL({ bl, onEncaisser }: { bl: Bordereau; onEncaisser: () => void }) {
+  switch (bl.etat) {
+    case "en_attente":
+      return <ParcoursBandeau etape="Expédition" ton="a_faire"
+        consigne="Préparez la marchandise, puis cliquez « Expédier » et renseignez le livreur et le véhicule." />;
+    case "echec":
+      return <ParcoursBandeau etape="Livraison" ton="alerte"
+        consigne="La livraison a échoué (motif ci-dessus). Convenez d'une nouvelle date avec le client, puis « Expédier » à nouveau." />;
+    case "expedie":
+      return <ParcoursBandeau etape="Livraison" ton="attente"
+        consigne="En route. À la remise, cliquez « Confirmer la livraison » et indiquez qui a reçu. En cas de problème : menu ⋯, « Signaler un échec »." />;
+    case "livre":
+      return <ParcoursBandeau etape="Encaissement" ton="a_faire"
+        consigne="Livré. La livraison ne solde rien : enregistrez les versements du client dans sa commande."
+        action={{ label: "Encaisser", onClick: onEncaisser }} />;
+    default:
+      return <ParcoursBandeau etape="Expédition" ton="alerte"
+        consigne="Bordereau annulé : il ne sera pas livré." />;
+  }
+}
+
 function LigneBordereau({
   bl, client, telephone, busy, ouvert, onToggle,
-  onExpedier, onLivrer, onEchec, onAnnuler, onImprimer, onHistorique,
+  onExpedier, onLivrer, onEchec, onAnnuler, onImprimer, onHistorique, onEncaisser,
 }: {
   bl: Bordereau;
   client: string;
@@ -363,6 +389,7 @@ function LigneBordereau({
   onAnnuler: () => void;
   onImprimer: () => void;
   onHistorique: () => void;
+  onEncaisser: () => void;
 }) {
   const statut = BL_STATUT[bl.etat];
 
@@ -465,7 +492,13 @@ function LigneBordereau({
       </div>
     </div>
 
-    {ouvert && <LignesBordereau blId={bl.id} />}
+    {/* Même place que sur les bons et commandes fournisseurs : bandeau de parcours, puis le détail. */}
+    {ouvert && (
+      <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
+        <BandeauBL bl={bl} onEncaisser={onEncaisser} />
+        <LignesBordereau blId={bl.id} />
+      </div>
+    )}
     </div>
   );
 }

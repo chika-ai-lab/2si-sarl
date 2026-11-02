@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ParcoursBandeau } from "@/components/business/ParcoursBandeau";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,64 +76,36 @@ function StatutBadge({ etat }: { etat: string }) {
 }
 
 /**
- * Ce que la logistique doit faire maintenant sur cette commande. Le parcours :
+ * Bandeau de parcours d'une commande fournisseur. Le parcours :
  * frais → facture fournisseur → validation → réception (crée les BL) → livraison.
  */
-function ProchaineEtapeCF({ cf, livraisons }: { cf: CF; livraisons: () => void }) {
+function BandeauCF({ cf, livraisons }: { cf: CF; livraisons: () => void }) {
   const fraisSaisis = (cf.lignes ?? []).some(
     (l) => Number(l.fraisExpedition) > 0 || Number(l.autresCharges) > 0,
   );
-  const enAttente = !["validé", "reçu", "non_reçu"].includes(cf.etat);
 
-  let etape: { n: number; titre: string; detail: string; ton: "action" | "attente" | "fini" | "alerte" };
-  if (!cf.factureId && !fraisSaisis) {
-    etape = { n: 1, ton: "action", titre: "Saisir les frais",
-      detail: "Renseignez les frais d'expédition et autres charges de chaque ligne ci-dessous, puis « Enregistrer les modifications »." };
-  } else if (!cf.factureId) {
-    etape = { n: 2, ton: "action", titre: "Générer la facture fournisseur",
-      detail: "Vérifiez le récapitulatif puis « Générer Facture » : les montants seront figés." };
-  } else if (enAttente) {
-    etape = { n: 3, ton: "action", titre: "Valider et envoyer au fournisseur",
-      detail: "« Valider » confirme la commande ; « Imprimer » produit le bon à transmettre au fournisseur." };
-  } else if (cf.etat === "validé") {
-    etape = { n: 4, ton: "attente", titre: "Réceptionner la marchandise",
-      detail: "À l'arrivée de la marchandise, cliquez « Reçu ✓ » : un bon de livraison sera créé pour chaque client. Si elle n'arrive pas, « Non reçu »." };
-  } else if (cf.etat === "non_reçu") {
-    etape = { n: 4, ton: "alerte", titre: "Marchandise non reçue",
-      detail: "Relancez le fournisseur. Dès qu'elle arrive, cliquez « Reçu ✓ » pour créer les bons de livraison." };
-  } else {
-    etape = { n: 5, ton: "fini", titre: "Livrer les clients",
-      detail: "Marchandise reçue, les bons de livraison sont créés : expédiez puis confirmez chaque remise dans Livraisons." };
+  if (!cf.factureId) {
+    return fraisSaisis
+      ? <ParcoursBandeau etape="Frais & facture" ton="a_faire"
+          consigne="Vérifiez le récapitulatif puis cliquez « Générer Facture » : les montants seront figés." />
+      : <ParcoursBandeau etape="Frais & facture" ton="a_faire"
+          consigne="Renseignez les frais d'expédition et autres charges de chaque ligne, puis « Enregistrer les modifications »." />;
   }
-
-  const couleurs = {
-    action:  "border-indigo-200 bg-indigo-50 text-indigo-900",
-    attente: "border-blue-200 bg-blue-50 text-blue-900",
-    alerte:  "border-amber-200 bg-amber-50 text-amber-900",
-    fini:    "border-green-200 bg-green-50 text-green-900",
-  }[etape.ton];
-
-  return (
-    <div className={`rounded-md border p-3 flex flex-wrap items-center justify-between gap-3 ${couleurs}`}>
-      <div className="flex gap-3 min-w-0">
-        <span className="h-6 w-6 shrink-0 rounded-full bg-white/80 border text-xs font-semibold flex items-center justify-center">
-          {etape.n}
-        </span>
-        <div className="text-sm leading-snug min-w-0">
-          <p className="font-medium">
-            <span className="text-xs font-normal opacity-70">Prochaine étape {etape.n}/5 · </span>
-            {etape.titre}
-          </p>
-          <p className="text-xs opacity-80">{etape.detail}</p>
-        </div>
-      </div>
-      {etape.n === 5 && (
-        <Button size="sm" variant="outline" className="bg-white" onClick={livraisons}>
-          <Truck className="h-4 w-4 mr-2" />Ouvrir les livraisons
-        </Button>
-      )}
-    </div>
-  );
+  if (!["validé", "reçu", "non_reçu"].includes(cf.etat)) {
+    return <ParcoursBandeau etape="Validation" ton="a_faire"
+      consigne="Cliquez « Valider », puis « Imprimer » le bon à transmettre au fournisseur." />;
+  }
+  if (cf.etat === "validé") {
+    return <ParcoursBandeau etape="Réception" ton="attente"
+      consigne="À l'arrivée de la marchandise, cliquez « Reçu ✓ » : un bon de livraison sera créé par client. Si elle n'arrive pas, « Non reçu »." />;
+  }
+  if (cf.etat === "non_reçu") {
+    return <ParcoursBandeau etape="Réception" ton="alerte"
+      consigne="Marchandise non reçue : relancez le fournisseur, puis cliquez « Reçu ✓ » à son arrivée." />;
+  }
+  return <ParcoursBandeau etape="Expédition" ton="a_faire"
+    consigne="Marchandise reçue : un bon de livraison a été créé pour chaque client."
+    action={{ label: "Ouvrir les livraisons", icon: Truck, onClick: livraisons }} />;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -570,7 +543,7 @@ export default function CommandesFournisseursPage() {
                 {/* ── Détail lignes (accordéon) ── */}
                 {isOpen && cf.lignes?.length > 0 && (
                   <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
-                    <ProchaineEtapeCF cf={cf} livraisons={() => navigate("/admin/achats/livraisons")} />
+                    <BandeauCF cf={cf} livraisons={() => navigate("/admin/achats/livraisons")} />
                     {/* Tableau articles — les frais se saisissent ici, ligne par ligne :
                         chaque ligne part chez un client différent, souvent dans une
                         autre ville, et doit lui être refacturée séparément. */}
