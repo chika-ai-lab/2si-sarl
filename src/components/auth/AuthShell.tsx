@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Lock } from "lucide-react";
+import { ReactNode, useState } from "react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SEO } from "@/components/SEO";
 
@@ -48,19 +48,29 @@ export function PasswordInput({
   autoComplete?: string;
   placeholder?: string;
 }) {
+  const [visible, setVisible] = useState(false);
   return (
     <div className="relative">
       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
       <input
         id={id}
-        type="password"
+        type={visible ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="flex w-full rounded-md border border-input bg-background pl-9 pr-3 h-9 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full rounded-md border border-input bg-background pl-9 pr-9 h-9 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        aria-pressed={visible}
+      >
+        {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
     </div>
   );
 }
