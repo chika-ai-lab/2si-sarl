@@ -175,6 +175,48 @@ export default function UsersPage() {
   /** Comptes au mot de passe jamais changé, joignables par WhatsApp. */
   const aInviter = users.filter((u) => u.mustChangePassword && u.telephone);
 
+  // ── Feuille « Compléter les numéros » : comptes sans téléphone ────────────
+  const sansNumero = users.filter((u) => !u.telephone);
+  const [feuilleOuverte, setFeuilleOuverte] = useState(false);
+  const [saisies, setSaisies] = useState<Record<number, string>>({});
+  const [erreursSaisie, setErreursSaisie] = useState<Record<number, string>>({});
+  const [enregistrement, setEnregistrement] = useState(false);
+
+  /** Même règle que l'API : 9 chiffres commençant par 70-78 ou 33, préfixe 221 accepté. */
+  const numeroValide = (saisie: string) => {
+    let d = saisie.replace(/\D/g, "");
+    if (d.length === 14 && d.startsWith("00221")) d = d.slice(5);
+    if (d.length === 12 && d.startsWith("221")) d = d.slice(3);
+    return /^(7[015678]|33)\d{7}$/.test(d);
+  };
+
+  const enregistrerNumeros = async (inviterEnsuite: boolean) => {
+    const remplis = sansNumero.filter((u) => saisies[u.id]?.trim());
+    const erreurs: Record<number, string> = {};
+    remplis.forEach((u) => {
+      if (!numeroValide(saisies[u.id])) erreurs[u.id] = "Numéro invalide (ex. 77 123 45 67)";
+    });
+    if (Object.keys(erreurs).length) return setErreursSaisie(erreurs);
+
+    setEnregistrement(true);
+    const enregistres: number[] = [];
+    for (const u of remplis) {
+      try {
+        await apiClient.put(`/users/${u.id}`, { telephone: saisies[u.id].trim() });
+        enregistres.push(u.id);
+      } catch (err: unknown) {
+        erreurs[u.id] = err instanceof Error ? err.message : "Échec de l'enregistrement";
+      }
+    }
+    setEnregistrement(false);
+    setErreursSaisie(erreurs);
+    setSaisies((p) => Object.fromEntries(Object.entries(p).filter(([id]) => !enregistres.includes(Number(id)))));
+    if (enregistres.length) toast({ title: `${enregistres.length} numéro(s) enregistré(s)` });
+    await loadData();
+    if (!Object.keys(erreurs).length) setFeuilleOuverte(false);
+    if (inviterEnsuite && enregistres.length) await handleInviter(enregistres);
+  };
+
   const handleInviter = async (ids: number[]) => {
     setInviteConfirm(null);
     setInviting(true);
@@ -353,6 +395,78 @@ export default function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Feuille de saisie des numéros manquants */}
+      <Dialog open={feuilleOuverte} onOpenChange={(open) => !enregistrement && setFeuilleOuverte(open)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Compléter les numéros WhatsApp</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Le numéro sert d'identifiant de connexion et reçoit le mot de passe provisoire.
+              Laissez vide pour compléter plus tard.
+            </p>
+          </DialogHeader>
+          <div className="max-h-[55vh] overflow-y-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Rôles</TableHead>
+                  <TableHead className="w-52">Téléphone WhatsApp</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sansNumero.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell>
+                      <p className="font-medium text-sm">{u.name}</p>
+                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {u.roles.map((r) => r.title).join(", ") || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="77 123 45 67"
+                        value={saisies[u.id] ?? ""}
+                        disabled={enregistrement}
+                        aria-invalid={!!erreursSaisie[u.id]}
+                        className={`h-8 text-sm ${erreursSaisie[u.id] ? "border-destructive" : ""}`}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setSaisies((p) => ({ ...p, [u.id]: v }));
+                          setErreursSaisie((p) => ({ ...p, [u.id]: "" }));
+                        }}
+                      />
+                      {erreursSaisie[u.id] && (
+                        <p className="text-[11px] text-destructive mt-1">{erreursSaisie[u.id]}</p>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              disabled={enregistrement || !Object.values(saisies).some((v) => v.trim())}
+              onClick={() => enregistrerNumeros(false)}
+            >
+              Enregistrer
+            </Button>
+            <Button
+              disabled={enregistrement || !Object.values(saisies).some((v) => v.trim())}
+              onClick={() => enregistrerNumeros(true)}
+            >
+              {enregistrement ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+              Enregistrer et inviter ({Object.values(saisies).filter((v) => v.trim()).length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Invitation par WhatsApp : tous les comptes à activer, ou un seul */}
       <AlertDialog open={inviteConfirm !== null} onOpenChange={(open) => !open && setInviteConfirm(null)}>
@@ -555,6 +669,12 @@ export default function UsersPage() {
               <RefreshCcw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Actualiser
             </Button>
+            {sansNumero.length > 0 && (
+              <Button variant="outline" onClick={() => { setErreursSaisie({}); setFeuilleOuverte(true); }} disabled={loading}>
+                <Phone className="h-4 w-4 mr-2" />
+                Compléter les numéros ({sansNumero.length})
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => setInviteConfirm(aInviter.map((u) => u.id))}
