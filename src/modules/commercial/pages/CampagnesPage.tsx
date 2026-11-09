@@ -113,6 +113,7 @@ const STATUT_DEST: Record<string, { label: string; className: string }> = {
   failed:    { label: "Échec",    className: "bg-red-50 text-red-800 border-red-200" },
   refused:   { label: "Refusé",   className: "bg-amber-50 text-amber-800 border-amber-200" },
   erreur:    { label: "Erreur",   className: "bg-red-50 text-red-800 border-red-200" },
+  inconnu:   { label: "Inconnu",  className: "bg-muted text-muted-foreground border-border" },
 };
 
 const fcfa = (n: number) => `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} FCFA`;

@@ -75,6 +75,8 @@ interface BackendUser {
   roles: { id: number; title: string }[];
   /** Mot de passe provisoire jamais changé : le compte n'est pas encore activé. */
   mustChangePassword?: boolean;
+  /** Dernier mot de passe envoyé par WhatsApp : l'envoi peut échouer après coup. */
+  dernierEnvoi?: { statut: string; erreur?: string | null } | null;
 }
 
 interface RoleOption {
@@ -819,6 +821,14 @@ export default function UsersPage() {
                         <TableCell>
                           {!user.telephone ? (
                             <Badge variant="outline" className="text-xs text-muted-foreground">Sans numéro</Badge>
+                          ) : user.mustChangePassword && ["failed", "erreur", "refused"].includes(user.dernierEnvoi?.statut ?? "") ? (
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-red-50 text-red-800 border-red-200"
+                              title={user.dernierEnvoi?.erreur ?? undefined}
+                            >
+                              Invitation échouée
+                            </Badge>
                           ) : user.mustChangePassword ? (
                             <Badge variant="outline" className="text-xs bg-amber-50 text-amber-800 border-amber-200">À activer</Badge>
                           ) : (
