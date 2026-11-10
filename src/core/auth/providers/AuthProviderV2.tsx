@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || "https://api.sen-services.com/ap
 
 // ─── Bump this whenever ROLE_CONFIG changes ───────────────────────────────────
 // Stored sessions with a lower version are automatically rebuilt on load.
-const PERMISSIONS_VERSION = 8; // v8: logistique = lecture des commandes clients (COMMERCIAL:ORDERS:READ) pour préparer les livraisons
+const PERMISSIONS_VERSION = 9; // v9: union des droits de tous les rôles d'une personne (avant : un seul rôle retenu)
 
 // ─── Liste exhaustive des modules de l'application ───────────────────────────
 const ALL_MODULE_IDS = [
@@ -77,17 +77,22 @@ function norm(s: string) {
   return s.toLowerCase().trim().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
-// ─── Détection du rôle depuis un tableau de titres backend ───────────────────
-function detectRoleKey(roleTitles: string[]): RoleKey {
+// ─── Détection des rôles depuis un tableau de titres backend ─────────────────
+// Une personne peut cumuler plusieurs rôles (ex. Commercial + Logistique +
+// Comptabilité) : elle reçoit l'union de leurs droits. Ne retenir qu'un rôle
+// lui retirait les autres — une commerciale qui fait aussi la logistique ne
+// pouvait plus créer de commande.
+function detectRoleKeys(roleTitles: string[]): RoleKey[] {
   const normalizedRoles = roleTitles.map((role) => norm(role));
   const hasRole = (values: string[]) => normalizedRoles.some((role) => values.includes(role));
 
-  if (hasRole(["admin", "super_admin"])) return "admin";
-  if (hasRole(["responsable commercial", "responsable_commercial"])) return "responsable_commercial";
-  if (hasRole(["logistique", "logistic"])) return "logistique";
-  if (hasRole(["comptabilite", "comptable"])) return "comptabilite";
-  if (hasRole(["commercial", "commerciale", "vendeur", "vendeuse", "sales"])) return "commercial";
-  return "default";
+  const keys: RoleKey[] = [];
+  if (hasRole(["admin", "super_admin"])) keys.push("admin");
+  if (hasRole(["responsable commercial", "responsable_commercial"])) keys.push("responsable_commercial");
+  if (hasRole(["logistique", "logistic"])) keys.push("logistique");
+  if (hasRole(["comptabilite", "comptable"])) keys.push("comptabilite");
+  if (hasRole(["commercial", "commerciale", "vendeur", "vendeuse", "sales"])) keys.push("commercial");
+  return keys.length ? keys : ["default"];
 }
 
 // ─── Construction de l'objet User à partir des rôles ─────────────────────────
@@ -99,19 +104,19 @@ function buildUserObject(
   roles: string[],
   extra: Partial<User> = {},
 ): User {
-  const roleKey = detectRoleKey(roles);
-  const config  = ROLE_CONFIG[roleKey];
-  
+  const configs     = detectRoleKeys(roles).map((key) => ROLE_CONFIG[key]);
+  const permissions = [...new Set(configs.flatMap((c) => c.permissions))];
+  const modules     = new Set<string>(configs.flatMap((c) => c.modules));
 
   return {
     id,
     email,
     name,
     roles,
-    customPermissions: config.permissions as never,
+    customPermissions: permissions as never,
     moduleAccess: ALL_MODULE_IDS.map((moduleId) => ({
       moduleId,
-      enabled: (config.modules as string[]).includes(moduleId),
+      enabled: modules.has(moduleId),
     })),
     status:             "active" as UserStatus,
     createdAt:          new Date().toISOString(),
@@ -324,7 +329,7 @@ export function AuthProviderV2({ children }: AuthProviderProps) {
   const SARL_ROLES: RoleKey[] = ["admin", "responsable_commercial", "logistique", "comptabilite"];
   const isAdmin = (): boolean => {
     if (!user) return false;
-    return SARL_ROLES.includes(detectRoleKey(user.roles));
+    return detectRoleKeys(user.roles).some((key) => SARL_ROLES.includes(key));
   };
 
   return (

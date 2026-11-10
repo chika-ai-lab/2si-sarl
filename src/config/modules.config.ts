@@ -180,13 +180,15 @@ export function getModuleNavigation(user: User | null): NavigationItem[] {
     ]);
   }
 
-  if (isResponsableComm) return [...NAV_GENERAL, ...NAV_COMMERCIAL_ADMIN];
-  if (isCommercial)      return [...NAV_GENERAL, ...NAV_COMMERCIAL];
-  if (isLogistique)      return [...NAV_GENERAL, ...NAV_LOGISTIQUE];
-  if (isComptable)       return [...NAV_GENERAL, ...NAV_COMPTABILITE];
-
-  // Fallback : dashboard uniquement
-  return NAV_GENERAL;
+  // Plusieurs rôles = les sections de chacun, chaque écran une seule fois
+  // (ex. Commercial + Logistique + Comptabilité). Un seul rôle retenu privait
+  // la personne des écrans de ses autres métiers.
+  return dedupeParChemin([
+    ...NAV_GENERAL,
+    ...(isResponsableComm ? NAV_COMMERCIAL_ADMIN : isCommercial ? NAV_COMMERCIAL : []),
+    ...(isLogistique ? NAV_LOGISTIQUE : []),
+    ...(isComptable ? NAV_COMPTABILITE : []),
+  ]);
 }
 
 /**

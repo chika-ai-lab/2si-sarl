@@ -258,11 +258,9 @@ export default function BonCommandesPage() {
   }, [commandesRaw]);
 
   // Filtre + recherche + pagination
-  const bdcsBase = useMemo(() => {
-    // Logistique ne voit que les BDC transmis+
-    if (isLogistique && !isAdmin) return bdcs.filter((b) => b.statut !== "brouillon");
-    return bdcs;
-  }, [bdcs, isLogistique, isAdmin]);
+  // Tous les profils qui ont accès à l'écran voient aussi les brouillons :
+  // la logistique anticipe ce qui va lui être transmis.
+  const bdcsBase = bdcs;
 
   const bdcsFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -409,16 +407,15 @@ export default function BonCommandesPage() {
           « En cours » manquait : les cartes annonçaient 11 bons au total puis
           n'en détaillaient que 6, les 5 bons en cours n'apparaissant nulle
           part. Les quatre états couvrent désormais le total, et le nombre de
-          colonnes suit le nombre de cartes réellement affichées — la carte
-          « Brouillons » étant masquée pour la logistique. */}
+          colonnes suit le nombre de cartes affichées. */}
       {(() => {
         const kpis = [
           { label: "Total BDC",   value: stats.total,      icon: ClipboardList, color: "text-gray-600" },
-          { label: "Brouillons",  value: stats.brouillons, icon: Clock,         color: "text-amber-600", hide: isLogistique && !isAdmin },
+          { label: "Brouillons",  value: stats.brouillons, icon: Clock,         color: "text-amber-600" },
           { label: "Transmis",    value: stats.transmis,   icon: Send,          color: "text-blue-600" },
           { label: "En cours",    value: stats.enCours,    icon: Loader2,       color: "text-indigo-600" },
           { label: "Terminés",    value: stats.termine,    icon: CheckCircle2,  color: "text-green-600" },
-        ].filter((s) => !s.hide);
+        ];
         return (
       <div className={`grid grid-cols-2 gap-4 ${kpis.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
         {kpis.map(({ label, value, icon: Icon, color }) => (
@@ -443,7 +440,7 @@ export default function BonCommandesPage() {
           <div className="flex gap-1 border-b flex-1">
             {[
               { key: "tous",      label: "Tous",       count: stats.total },
-              ...(!(isLogistique && !isAdmin) ? [{ key: "brouillon", label: "Brouillons", count: stats.brouillons }] : []),
+              { key: "brouillon", label: "Brouillons", count: stats.brouillons },
               { key: "transmis",  label: "Transmis",   count: stats.transmis },
               { key: "en_cours",  label: "En cours",   count: stats.enCours },
               { key: "termine",   label: "Terminés",   count: stats.termine },
